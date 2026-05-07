@@ -5,9 +5,12 @@ import { useState } from "react";
 import api from "@/lib/api";
 import Image from "next/image";
 import { Eye, EyeOff } from "lucide-react";
+import useAuth from "@/hooks/useAuth";
+import toast from "react-hot-toast";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { loadUser } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -15,6 +18,12 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
 
   const login = async () => {
+    // ✅ FRONTEND VALIDATION
+    if (!email || !password) {
+      toast.error("Email and password are required");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -28,10 +37,26 @@ export default function LoginPage() {
       localStorage.setItem("token", token);
       document.cookie = `token=${token}; path=/`;
 
+      await loadUser(); // sync auth instantly
+
+      toast.success("Login successful");
+
       router.replace("/");
     } catch (err) {
+      const status = err?.response?.status;
+      const message =
+        err?.response?.data?.message || "Invalid credentials";
+
+      // 🔥 proper handling
+      if (status === 401) {
+        toast.error("Invalid email or password");
+      } else if (status === 422) {
+        toast.error(message);
+      } else {
+        toast.error("Something went wrong. Try again.");
+      }
+
       console.log("LOGIN ERROR:", err?.response?.data || err.message);
-      alert("Login failed");
     } finally {
       setLoading(false);
     }
@@ -40,7 +65,7 @@ export default function LoginPage() {
   return (
     <div className="relative min-h-screen w-full overflow-hidden">
 
-      {/* 🎥 Background Video */}
+      {/* Background Video */}
       <video
         autoPlay
         loop
@@ -51,13 +76,11 @@ export default function LoginPage() {
         <source src="/videos/world.mp4" type="video/mp4" />
       </video>
 
-      {/* 🌑 Overlay */}
       <div className="absolute inset-0 bg-black/25 z-10"></div>
 
-      {/* 📦 Content */}
+      {/* Card */}
       <div className="relative z-20 flex min-h-screen items-center justify-center px-4">
 
-        {/* Card */}
         <div className="w-full max-w-sm p-6 rounded-2xl bg-white/20 backdrop-blur-xl border border-white/30">
 
           {/* Logo */}
@@ -71,7 +94,6 @@ export default function LoginPage() {
             />
           </div>
 
-          {/* Title */}
           <h1 className="text-xl mb-4 text-center text-white font-bold">
             Login
           </h1>
@@ -84,9 +106,8 @@ export default function LoginPage() {
             onChange={(e) => setEmail(e.target.value)}
           />
 
-          {/* Password with Eye Icon */}
+          {/* Password */}
           <div className="relative mb-3">
-
             <input
               className="w-full p-3 pr-10 rounded bg-white/10 text-white outline-none"
               placeholder="Password"
@@ -100,16 +121,11 @@ export default function LoginPage() {
               onClick={() => setShowPassword(!showPassword)}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-white"
             >
-              {showPassword ? (
-                <EyeOff size={18} />
-              ) : (
-                <Eye size={18} />
-              )}
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
-
           </div>
 
-          {/* Login Button with Loader */}
+          {/* Button */}
           <button
             onClick={login}
             disabled={loading}

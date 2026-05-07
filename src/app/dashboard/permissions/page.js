@@ -1,239 +1,425 @@
 "use client";
 
 import Layout from "@/components/Layout";
+
+import {
+  Plus,
+  Search,
+  ShieldCheck,
+  Pencil,
+  Trash2,
+  LockKeyhole,
+} from "lucide-react";
+
 import { useEffect, useState } from "react";
+
 import api from "@/lib/api";
+
 import toast from "react-hot-toast";
-import useAuth from "@/hooks/useAuth";
 
 export default function PermissionsPage() {
-  const { can, ready } = useAuth();
 
   const [permissions, setPermissions] = useState([]);
+
   const [loading, setLoading] = useState(true);
 
   const [search, setSearch] = useState("");
+
   const [debouncedSearch, setDebouncedSearch] = useState("");
 
   const [page, setPage] = useState(1);
+
   const [lastPage, setLastPage] = useState(1);
 
-  const [sortField, setSortField] = useState("id");
-  const [sortOrder, setSortOrder] = useState("desc");
-
   const [openModal, setOpenModal] = useState(false);
+
   const [editingPermission, setEditingPermission] = useState(null);
 
-  const [form, setForm] = useState({
+  const initialForm = {
+
     name: "",
-  });
+  };
 
-  // debounce search
+  const [form, setForm] = useState(initialForm);
+
+  // SEARCH DEBOUNCE
   useEffect(() => {
-    const t = setTimeout(() => {
-      setDebouncedSearch(search);
-      setPage(1);
-    }, 250);
 
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => {
+
+      setDebouncedSearch(search);
+
+      setPage(1);
+
+    }, 300);
+
+    return () => clearTimeout(timer);
+
   }, [search]);
 
+  // FETCH
   useEffect(() => {
+
     fetchPermissions();
-  }, [debouncedSearch, page, sortField, sortOrder]);
+
+  }, [debouncedSearch, page]);
 
   const fetchPermissions = async () => {
-    setLoading(true);
+
     try {
+
+      setLoading(true);
+
       const res = await api.get(
-        `/permissions?search=${debouncedSearch}&page=${page}&sort=${sortField}&order=${sortOrder}`
+        `/permissions?search=${debouncedSearch}&page=${page}`
       );
 
-      setPermissions(res.data.permissions || []);
-      setLastPage(res.data.meta?.last_page || 1);
-    } catch {
-      toast.error("Failed to load permissions");
+      setPermissions(
+        res.data?.permissions?.data || []
+      );
+
+      setLastPage(
+        res.data?.permissions?.last_page || 1
+      );
+
+    } catch (err) {
+
+      console.log(err.response?.data);
+
+      toast.error(
+        "Failed to load permissions"
+      );
+
     } finally {
+
       setLoading(false);
     }
   };
 
-  const handleSort = (field) => {
-    if (sortField === field) {
-      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
-    } else {
-      setSortField(field);
-      setSortOrder("asc");
-    }
-  };
-
+  // CREATE
   const openCreate = () => {
+
     setEditingPermission(null);
-    setForm({ name: "" });
+
+    setForm(initialForm);
+
     setOpenModal(true);
   };
 
-  const openEdit = (p) => {
-    setEditingPermission(p);
-    setForm({ name: p.name });
+  // EDIT
+  const openEdit = (permission) => {
+
+    setEditingPermission(permission);
+
+    setForm({
+
+      name: permission.name,
+    });
+
     setOpenModal(true);
   };
 
-  const handleSubmit = async (e) => {
-    if (e?.preventDefault) e.preventDefault();
-    if (!form.name) return toast.error("Name required");
+  // SAVE
+  const handleSubmit = async () => {
+
+    if (!form.name) {
+
+      return toast.error(
+        "Permission name required"
+      );
+    }
 
     try {
+
       if (editingPermission) {
-        await api.put(`/permissions/${editingPermission.id}`, form);
-        toast.success("Permission updated");
+
+        await api.put(
+          `/permissions/${editingPermission.id}`,
+          form
+        );
+
+        toast.success(
+          "Permission updated"
+        );
+
       } else {
-        await api.post("/permissions", form);
-        toast.success("Permission created");
+
+        await api.post(
+          "/permissions",
+          form
+        );
+
+        toast.success(
+          "Permission created"
+        );
       }
 
       setOpenModal(false);
+
       fetchPermissions();
-    } catch {
-      toast.error("Something went wrong");
+
+    } catch (err) {
+
+      console.log(err.response?.data);
+
+      toast.error(
+        err.response?.data?.message ||
+        "Something went wrong"
+      );
     }
   };
 
+  // DELETE
   const handleDelete = async (id) => {
-    if (!confirm("Delete permission?")) return;
+
+    if (!confirm("Delete permission?"))
+      return;
 
     try {
-      await api.delete(`/permissions/${id}`);
-      toast.success("Deleted");
+
+      await api.delete(
+        `/permissions/${id}`
+      );
+
+      toast.success(
+        "Permission deleted"
+      );
+
       fetchPermissions();
+
     } catch {
-      toast.error("Failed");
+
+      toast.error(
+        "Delete failed"
+      );
     }
   };
 
-  if (!ready) return null;
-
   return (
-    <Layout>
-      <div className="space-y-6">
 
-        {/* HEADER (Stripe style) */}
-        <div className="flex items-center justify-between border-b pb-4">
+    <Layout>
+
+      <div className="space-y-6 pb-10">
+
+        {/* HEADER */}
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
 
           <div>
-            <h1 className="text-xl font-semibold text-gray-900">
+
+            <h1 className="text-3xl font-bold text-gray-900">
               Permissions
             </h1>
-            <p className="text-sm text-gray-500">
-              Control system access rules
+
+            <p className="text-gray-500 mt-1">
+              Manage system access permissions
             </p>
-          </div>
-
-          <div className="flex gap-2 items-center">
-
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search permissions..."
-              className="border px-3 py-2 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-black/10"
-            />
-
-            {can("permissions.create") && (
-              <button
-                onClick={openCreate}
-                className="bg-black text-white px-4 py-2 text-sm rounded-lg hover:bg-gray-800"
-              >
-                New
-              </button>
-            )}
 
           </div>
+
+          <button
+            onClick={openCreate}
+            className="bg-blue-600 hover:bg-blue-700 transition text-white px-5 py-3 rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-blue-200"
+          >
+            <Plus size={18} />
+            New Permission
+          </button>
+
+        </div>
+
+        {/* STATS */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+
+          <StatCard
+            title="Total Permissions"
+            value={permissions.length}
+            icon={<ShieldCheck size={18} />}
+          />
+
+          <StatCard
+            title="Security Layer"
+            value="Active"
+            icon={<LockKeyhole size={18} />}
+          />
+
+          <StatCard
+            title="Access Control"
+            value="Protected"
+            icon={<ShieldCheck size={18} />}
+          />
+
+        </div>
+
+        {/* SEARCH */}
+        <div className="relative">
+
+          <Search
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+            size={18}
+          />
+
+          <input
+            value={search}
+            onChange={(e) =>
+              setSearch(e.target.value)
+            }
+            placeholder="Search permissions..."
+            className="w-full border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none rounded-2xl pl-12 pr-4 py-4 transition"
+          />
+
         </div>
 
         {/* TABLE */}
-        <div className="border rounded-xl bg-white overflow-hidden">
+        <div className="bg-white rounded-3xl border border-blue-100 overflow-hidden shadow-sm">
 
-          {/* HEADER */}
-          <div className="grid grid-cols-3 bg-gray-50 text-xs uppercase text-gray-500 px-4 py-3">
-            <div>#</div>
+          <div className="overflow-x-auto">
 
-            <div
-              className="cursor-pointer"
-              onClick={() => handleSort("name")}
-            >
-              Name {sortField === "name" && (sortOrder === "asc" ? "↑" : "↓")}
-            </div>
+            <table className="w-full min-w-[700px] text-sm">
 
-            <div className="text-right">Actions</div>
+              <thead className="bg-blue-50 border-b border-blue-100">
+
+                <tr>
+
+                  <th className="p-4 text-left">
+                    #
+                  </th>
+
+                  <th className="p-4 text-left">
+                    Permission Name
+                  </th>
+
+                  <th className="p-4 text-right">
+                    Actions
+                  </th>
+
+                </tr>
+
+              </thead>
+
+              <tbody>
+
+                {loading ? (
+
+                  <tr>
+
+                    <td
+                      colSpan={3}
+                      className="p-6 text-center text-gray-500"
+                    >
+                      Loading...
+                    </td>
+
+                  </tr>
+
+                ) : permissions.length === 0 ? (
+
+                  <tr>
+
+                    <td
+                      colSpan={3}
+                      className="p-6 text-center text-gray-500"
+                    >
+                      No permissions found
+                    </td>
+
+                  </tr>
+
+                ) : (
+
+                  permissions.map((permission, index) => (
+
+                    <tr
+                      key={permission.id}
+                      className="border-b border-gray-100 hover:bg-blue-50/40 transition"
+                    >
+
+                      <td className="p-4 text-gray-500">
+
+                        {(page - 1) * 10 + index + 1}
+
+                      </td>
+
+                      <td className="p-4">
+
+                        <div className="flex items-center gap-3">
+
+                          <div className="w-11 h-11 rounded-2xl bg-blue-100 text-blue-700 flex items-center justify-center">
+                            <ShieldCheck size={18} />
+                          </div>
+
+                          <div>
+
+                            <p className="font-semibold text-gray-900">
+                              {permission.name}
+                            </p>
+
+                          </div>
+
+                        </div>
+
+                      </td>
+
+                      <td className="p-4">
+
+                        <div className="flex justify-end gap-3">
+
+                          <button
+                            onClick={() =>
+                              openEdit(permission)
+                            }
+                            className="text-blue-600 hover:text-blue-800"
+                          >
+                            <Pencil size={16} />
+                          </button>
+
+                          <button
+                            onClick={() =>
+                              handleDelete(permission.id)
+                            }
+                            className="text-red-500 hover:text-red-700"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+
+                        </div>
+
+                      </td>
+
+                    </tr>
+
+                  ))
+                )}
+
+              </tbody>
+
+            </table>
+
           </div>
-
-          {/* BODY */}
-          {loading ? (
-            <div className="p-4 text-sm text-gray-500">Loading...</div>
-          ) : permissions.length === 0 ? (
-            <div className="p-4 text-sm text-gray-500">
-              No permissions found
-            </div>
-          ) : (
-            permissions.map((p, i) => (
-              <div
-                key={p.id}
-                className="grid grid-cols-3 px-4 py-3 border-t text-sm hover:bg-gray-50"
-              >
-
-                <div className="text-gray-500">
-                  {(page - 1) * 10 + i + 1}
-                </div>
-
-                <div className="font-medium text-gray-900">
-                  {p.name}
-                </div>
-
-                <div className="flex justify-end gap-2">
-
-                  {can("permissions.edit") && (
-                    <button
-                      onClick={() => openEdit(p)}
-                      className="text-xs px-3 py-1 bg-gray-900 text-white rounded"
-                    >
-                      Edit
-                    </button>
-                  )}
-
-                  {can("permissions.delete") && (
-                    <button
-                      onClick={() => handleDelete(p.id)}
-                      className="text-xs px-3 py-1 bg-red-600 text-white rounded"
-                    >
-                      Delete
-                    </button>
-                  )}
-
-                </div>
-
-              </div>
-            ))
-          )}
 
         </div>
 
         {/* PAGINATION */}
-        <div className="flex justify-between text-sm text-gray-500">
+        <div className="flex items-center justify-between">
 
           <button
             disabled={page === 1}
-            onClick={() => setPage(page - 1)}
-            className="px-3 py-1 border rounded disabled:opacity-40"
+            onClick={() =>
+              setPage(page - 1)
+            }
+            className="px-4 py-2 border rounded-xl disabled:opacity-40"
           >
             Prev
           </button>
 
-          <span>Page {page} / {lastPage}</span>
+          <span className="text-sm text-gray-500">
+            Page {page} / {lastPage}
+          </span>
 
           <button
             disabled={page === lastPage}
-            onClick={() => setPage(page + 1)}
-            className="px-3 py-1 border rounded disabled:opacity-40"
+            onClick={() =>
+              setPage(page + 1)
+            }
+            className="px-4 py-2 border rounded-xl disabled:opacity-40"
           >
             Next
           </button>
@@ -242,37 +428,64 @@ export default function PermissionsPage() {
 
         {/* MODAL */}
         {openModal && (
-          <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
 
-            <div className="bg-white p-6 rounded-xl w-[420px] space-y-3">
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center z-50 p-4">
 
-              <h2 className="text-lg font-semibold">
-                {editingPermission ? "Edit Permission" : "Create Permission"}
-              </h2>
+            <div className="bg-white w-full max-w-xl rounded-3xl shadow-2xl border border-blue-100 overflow-hidden">
 
-              <input
-                value={form.name}
-                onChange={(e) =>
-                  setForm({ ...form, name: e.target.value })
-                }
-                className="border p-2 w-full rounded"
-                placeholder="Permission name"
-              />
+              {/* HEADER */}
+              <div className="p-6 border-b border-blue-100 flex items-center justify-between">
 
-              <div className="flex justify-end gap-2 pt-2">
+                <div>
+
+                  <h2 className="text-xl font-bold text-gray-900">
+
+                    {editingPermission
+                      ? "Edit Permission"
+                      : "Create Permission"}
+
+                  </h2>
+
+                  <p className="text-sm text-gray-500 mt-1">
+                    Configure access permission
+                  </p>
+
+                </div>
 
                 <button
-                  onClick={() => setOpenModal(false)}
-                  className="px-4 py-2 border rounded-lg"
+                  onClick={() =>
+                    setOpenModal(false)
+                  }
+                  className="text-gray-400 hover:text-gray-700 text-xl"
                 >
-                  Cancel
+                  ✕
                 </button>
+
+              </div>
+
+              {/* BODY */}
+              <div className="p-6 space-y-5">
+
+                <Input
+                  placeholder="Permission Name"
+                  value={form.name}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      name: e.target.value,
+                    })
+                  }
+                />
 
                 <button
                   onClick={handleSubmit}
-                  className="px-4 py-2 bg-black text-white rounded-lg"
+                  className="w-full bg-blue-600 hover:bg-blue-700 transition text-white py-4 rounded-2xl font-semibold shadow-lg shadow-blue-200"
                 >
-                  Save
+
+                  {editingPermission
+                    ? "Update Permission"
+                    : "Create Permission"}
+
                 </button>
 
               </div>
@@ -283,6 +496,54 @@ export default function PermissionsPage() {
         )}
 
       </div>
+
     </Layout>
+  );
+}
+
+// STAT CARD
+function StatCard({
+  title,
+  value,
+  icon,
+}) {
+
+  return (
+
+    <div className="bg-white rounded-3xl border border-blue-100 p-5 shadow-sm">
+
+      <div className="flex items-center justify-between">
+
+        <div>
+
+          <p className="text-sm text-gray-500">
+            {title}
+          </p>
+
+          <h3 className="text-2xl font-bold text-gray-900 mt-2">
+            {value}
+          </h3>
+
+        </div>
+
+        <div className="w-12 h-12 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center">
+          {icon}
+        </div>
+
+      </div>
+
+    </div>
+  );
+}
+
+// INPUT
+function Input(props) {
+
+  return (
+
+    <input
+      {...props}
+      className="w-full border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none rounded-2xl px-4 py-4 transition"
+    />
   );
 }

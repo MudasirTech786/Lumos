@@ -4,6 +4,8 @@ import { useState } from "react";
 import api from "@/lib/api";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { Eye, EyeOff } from "lucide-react";
+import toast from "react-hot-toast";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -12,25 +14,42 @@ export default function RegisterPage() {
     name: "",
     email: "",
     password: "",
+    confirmPassword: "",
   });
 
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+
   const register = async () => {
+    if (form.password !== form.confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+
     try {
-      const res = await api.post("/register", form);
+      const res = await api.post("/register", {
+        name: form.name,
+        email: form.email,
+        password: form.password,
+      });
+
       localStorage.setItem("token", res.data.token);
+
+      toast.success("Account created successfully");
+
       router.push("/");
+
     } catch (err) {
-      alert("Register failed");
+      console.log(err);
+      toast.error(
+        err?.response?.data?.message || "Register failed"
+      );
     }
   };
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden">
 
-      {/* 📱 Mobile fallback */}
-      <div className="absolute inset-0 md:hidden bg-[url('/images/fallback.jpg')] bg-cover bg-center"></div>
-
-      {/* 🎥 Background Video (ALL DEVICES like login page) */}
       <video
         autoPlay
         loop
@@ -42,78 +61,96 @@ export default function RegisterPage() {
         <source src="/videos/world.mp4" type="video/mp4" />
       </video>
 
-      {/* 🌑 Overlay */}
       <div className="absolute inset-0 bg-black/25 z-10"></div>
 
-      {/* 📦 Center Content */}
       <div className="relative z-20 flex min-h-screen items-center justify-center px-4 sm:px-6">
 
-        {/* ✨ Glow (responsive like login) */}
-        <div className="absolute w-[280px] sm:w-[380px] md:w-[420px] h-[280px] sm:h-[380px] md:h-[420px] bg-blue-500/30 rounded-full blur-3xl animate-pulse"></div>
+        <div className="w-full max-w-xs sm:max-w-sm md:max-w-md p-6 rounded-2xl bg-white/20 backdrop-blur-xl border border-white/30">
 
-        {/* 📦 Card */}
-        <div className="
-          relative w-full
-          max-w-xs sm:max-w-sm md:max-w-md
-          p-5 sm:p-6 md:p-7
-          rounded-2xl
-          bg-white/20 backdrop-blur-xl
-          border border-white/30
-          shadow-[0_0_50px_rgba(0,150,255,0.35)]
-        ">
-
-          {/* 🖼️ Logo (same sizing as login) */}
-          <div className="flex justify-center mb-5 sm:mb-6">
+          <div className="flex justify-center mb-5">
             <Image
               src="/images/Header.png"
               alt="Logo"
               width={220}
               height={140}
-              className="w-44 sm:w-56 md:w-64 lg:w-72 h-auto drop-shadow-lg"
+              className="w-56 h-auto"
             />
           </div>
 
-          {/* Title */}
-          <h1 className="text-xl sm:text-2xl mb-5 font-bold text-center text-white">
+          <h1 className="text-xl mb-5 font-bold text-center text-white">
             Create Account
           </h1>
 
-          {/* Inputs */}
-          {["name", "email", "password"].map((field) => (
+          {/* NAME */}
+          <input
+            className="w-full mb-3 p-3 rounded-lg bg-white/10 text-white border border-white/20"
+            placeholder="Name"
+            onChange={(e) =>
+              setForm({ ...form, name: e.target.value })
+            }
+          />
+
+          {/* EMAIL */}
+          <input
+            className="w-full mb-3 p-3 rounded-lg bg-white/10 text-white border border-white/20"
+            placeholder="Email"
+            onChange={(e) =>
+              setForm({ ...form, email: e.target.value })
+            }
+          />
+
+          {/* PASSWORD */}
+          <div className="relative mb-3">
+
             <input
-              key={field}
-              className="
-                w-full mb-3 p-3 rounded-lg
-                bg-white/10 text-white
-                border border-white/20
-                placeholder:text-gray-300
-                focus:outline-none
-                focus:ring-2 focus:ring-blue-400
-                transition
-              "
-              placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
-              type={field === "password" ? "password" : "text"}
+              className="w-full p-3 rounded-lg bg-white/10 text-white border border-white/20 pr-10"
+              placeholder="Password"
+              type={showPassword ? "text" : "password"}
               onChange={(e) =>
-                setForm({ ...form, [field]: e.target.value })
+                setForm({ ...form, password: e.target.value })
               }
             />
-          ))}
 
-          {/* Register Button */}
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-3 text-white"
+            >
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+
+          </div>
+
+          {/* CONFIRM PASSWORD */}
+          <div className="relative mb-4">
+
+            <input
+              className="w-full p-3 rounded-lg bg-white/10 text-white border border-white/20 pr-10"
+              placeholder="Confirm Password"
+              type={showConfirm ? "text" : "password"}
+              onChange={(e) =>
+                setForm({ ...form, confirmPassword: e.target.value })
+              }
+            />
+
+            <button
+              type="button"
+              onClick={() => setShowConfirm(!showConfirm)}
+              className="absolute right-3 top-3 text-white"
+            >
+              {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+
+          </div>
+
+          {/* BUTTON */}
           <button
             onClick={register}
-            className="
-              w-full p-3 mt-2 rounded-lg
-              bg-blue-500 hover:bg-blue-600
-              shadow-[0_0_20px_rgba(0,150,255,0.7)]
-              text-white font-semibold
-              transition-all duration-300
-            "
+            className="w-full p-3 rounded-lg bg-blue-500 text-white font-semibold"
           >
             Register
           </button>
 
-          {/* Login Link */}
           <button
             onClick={() => router.push("/login")}
             className="mt-4 text-sm text-blue-300 w-full hover:underline"
@@ -125,4 +162,4 @@ export default function RegisterPage() {
       </div>
     </div>
   );
-} 
+}

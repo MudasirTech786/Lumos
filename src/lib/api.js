@@ -4,11 +4,20 @@ const api = axios.create({
   baseURL: "http://127.0.0.1:8000/api",
 });
 
+// 🔥 safe cookie reader
+const getCookie = (name) => {
+  if (typeof document === "undefined") return null;
+
+  return document.cookie
+    .split("; ")
+    .find((row) => row.startsWith(name + "="))
+    ?.split("=")[1];
+};
+
 api.interceptors.request.use((config) => {
   if (typeof window !== "undefined") {
     const token =
-      localStorage.getItem("token") ||
-      document.cookie.split("token=")[1];
+      localStorage.getItem("token") || getCookie("token");
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;

@@ -5,7 +5,7 @@ import { AuthProvider } from "@/context/AuthContext";
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body>
+      <body suppressHydrationWarning={true}>
         <AuthProvider>
           {children}
           <Toaster position="top-right" />
