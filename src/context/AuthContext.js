@@ -96,8 +96,6 @@ export function AuthProvider({
   // REFRESH
   const refreshUser = async () => {
 
-    setReady(false);
-
     await loadUser();
   };
 

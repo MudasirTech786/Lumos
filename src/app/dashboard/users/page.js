@@ -1,7 +1,7 @@
 "use client";
 
 import Layout from "@/components/Layout";
-
+import ProtectedPage from "@/components/ProtectedPage";
 import {
   Plus,
   Search,
@@ -226,365 +226,366 @@ export default function UsersPage() {
   ).length;
 
   return (
+    <ProtectedPage permission="users.view">
+      <Layout>
 
-    <Layout>
+        <div className="space-y-6 pb-10">
 
-      <div className="space-y-6 pb-10">
+          {/* HEADER */}
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
 
-        {/* HEADER */}
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div>
 
-          <div>
+              <h1 className="text-3xl font-bold text-gray-900">
+                Users
+              </h1>
 
-            <h1 className="text-3xl font-bold text-gray-900">
-              Users
-            </h1>
+              <p className="text-gray-500 mt-1">
+                Manage platform users & access
+              </p>
 
-            <p className="text-gray-500 mt-1">
-              Manage platform users & access
-            </p>
+            </div>
+
+            <button
+              onClick={openCreate}
+              className="bg-blue-600 hover:bg-blue-700 transition text-white px-5 py-3 rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-blue-200"
+            >
+              <Plus size={18} />
+              Add User
+            </button>
 
           </div>
 
-          <button
-            onClick={openCreate}
-            className="bg-blue-600 hover:bg-blue-700 transition text-white px-5 py-3 rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-blue-200"
-          >
-            <Plus size={18} />
-            Add User
-          </button>
+          {/* STATS */}
+          <div className="grid grid-cols-2 xl:grid-cols-3 gap-4">
 
-        </div>
+            <StatCard
+              title="Total Users"
+              value={totalUsers}
+              icon={<Users size={18} />}
+            />
 
-        {/* STATS */}
-        <div className="grid grid-cols-2 xl:grid-cols-3 gap-4">
+            <StatCard
+              title="Admins"
+              value={adminUsers}
+              icon={<Shield size={18} />}
+            />
 
-          <StatCard
-            title="Total Users"
-            value={totalUsers}
-            icon={<Users size={18} />}
-          />
+            <StatCard
+              title="Roles"
+              value={roles.length}
+              icon={<Mail size={18} />}
+            />
 
-          <StatCard
-            title="Admins"
-            value={adminUsers}
-            icon={<Shield size={18} />}
-          />
+          </div>
 
-          <StatCard
-            title="Roles"
-            value={roles.length}
-            icon={<Mail size={18} />}
-          />
+          {/* SEARCH */}
+          <div className="relative">
 
-        </div>
+            <Search
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+              size={18}
+            />
 
-        {/* SEARCH */}
-        <div className="relative">
+            <input
+              value={search}
+              onChange={(e) =>
+                setSearch(e.target.value)
+              }
+              placeholder="Search users..."
+              className="w-full border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none rounded-2xl pl-12 pr-4 py-4 transition"
+            />
 
-          <Search
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
-            size={18}
-          />
+          </div>
 
-          <input
-            value={search}
-            onChange={(e) =>
-              setSearch(e.target.value)
-            }
-            placeholder="Search users..."
-            className="w-full border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none rounded-2xl pl-12 pr-4 py-4 transition"
-          />
+          {/* TABLE */}
+          <div className="bg-white rounded-3xl border border-blue-100 overflow-hidden shadow-sm">
 
-        </div>
+            <div className="overflow-x-auto">
 
-        {/* TABLE */}
-        <div className="bg-white rounded-3xl border border-blue-100 overflow-hidden shadow-sm">
+              <table className="w-full min-w-[800px] text-sm">
 
-          <div className="overflow-x-auto">
-
-            <table className="w-full min-w-[800px] text-sm">
-
-              <thead className="bg-blue-50 border-b border-blue-100">
-
-                <tr>
-
-                  <th className="p-4 text-left">
-                    Name
-                  </th>
-
-                  <th className="p-4 text-left">
-                    Email
-                  </th>
-
-                  <th className="p-4 text-left">
-                    Role
-                  </th>
-
-                  <th className="p-4 text-right">
-                    Actions
-                  </th>
-
-                </tr>
-
-              </thead>
-
-              <tbody>
-
-                {loading ? (
+                <thead className="bg-blue-50 border-b border-blue-100">
 
                   <tr>
-                    <td
-                      colSpan={4}
-                      className="p-6 text-center text-gray-500"
-                    >
-                      Loading...
-                    </td>
+
+                    <th className="p-4 text-left">
+                      Name
+                    </th>
+
+                    <th className="p-4 text-left">
+                      Email
+                    </th>
+
+                    <th className="p-4 text-left">
+                      Role
+                    </th>
+
+                    <th className="p-4 text-right">
+                      Actions
+                    </th>
+
                   </tr>
 
-                ) : users.length === 0 ? (
+                </thead>
 
-                  <tr>
-                    <td
-                      colSpan={4}
-                      className="p-6 text-center text-gray-500"
-                    >
-                      No users found
-                    </td>
-                  </tr>
+                <tbody>
 
-                ) : (
+                  {loading ? (
 
-                  users.map((user) => (
-
-                    <tr
-                      key={user.id}
-                      className="border-b border-gray-100 hover:bg-blue-50/40 transition"
-                    >
-
-                      <td className="p-4">
-
-                        <div className="flex items-center gap-3">
-
-                          <div className="w-11 h-11 rounded-2xl bg-blue-100 text-blue-700 flex items-center justify-center font-bold">
-                            {user.name?.charAt(0)}
-                          </div>
-
-                          <div>
-
-                            <p className="font-semibold text-gray-900">
-                              {user.name}
-                            </p>
-
-                          </div>
-
-                        </div>
-
+                    <tr>
+                      <td
+                        colSpan={4}
+                        className="p-6 text-center text-gray-500"
+                      >
+                        Loading...
                       </td>
-
-                      <td className="p-4 text-gray-600">
-                        {user.email}
-                      </td>
-
-                      <td className="p-4">
-
-                        <span className="px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-medium">
-                          {user.roles?.[0]?.name || "-"}
-                        </span>
-
-                      </td>
-
-                      <td className="p-4">
-
-                        <div className="flex justify-end gap-3">
-
-                          <button
-                            onClick={() =>
-                              openEdit(user)
-                            }
-                            className="text-blue-600 hover:text-blue-800"
-                          >
-                            <Pencil size={16} />
-                          </button>
-
-                          <button
-                            onClick={() =>
-                              handleDelete(user.id)
-                            }
-                            disabled={
-                              loadingId === user.id
-                            }
-                            className="text-red-500 hover:text-red-700"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-
-                        </div>
-
-                      </td>
-
                     </tr>
-                  ))
-                )}
 
-              </tbody>
+                  ) : users.length === 0 ? (
 
-            </table>
+                    <tr>
+                      <td
+                        colSpan={4}
+                        className="p-6 text-center text-gray-500"
+                      >
+                        No users found
+                      </td>
+                    </tr>
 
-          </div>
+                  ) : (
 
-        </div>
+                    users.map((user) => (
 
-        {/* PAGINATION */}
-        <div className="flex items-center justify-between">
+                      <tr
+                        key={user.id}
+                        className="border-b border-gray-100 hover:bg-blue-50/40 transition"
+                      >
 
-          <button
-            disabled={page === 1}
-            onClick={() =>
-              setPage(page - 1)
-            }
-            className="px-4 py-2 border rounded-xl disabled:opacity-40"
-          >
-            Prev
-          </button>
+                        <td className="p-4">
 
-          <span className="text-sm text-gray-500">
-            Page {page} / {lastPage}
-          </span>
+                          <div className="flex items-center gap-3">
 
-          <button
-            disabled={page === lastPage}
-            onClick={() =>
-              setPage(page + 1)
-            }
-            className="px-4 py-2 border rounded-xl disabled:opacity-40"
-          >
-            Next
-          </button>
+                            <div className="w-11 h-11 rounded-2xl bg-blue-100 text-blue-700 flex items-center justify-center font-bold">
+                              {user.name?.charAt(0)}
+                            </div>
 
-        </div>
+                            <div>
 
-        {/* MODAL */}
-        {openModal && (
+                              <p className="font-semibold text-gray-900">
+                                {user.name}
+                              </p>
 
-          <div className="fixed inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center z-50 p-4">
+                            </div>
 
-            <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl border border-blue-100 overflow-hidden max-h-[90vh] overflow-y-auto">
+                          </div>
 
-              <div className="p-6 border-b border-blue-100 flex items-center justify-between">
+                        </td>
 
-                <div>
+                        <td className="p-4 text-gray-600">
+                          {user.email}
+                        </td>
 
-                  <h2 className="text-xl font-bold text-gray-900">
-                    {editingUser
-                      ? "Edit User"
-                      : "Add User"}
-                  </h2>
+                        <td className="p-4">
 
-                  <p className="text-sm text-gray-500 mt-1">
-                    Manage system user access
-                  </p>
+                          <span className="px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-medium">
+                            {user.roles?.[0]?.name || "-"}
+                          </span>
 
-                </div>
+                        </td>
 
-                <button
-                  onClick={() =>
-                    setOpenModal(false)
-                  }
-                  className="text-gray-400 hover:text-gray-700 text-xl"
-                >
-                  ✕
-                </button>
+                        <td className="p-4">
 
-              </div>
+                          <div className="flex justify-end gap-3">
 
-              <div className="p-6 space-y-4">
+                            <button
+                              onClick={() =>
+                                openEdit(user)
+                              }
+                              className="text-blue-600 hover:text-blue-800"
+                            >
+                              <Pencil size={16} />
+                            </button>
 
-                <Input
-                  placeholder="Full Name"
-                  value={form.name}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      name: e.target.value,
-                    })
-                  }
-                />
+                            <button
+                              onClick={() =>
+                                handleDelete(user.id)
+                              }
+                              disabled={
+                                loadingId === user.id
+                              }
+                              className="text-red-500 hover:text-red-700"
+                            >
+                              <Trash2 size={16} />
+                            </button>
 
-                <Input
-                  placeholder="Email Address"
-                  value={form.email}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      email: e.target.value,
-                    })
-                  }
-                />
+                          </div>
 
-                {!editingUser && (
+                        </td>
 
-                  <Input
-                    type="password"
-                    placeholder="Password"
-                    value={form.password}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        password: e.target.value,
-                      })
-                    }
-                  />
+                      </tr>
+                    ))
+                  )}
 
-                )}
+                </tbody>
 
-                <select
-                  value={form.role}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      role: e.target.value,
-                    })
-                  }
-                  className="w-full border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none rounded-2xl px-4 py-4 transition"
-                >
-
-                  <option value="">
-                    Select Role
-                  </option>
-
-                  {roles.map((role) => (
-
-                    <option
-                      key={role.id}
-                      value={role.name}
-                    >
-                      {role.name}
-                    </option>
-
-                  ))}
-
-                </select>
-
-                <button
-                  onClick={handleSubmit}
-                  className="w-full bg-blue-600 hover:bg-blue-700 transition text-white py-4 rounded-2xl font-semibold shadow-lg shadow-blue-200"
-                >
-                  {editingUser
-                    ? "Update User"
-                    : "Create User"}
-                </button>
-
-              </div>
+              </table>
 
             </div>
 
           </div>
-        )}
 
-      </div>
+          {/* PAGINATION */}
+          <div className="flex items-center justify-between">
 
-    </Layout>
+            <button
+              disabled={page === 1}
+              onClick={() =>
+                setPage(page - 1)
+              }
+              className="px-4 py-2 border rounded-xl disabled:opacity-40"
+            >
+              Prev
+            </button>
+
+            <span className="text-sm text-gray-500">
+              Page {page} / {lastPage}
+            </span>
+
+            <button
+              disabled={page === lastPage}
+              onClick={() =>
+                setPage(page + 1)
+              }
+              className="px-4 py-2 border rounded-xl disabled:opacity-40"
+            >
+              Next
+            </button>
+
+          </div>
+
+          {/* MODAL */}
+          {openModal && (
+
+            <div className="fixed inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center z-50 p-4">
+
+              <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl border border-blue-100 overflow-hidden max-h-[90vh] overflow-y-auto">
+
+                <div className="p-6 border-b border-blue-100 flex items-center justify-between">
+
+                  <div>
+
+                    <h2 className="text-xl font-bold text-gray-900">
+                      {editingUser
+                        ? "Edit User"
+                        : "Add User"}
+                    </h2>
+
+                    <p className="text-sm text-gray-500 mt-1">
+                      Manage system user access
+                    </p>
+
+                  </div>
+
+                  <button
+                    onClick={() =>
+                      setOpenModal(false)
+                    }
+                    className="text-gray-400 hover:text-gray-700 text-xl"
+                  >
+                    ✕
+                  </button>
+
+                </div>
+
+                <div className="p-6 space-y-4">
+
+                  <Input
+                    placeholder="Full Name"
+                    value={form.name}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        name: e.target.value,
+                      })
+                    }
+                  />
+
+                  <Input
+                    placeholder="Email Address"
+                    value={form.email}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        email: e.target.value,
+                      })
+                    }
+                  />
+
+                  {!editingUser && (
+
+                    <Input
+                      type="password"
+                      placeholder="Password"
+                      value={form.password}
+                      onChange={(e) =>
+                        setForm({
+                          ...form,
+                          password: e.target.value,
+                        })
+                      }
+                    />
+
+                  )}
+
+                  <select
+                    value={form.role}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        role: e.target.value,
+                      })
+                    }
+                    className="w-full border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none rounded-2xl px-4 py-4 transition"
+                  >
+
+                    <option value="">
+                      Select Role
+                    </option>
+
+                    {roles.map((role) => (
+
+                      <option
+                        key={role.id}
+                        value={role.name}
+                      >
+                        {role.name}
+                      </option>
+
+                    ))}
+
+                  </select>
+
+                  <button
+                    onClick={handleSubmit}
+                    className="w-full bg-blue-600 hover:bg-blue-700 transition text-white py-4 rounded-2xl font-semibold shadow-lg shadow-blue-200"
+                  >
+                    {editingUser
+                      ? "Update User"
+                      : "Create User"}
+                  </button>
+
+                </div>
+
+              </div>
+
+            </div>
+          )}
+
+        </div>
+
+      </Layout>
+    </ProtectedPage>
   );
 }
 

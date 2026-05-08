@@ -20,6 +20,7 @@ export default function Layout({ children }) {
   });
   const [profileOpen, setProfileOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(false);
 
   const { user, ready, refreshUser } = useAuth();
 
@@ -69,7 +70,33 @@ export default function Layout({ children }) {
   }, [user]);
 
   useEffect(() => {
-    if (ready && !user) router.replace("/login");
+
+    if (!ready) return;
+
+    // USER EXISTS
+    if (user) {
+
+      setCheckingAuth(false);
+
+      return;
+    }
+
+    // WAIT SLIGHTLY BEFORE REDIRECT
+    const timer = setTimeout(() => {
+
+      const token =
+        localStorage.getItem("token");
+
+      // STILL NO TOKEN
+      if (!token) {
+
+        router.replace("/login");
+      }
+
+    }, 500);
+
+    return () => clearTimeout(timer);
+
   }, [ready, user]);
 
   useEffect(() => {
@@ -155,7 +182,7 @@ export default function Layout({ children }) {
     }
   };
 
-  if (!ready) {
+  if (!ready || checkingAuth) {
     return (
       <div className="h-screen flex items-center justify-center text-blue-600 text-sm">
         Loading...
@@ -200,53 +227,341 @@ export default function Layout({ children }) {
           <div className="flex items-center gap-3 relative" ref={dropdownRef}>
 
             {/* BELL */}
-            <button className="relative p-2 rounded-md hover:bg-blue-50 transition">
-              <Bell size={18} className="text-blue-700" />
-              <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-blue-600 rounded-full"></span>
+            <button className="relative p-3 rounded-xl bg-blue-50 hover:bg-blue-100 transition-all duration-200">
+
+              <Bell
+                size={20}
+                className="text-blue-700"
+                strokeWidth={2}
+              />
+
+              <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-blue-600"></span>
+
             </button>
 
             {/* AVATAR */}
             <button
               onClick={() => setProfileOpen(!profileOpen)}
-              className="w-12 h-12 rounded-full overflow-hidden border-2 border-blue-200 shadow-[0_8px_25px_rgba(0,0,0,0.12)] hover:shadow-[0_15px_40px_rgba(0,0,0,0.2)] hover:scale-[1.03] transition"
+              className="
+    group
+    relative
+    flex
+    items-center
+    gap-2.5
+    pl-1.5
+    pr-3
+    py-0.5
+    rounded-2xl
+    bg-white
+    border
+    border-blue-100
+    shadow-[0_6px_20px_rgba(37,99,235,0.08)]
+    hover:shadow-[0_10px_28px_rgba(37,99,235,0.14)]
+    hover:border-blue-200
+    transition-all
+    duration-300
+  "
             >
-              {avatar ? (
-                <img src={avatar} className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full bg-blue-600 text-white flex items-center justify-center text-sm font-medium">
-                  {user?.name?.charAt(0)?.toUpperCase()}
+
+              {/* AVATAR */}
+              <div className="relative">
+
+                <div
+                  className="
+        w-10
+        h-10
+        rounded-xl
+        overflow-hidden
+        border-2
+        border-white
+        shadow-sm
+        bg-gradient-to-br
+        from-blue-600
+        to-blue-700
+        flex
+        items-center
+        justify-center
+      "
+                >
+                  {avatar ? (
+                    <img
+                      src={avatar}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="text-white text-xs font-semibold">
+                      {user?.name?.charAt(0)?.toUpperCase()}
+                    </div>
+                  )}
                 </div>
-              )}
+
+                {/* ONLINE DOT */}
+                <span
+                  className="
+        absolute
+        -bottom-0.5
+        -right-0.5
+        w-3
+        h-3
+        rounded-full
+        bg-emerald-500
+        border-2
+        border-white
+      "
+                />
+              </div>
+
+              {/* USER INFO */}
+              <div className="hidden md:flex flex-col items-start leading-tight">
+
+                <span className="text-[13px] font-semibold text-slate-800 max-w-[110px] truncate">
+                  {user?.name}
+                </span>
+
+                <span className="text-[10px] font-medium text-slate-500 uppercase tracking-wide">
+                  {user?.roles?.[0]?.name || "USER"}
+                </span>
+              </div>
+
+              {/* CHEVRON */}
+              <svg
+                className="
+      hidden
+      md:block
+      w-3.5
+      h-3.5
+      text-slate-400
+      group-hover:text-blue-600
+      transition-colors
+    "
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+
             </button>
 
             {/* DROPDOWN (FIXED LAYER + DP) */}
             {profileOpen && (
-              <div className="absolute right-0 top-12 w-48 md:w-56 z-50">
+              <div className="absolute right-0 top-14 w-[290px] z-50 animate-in fade-in slide-in-from-top-2 duration-200">
 
-                <div className="bg-white rounded-lg border border-blue-100 shadow-[0_20px_60px_rgba(0,0,0,0.15)] overflow-hidden">
+                <div className="
+      overflow-hidden
+      rounded-3xl
+      border
+      border-blue-100/80
+      bg-white/95
+      backdrop-blur-xl
+      shadow-[0_25px_80px_rgba(37,99,235,0.15)]
+    ">
 
-                  <div className="p-3 border-b border-blue-50 bg-blue-50/40">
-                    <p className="text-sm font-medium text-blue-900">{user?.name}</p>
-                    <p className="text-xs text-gray-500">{user?.email}</p>
+                  {/* TOP GLOW */}
+                  <div className="
+        absolute
+        inset-0
+        bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,0.08),transparent_30%)]
+        pointer-events-none
+      " />
+
+                  {/* PROFILE SECTION */}
+                  <div className="relative p-5 border-b border-blue-50">
+
+                    <div className="flex items-center gap-4">
+
+                      {/* AVATAR */}
+                      <div className="relative">
+
+                        <div className="
+              w-14
+              h-14
+              rounded-2xl
+              overflow-hidden
+              border-2
+              border-white
+              shadow-md
+              bg-gradient-to-br
+              from-blue-600
+              to-blue-700
+              flex
+              items-center
+              justify-center
+            ">
+                          {avatar ? (
+                            <img
+                              src={avatar}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="text-white font-semibold">
+                              {user?.name?.charAt(0)?.toUpperCase()}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* ONLINE STATUS */}
+                        <span className="
+              absolute
+              -bottom-1
+              -right-1
+              w-4
+              h-4
+              rounded-full
+              bg-emerald-500
+              border-2
+              border-white
+            " />
+                      </div>
+
+                      {/* USER INFO */}
+                      <div className="min-w-0 flex-1">
+
+                        <h3 className="
+              text-sm
+              font-semibold
+              text-slate-800
+              truncate
+            ">
+                          {user?.name}
+                        </h3>
+
+                        <p className="
+              text-xs
+              text-slate-500
+              truncate
+              mt-0.5
+            ">
+                          {user?.email}
+                        </p>
+
+                        {/* ROLE BADGE */}
+                        <div className="mt-2">
+                          <span className="
+                inline-flex
+                items-center
+                rounded-full
+                bg-blue-50
+                border
+                border-blue-100
+                px-2.5
+                py-1
+                text-[10px]
+                font-semibold
+                uppercase
+                tracking-wide
+                text-blue-700
+              ">
+                            {user?.roles?.[0]?.name || "USER"}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
-                  <button
-                    onClick={() => {
-                      setEditOpen(true);
-                      setProfileOpen(false);
-                    }}
-                    className="w-full text-left px-3 py-2 text-sm hover:bg-blue-50 transition"
-                  >
-                    Edit Profile
-                  </button>
+                  {/* MENU ITEMS */}
+                  <div className="p-2">
 
-                  <button
-                    onClick={handleLogout}
-                    className="w-full text-left px-3 py-2 text-sm text-red-500 hover:bg-red-50 transition"
-                  >
-                    Logout
-                  </button>
+                    {/* EDIT PROFILE */}
+                    <button
+                      onClick={() => {
+                        setEditOpen(true);
+                        setProfileOpen(false);
+                      }}
+                      className="
+            group
+            w-full
+            flex
+            items-center
+            gap-3
+            rounded-2xl
+            px-3
+            py-3
+            hover:bg-blue-50
+            transition-all
+            duration-200
+          "
+                    >
 
+                      <div className="
+            w-10
+            h-10
+            rounded-xl
+            bg-blue-100
+            text-blue-700
+            flex
+            items-center
+            justify-center
+            group-hover:scale-105
+            transition-all
+          ">
+                        ✦
+                      </div>
+
+                      <div className="flex flex-col items-start">
+                        <span className="text-sm font-medium text-slate-700">
+                          Edit Profile
+                        </span>
+
+                        <span className="text-[11px] text-slate-400">
+                          Manage your account
+                        </span>
+                      </div>
+
+                    </button>
+
+
+                    {/* LOGOUT */}
+                    <button
+                      onClick={handleLogout}
+                      className="
+            group
+            w-full
+            flex
+            items-center
+            gap-3
+            rounded-2xl
+            px-3
+            py-3
+            hover:bg-red-50
+            transition-all
+            duration-200
+          "
+                    >
+
+                      <div className="
+            w-10
+            h-10
+            rounded-xl
+            bg-red-100
+            text-red-500
+            flex
+            items-center
+            justify-center
+            group-hover:scale-105
+            transition-all
+          ">
+                        ⎋
+                      </div>
+
+                      <div className="flex flex-col items-start">
+                        <span className="text-sm font-medium text-red-500">
+                          Logout
+                        </span>
+
+                        <span className="text-[11px] text-slate-400">
+                          End your session
+                        </span>
+                      </div>
+
+                    </button>
+
+                  </div>
                 </div>
               </div>
             )}

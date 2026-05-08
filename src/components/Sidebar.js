@@ -91,7 +91,7 @@ export default function Sidebar({ open, setOpen }) {
       <div className="flex-1 px-3 space-y-2 overflow-y-auto">
 
         {/* DASHBOARD */}
-        <Link href="/dashboard" className={menuClass("/dashboard")} onClick={handleNavClick}>
+        <Link href="/" className={menuClass("/dashboard")} onClick={handleNavClick}>
           <LayoutDashboard size={20} />
           {isExpanded && <span>Dashboard</span>}
         </Link>
@@ -164,10 +164,10 @@ export default function Sidebar({ open, setOpen }) {
                 {/* <Link href="/attendance" className={subMenuClass("/attendance")}>
                   Attendance
                 </Link> */}
-{can("hr.view") && (
-                <Link href="/dashboard/leaves" className={subMenuClass("/leaves")}>
-                  Leaves
-                </Link>
+                {can("hr.view") && (
+                  <Link href="/dashboard/leaves" className={subMenuClass("/leaves")}>
+                    Leaves
+                  </Link>
                 )}
 
                 {/* <Link href="/performance" className={subMenuClass("/performance")}>

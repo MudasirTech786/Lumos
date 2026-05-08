@@ -1,6 +1,7 @@
 "use client";
 
 import Layout from "@/components/Layout";
+import ProtectedPage from "@/components/ProtectedPage";
 
 import {
   Plus,
@@ -45,19 +46,35 @@ export default function LeavesPage() {
 
   const [form, setForm] = useState(initialForm);
 
-  // =========================
+  // =========================================
   // PERMISSIONS
-  // =========================
+  // =========================================
 
-  const canView = can("leaves.view");
-  const canCreate = can("leaves.create");
-  const canEdit = can("leaves.edit");
-  const canDelete = can("leaves.delete");
-  const canApprove = can("leaves.approve");
+  const canView =
+    can("leaves.view") ||
+    can("leaves.view_own");
 
-  // =========================
+  const canCreate =
+    can("leaves.create");
+
+  const canApprove =
+    can("leaves.approve");
+
+  const canEditAll =
+    can("leaves.edit");
+
+  const canDeleteAll =
+    can("leaves.delete");
+
+  const canEditOwn =
+    can("leaves.edit_own");
+
+  const canDeleteOwn =
+    can("leaves.delete_own");
+
+  // =========================================
   // EFFECTS
-  // =========================
+  // =========================================
 
   useEffect(() => {
 
@@ -71,9 +88,53 @@ export default function LeavesPage() {
 
   }, [ready]);
 
-  // =========================
+  // =========================================
+  // HELPERS
+  // =========================================
+
+  const isOwner = (leave) => {
+
+    return (
+      leave.employee?.id ===
+      user?.employee?.id
+    );
+  };
+
+  const canEditLeave = (leave) => {
+
+    if (canEditAll) return true;
+
+    if (
+      canEditOwn &&
+      isOwner(leave) &&
+      leave.status === "pending"
+    ) {
+
+      return true;
+    }
+
+    return false;
+  };
+
+  const canDeleteLeave = (leave) => {
+
+    if (canDeleteAll) return true;
+
+    if (
+      canDeleteOwn &&
+      isOwner(leave) &&
+      leave.status === "pending"
+    ) {
+
+      return true;
+    }
+
+    return false;
+  };
+
+  // =========================================
   // FORMAT DATE
-  // =========================
+  // =========================================
 
   const formatDate = (date) => {
 
@@ -89,9 +150,9 @@ export default function LeavesPage() {
     );
   };
 
-  // =========================
+  // =========================================
   // FETCH LEAVES
-  // =========================
+  // =========================================
 
   const fetchLeaves = async () => {
 
@@ -115,9 +176,9 @@ export default function LeavesPage() {
     }
   };
 
-  // =========================
+  // =========================================
   // FETCH EMPLOYEES
-  // =========================
+  // =========================================
 
   const fetchEmployees = async () => {
 
@@ -132,20 +193,11 @@ export default function LeavesPage() {
     } catch {}
   };
 
-  // =========================
+  // =========================================
   // FILTER
-  // =========================
+  // =========================================
 
-  const visibleLeaves = canApprove
-    ? leaves
-    : leaves.filter(
-        (leave) =>
-          leave.employee?.email === user?.email
-      );
-
-  // =========================
-  // SEARCH
-  // =========================
+  const visibleLeaves = leaves;
 
   const filtered = visibleLeaves.filter(
     (leave) =>
@@ -154,9 +206,9 @@ export default function LeavesPage() {
         .includes(search.toLowerCase())
   );
 
-  // =========================
+  // =========================================
   // SUBMIT
-  // =========================
+  // =========================================
 
   const handleSubmit = async () => {
 
@@ -164,17 +216,34 @@ export default function LeavesPage() {
 
       const payload = {
 
-        ...form,
+        leave_type:
+          form.leave_type,
 
-        employee_id: canApprove
-          ? form.employee_id
-          : user?.employee?.id,
+        start_date:
+          form.start_date,
 
-        status: canApprove
-          ? form.status
-          : "pending",
+        end_date:
+          form.end_date,
+
+        reason:
+          form.reason,
+
+        status:
+          canApprove
+            ? form.status
+            : "pending",
       };
 
+      // CREATE
+      if (!editingId) {
+
+        payload.employee_id =
+          canApprove
+            ? form.employee_id
+            : user?.employee?.id;
+      }
+
+      // UPDATE
       if (editingId) {
 
         await api.put(
@@ -182,7 +251,9 @@ export default function LeavesPage() {
           payload
         );
 
-        toast.success("Leave updated");
+        toast.success(
+          "Leave updated"
+        );
 
       } else {
 
@@ -217,13 +288,20 @@ export default function LeavesPage() {
     }
   };
 
-  // =========================
+  // =========================================
   // EDIT
-  // =========================
+  // =========================================
 
   const handleEdit = (leave) => {
 
-    if (!canEdit) return;
+    if (!canEditLeave(leave)) {
+
+      toast.error(
+        "You cannot edit this leave"
+      );
+
+      return;
+    }
 
     setEditingId(leave.id);
 
@@ -251,23 +329,30 @@ export default function LeavesPage() {
     setOpenModal(true);
   };
 
-  // =========================
+  // =========================================
   // DELETE
-  // =========================
+  // =========================================
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (leave) => {
 
-    if (!canDelete) return;
+    if (!canDeleteLeave(leave)) {
+
+      toast.error(
+        "You cannot delete this leave"
+      );
+
+      return;
+    }
 
     if (!confirm("Delete leave?"))
       return;
 
     try {
 
-      setLoadingId(id);
+      setLoadingId(leave.id);
 
       await api.delete(
-        `/leaves/${id}`
+        `/leaves/${leave.id}`
       );
 
       toast.success("Deleted");
@@ -284,9 +369,9 @@ export default function LeavesPage() {
     }
   };
 
-  // =========================
+  // =========================================
   // APPROVE / REJECT
-  // =========================
+  // =========================================
 
   const updateStatus = async (
     id,
@@ -316,9 +401,9 @@ export default function LeavesPage() {
     }
   };
 
-  // =========================
+  // =========================================
   // STATS
-  // =========================
+  // =========================================
 
   const approvedLeaves =
     visibleLeaves.filter(
@@ -335,9 +420,9 @@ export default function LeavesPage() {
       (l) => l.status === "rejected"
     ).length;
 
-  // =========================
+  // =========================================
   // LOADING
-  // =========================
+  // =========================================
 
   if (!ready) {
 
@@ -350,9 +435,9 @@ export default function LeavesPage() {
     );
   }
 
-  // =========================
+  // =========================================
   // ACCESS DENIED
-  // =========================
+  // =========================================
 
   if (!canView) {
 
@@ -384,491 +469,520 @@ export default function LeavesPage() {
 
   return (
 
-    <Layout>
+    <ProtectedPage permission="leaves.view">
 
-      <div className="space-y-6 pb-24">
+      <Layout>
 
-        {/* HEADER */}
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
+        <div className="space-y-6 pb-24">
 
-          <div>
+          {/* HEADER */}
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
 
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-900">
-              Leaves
-            </h1>
+            <div>
 
-            <p className="text-gray-500 mt-2">
-              Manage employee leave requests
-            </p>
+              <h1 className="text-3xl md:text-4xl font-bold text-gray-900">
+                Leaves
+              </h1>
+
+              <p className="text-gray-500 mt-2">
+                Manage employee leave requests
+              </p>
+
+            </div>
+
+            {canCreate && (
+
+              <button
+                onClick={() => {
+
+                  setEditingId(null);
+
+                  setForm(initialForm);
+
+                  setOpenModal(true);
+                }}
+                className="bg-blue-600 hover:bg-blue-700 transition text-white px-5 py-3 rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-blue-200"
+              >
+                <Plus size={18} />
+                Request Leave
+              </button>
+
+            )}
 
           </div>
 
-          {canCreate && (
-
-            <button
-              onClick={() => {
-
-                setEditingId(null);
-
-                setForm(initialForm);
-
-                setOpenModal(true);
-              }}
-              className="bg-blue-600 hover:bg-blue-700 transition text-white px-5 py-3 rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-blue-200"
-            >
-              <Plus size={18} />
-              Request Leave
-            </button>
-
-          )}
-
-        </div>
-
-        {/* STATS */}
-        <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-
-          <StatCard
-            title="Total Leaves"
-            value={visibleLeaves.length}
-            icon={<CalendarDays size={18} />}
-          />
-
-          <StatCard
-            title="Approved"
-            value={approvedLeaves}
-            icon={<CheckCircle2 size={18} />}
-          />
-
-          <StatCard
-            title="Pending"
-            value={pendingLeaves}
-            icon={<Clock3 size={18} />}
-          />
-
-          <StatCard
-            title="Rejected"
-            value={rejectedLeaves}
-            icon={<XCircle size={18} />}
-          />
-
-        </div>
-
-        {/* SEARCH */}
-        <div className="relative">
-
-          <Search
-            size={18}
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
-          />
-
-          <input
-            value={search}
-            onChange={(e) =>
-              setSearch(e.target.value)
-            }
-            placeholder="Search leaves..."
-            className="w-full border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none rounded-2xl pl-12 pr-4 py-4 transition"
-          />
-
-        </div>
-
-        {/* TABLE */}
-        <div className="bg-white rounded-3xl border border-blue-100 overflow-hidden shadow-sm">
-
-          <div className="overflow-x-auto">
-
-            <table className="w-full text-sm min-w-[1000px]">
-
-              <thead className="bg-blue-50 border-b border-blue-100">
-
-                <tr>
-
-                  <th className="p-4 text-left">
-                    Employee
-                  </th>
-
-                  <th className="p-4 text-left">
-                    Type
-                  </th>
-
-                  <th className="p-4 text-left">
-                    Dates
-                  </th>
-
-                  <th className="p-4 text-center">
-                    Days
-                  </th>
-
-                  <th className="p-4 text-center">
-                    Status
-                  </th>
-
-                  <th className="p-4 text-right">
-                    Actions
-                  </th>
-
-                </tr>
-
-              </thead>
-
-              <tbody>
-
-                {!loading &&
-                  filtered.map((leave) => (
-
-                    <tr
-                      key={leave.id}
-                      className="border-b border-gray-100 hover:bg-blue-50/40 transition"
-                    >
-
-                      <td className="p-4 font-medium">
-                        {leave.employee?.name}
-                      </td>
-
-                      <td className="p-4">
-                        {leave.leave_type}
-                      </td>
-
-                      <td className="p-4">
-
-                        <div className="flex flex-col">
-
-                          <span>
-                            {formatDate(
-                              leave.start_date
-                            )}
-                          </span>
-
-                          <span className="text-xs text-gray-400">
-                            to {formatDate(
-                              leave.end_date
-                            )}
-                          </span>
-
-                        </div>
-
-                      </td>
-
-                      <td className="p-4 text-center">
-                        {leave.total_days}
-                      </td>
-
-                      <td className="p-4 text-center">
-
-                        <StatusBadge
-                          status={leave.status}
-                        />
-
-                      </td>
-
-                      <td className="p-4">
-
-                        <div className="flex justify-end gap-2 flex-wrap">
-
-                          {canApprove &&
-                            leave.status === "pending" && (
-
-                            <>
-                              <button
-                                onClick={() =>
-                                  updateStatus(
-                                    leave.id,
-                                    "approved"
-                                  )
-                                }
-                                className="px-3 py-1 rounded-xl bg-green-100 text-green-700 text-xs font-medium"
-                              >
-                                Approve
-                              </button>
-
-                              <button
-                                onClick={() =>
-                                  updateStatus(
-                                    leave.id,
-                                    "rejected"
-                                  )
-                                }
-                                className="px-3 py-1 rounded-xl bg-red-100 text-red-700 text-xs font-medium"
-                              >
-                                Reject
-                              </button>
-                            </>
-                          )}
-
-                          {canEdit && (
-
-                            <button
-                              onClick={() =>
-                                handleEdit(
-                                  leave
-                                )
-                              }
-                              className="text-blue-600 hover:text-blue-800"
-                            >
-                              <Pencil size={16} />
-                            </button>
-
-                          )}
-
-                          {canDelete && (
-
-                            <button
-                              onClick={() =>
-                                handleDelete(
-                                  leave.id
-                                )
-                              }
-                              disabled={
-                                loadingId ===
-                                leave.id
-                              }
-                              className="text-red-500 hover:text-red-700"
-                            >
-                              <Trash2 size={16} />
-                            </button>
-
-                          )}
-
-                        </div>
-
-                      </td>
-
-                    </tr>
-
-                  ))}
-
-              </tbody>
-
-            </table>
-
-          </div>
-
-        </div>
-
-        {/* MODAL */}
-        {openModal && (
-
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-
-            <div
-              onClick={() => {
-
-                setOpenModal(false);
-
-                setEditingId(null);
-
-                setForm(initialForm);
-              }}
-              className="absolute inset-0 bg-black/40 backdrop-blur-md"
+          {/* STATS */}
+          <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+
+            <StatCard
+              title="Total Leaves"
+              value={visibleLeaves.length}
+              icon={<CalendarDays size={18} />}
             />
 
-            <div className="relative bg-white w-full max-w-2xl rounded-3xl shadow-2xl border border-blue-100 overflow-hidden max-h-[90vh] overflow-y-auto">
+            <StatCard
+              title="Approved"
+              value={approvedLeaves}
+              icon={<CheckCircle2 size={18} />}
+            />
 
-              {/* HEADER */}
-              <div className="p-5 border-b border-blue-100 flex items-center justify-between">
+            <StatCard
+              title="Pending"
+              value={pendingLeaves}
+              icon={<Clock3 size={18} />}
+            />
 
-                <div>
+            <StatCard
+              title="Rejected"
+              value={rejectedLeaves}
+              icon={<XCircle size={18} />}
+            />
 
-                  <h2 className="text-2xl font-bold text-gray-900">
-                    {editingId
-                      ? "Edit Leave"
-                      : "Request Leave"}
-                  </h2>
+          </div>
 
-                  <p className="text-sm text-gray-500 mt-1">
-                    Submit leave request
-                  </p>
+          {/* SEARCH */}
+          <div className="relative">
 
-                </div>
+            <Search
+              size={18}
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+            />
 
-                <button
-                  onClick={() => {
+            <input
+              value={search}
+              onChange={(e) =>
+                setSearch(e.target.value)
+              }
+              placeholder="Search leaves..."
+              className="w-full border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none rounded-2xl pl-12 pr-4 py-4 transition"
+            />
 
-                    setOpenModal(false);
+          </div>
 
-                    setEditingId(null);
+          {/* TABLE */}
+          <div className="bg-white rounded-3xl border border-blue-100 overflow-hidden shadow-sm">
 
-                    setForm(initialForm);
-                  }}
-                  className="text-gray-400 hover:text-gray-700 text-xl"
-                >
-                  ✕
-                </button>
+            <div className="overflow-x-auto">
 
-              </div>
+              <table className="w-full text-sm min-w-[1000px]">
 
-              {/* BODY */}
-              <div className="p-5 space-y-5">
+                <thead className="bg-blue-50 border-b border-blue-100">
 
-                {canApprove && (
+                  <tr>
 
-                  <select
-                    value={form.employee_id}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        employee_id:
-                          e.target.value,
-                      })
-                    }
-                    className="w-full border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none rounded-2xl px-4 py-4 transition"
-                  >
+                    <th className="p-4 text-left">
+                      Employee
+                    </th>
 
-                    <option value="">
-                      Select Employee
-                    </option>
+                    <th className="p-4 text-left">
+                      Type
+                    </th>
 
-                    {employees.map((e) => (
+                    <th className="p-4 text-left">
+                      Dates
+                    </th>
 
-                      <option
-                        key={e.id}
-                        value={e.id}
+                    <th className="p-4 text-center">
+                      Days
+                    </th>
+
+                    <th className="p-4 text-center">
+                      Status
+                    </th>
+
+                    <th className="p-4 text-right">
+                      Actions
+                    </th>
+
+                  </tr>
+
+                </thead>
+
+                <tbody>
+
+                  {!loading &&
+                    filtered.map((leave) => (
+
+                      <tr
+                        key={leave.id}
+                        className="border-b border-gray-100 hover:bg-blue-50/40 transition"
                       >
-                        {e.name}
-                      </option>
+
+                        <td className="p-4 font-medium">
+                          {leave.employee?.name}
+                        </td>
+
+                        <td className="p-4">
+                          {leave.leave_type}
+                        </td>
+
+                        <td className="p-4">
+
+                          <div className="flex flex-col">
+
+                            <span>
+                              {formatDate(
+                                leave.start_date
+                              )}
+                            </span>
+
+                            <span className="text-xs text-gray-400">
+                              to {formatDate(
+                                leave.end_date
+                              )}
+                            </span>
+
+                          </div>
+
+                        </td>
+
+                        <td className="p-4 text-center">
+                          {leave.total_days}
+                        </td>
+
+                        <td className="p-4 text-center">
+
+                          <StatusBadge
+                            status={leave.status}
+                          />
+
+                        </td>
+
+                        <td className="p-4">
+
+                          <div className="flex justify-end gap-2 flex-wrap">
+
+                            {canApprove &&
+                              leave.status === "pending" && (
+
+                                <>
+                                  <button
+                                    onClick={() =>
+                                      updateStatus(
+                                        leave.id,
+                                        "approved"
+                                      )
+                                    }
+                                    className="px-3 py-1 rounded-xl bg-green-100 text-green-700 text-xs font-medium"
+                                  >
+                                    Approve
+                                  </button>
+
+                                  <button
+                                    onClick={() =>
+                                      updateStatus(
+                                        leave.id,
+                                        "rejected"
+                                      )
+                                    }
+                                    className="px-3 py-1 rounded-xl bg-red-100 text-red-700 text-xs font-medium"
+                                  >
+                                    Reject
+                                  </button>
+                                </>
+                              )}
+
+                            {canEditLeave(leave) && (
+
+                              <button
+                                onClick={() =>
+                                  handleEdit(
+                                    leave
+                                  )
+                                }
+                                className="text-blue-600 hover:text-blue-800"
+                              >
+                                <Pencil size={16} />
+                              </button>
+
+                            )}
+
+                            {canDeleteLeave(leave) && (
+
+                              <button
+                                onClick={() =>
+                                  handleDelete(
+                                    leave
+                                  )
+                                }
+                                disabled={
+                                  loadingId ===
+                                  leave.id
+                                }
+                                className="text-red-500 hover:text-red-700"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+
+                            )}
+
+                          </div>
+
+                        </td>
+
+                      </tr>
 
                     ))}
 
-                  </select>
+                </tbody>
 
-                )}
+              </table>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            </div>
 
-                  <Input
-                    placeholder="Leave Type"
-                    value={form.leave_type}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        leave_type:
-                          e.target.value,
-                      })
-                    }
-                  />
+          </div>
 
-                  {canApprove ? (
+          {/* MODAL */}
+          {openModal && (
+
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+
+              <div
+                onClick={() => {
+
+                  setOpenModal(false);
+
+                  setEditingId(null);
+
+                  setForm(initialForm);
+                }}
+                className="absolute inset-0 bg-black/40 backdrop-blur-md"
+              />
+
+              <div className="relative bg-white w-full max-w-2xl rounded-3xl shadow-2xl border border-blue-100 overflow-hidden max-h-[90vh] overflow-y-auto">
+
+                {/* HEADER */}
+                <div className="p-5 border-b border-blue-100 flex items-center justify-between">
+
+                  <div>
+
+                    <h2 className="text-2xl font-bold text-gray-900">
+                      {editingId
+                        ? "Edit Leave"
+                        : "Request Leave"}
+                    </h2>
+
+                    <p className="text-sm text-gray-500 mt-1">
+                      Submit leave request
+                    </p>
+
+                  </div>
+
+                  <button
+                    onClick={() => {
+
+                      setOpenModal(false);
+
+                      setEditingId(null);
+
+                      setForm(initialForm);
+                    }}
+                    className="text-gray-400 hover:text-gray-700 text-xl"
+                  >
+                    ✕
+                  </button>
+
+                </div>
+
+                {/* BODY */}
+                <div className="p-5 space-y-5">
+
+                  {/* EMPLOYEE SELECT ONLY WHILE CREATING */}
+                  {canApprove && !editingId && (
 
                     <select
-                      value={form.status}
+                      value={form.employee_id}
                       onChange={(e) =>
                         setForm({
                           ...form,
-                          status:
+                          employee_id:
                             e.target.value,
                         })
                       }
                       className="w-full border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none rounded-2xl px-4 py-4 transition"
                     >
 
-                      <option value="pending">
-                        Pending
+                      <option value="">
+                        Select Employee
                       </option>
 
-                      <option value="approved">
-                        Approved
-                      </option>
+                      {employees.map((e) => (
 
-                      <option value="rejected">
-                        Rejected
-                      </option>
+                        <option
+                          key={e.id}
+                          value={e.id}
+                        >
+                          {e.name}
+                        </option>
+
+                      ))}
 
                     </select>
 
-                  ) : (
+                  )}
 
-                    <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-4 rounded-2xl text-sm flex items-center">
+                  {/* EMPLOYEE INFO DURING EDIT */}
+                  {editingId && (
 
-                      Your leave request will be submitted for approval.
+                    <div className="bg-blue-50 border border-blue-100 rounded-2xl px-4 py-4">
+
+                      <p className="text-xs uppercase tracking-wide text-blue-500 font-semibold">
+                        Employee
+                      </p>
+
+                      <p className="text-sm font-semibold text-blue-900 mt-1">
+                        {
+                          leaves.find(
+                            (l) => l.id === editingId
+                          )?.employee?.name
+                        }
+                      </p>
 
                     </div>
 
                   )}
 
-                </div>
-
-                {/* DATES */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-                  <div>
-
-                    <label className="text-sm font-medium text-gray-700 mb-2 block">
-                      From Date
-                    </label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
                     <Input
-                      type="date"
-                      value={form.start_date}
+                      placeholder="Leave Type"
+                      value={form.leave_type}
                       onChange={(e) =>
                         setForm({
                           ...form,
-                          start_date:
+                          leave_type:
                             e.target.value,
                         })
                       }
                     />
 
+                    {canApprove ? (
+
+                      <select
+                        value={form.status}
+                        onChange={(e) =>
+                          setForm({
+                            ...form,
+                            status:
+                              e.target.value,
+                          })
+                        }
+                        className="w-full border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none rounded-2xl px-4 py-4 transition"
+                      >
+
+                        <option value="pending">
+                          Pending
+                        </option>
+
+                        <option value="approved">
+                          Approved
+                        </option>
+
+                        <option value="rejected">
+                          Rejected
+                        </option>
+
+                      </select>
+
+                    ) : (
+
+                      <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-4 rounded-2xl text-sm flex items-center">
+
+                        Your leave request will be submitted for approval.
+
+                      </div>
+
+                    )}
+
                   </div>
 
-                  <div>
+                  {/* DATES */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-                    <label className="text-sm font-medium text-gray-700 mb-2 block">
-                      To Date
-                    </label>
+                    <div>
 
-                    <Input
-                      type="date"
-                      value={form.end_date}
-                      onChange={(e) =>
-                        setForm({
-                          ...form,
-                          end_date:
-                            e.target.value,
-                        })
-                      }
-                    />
+                      <label className="text-sm font-medium text-gray-700 mb-2 block">
+                        From Date
+                      </label>
+
+                      <Input
+                        type="date"
+                        value={form.start_date}
+                        onChange={(e) =>
+                          setForm({
+                            ...form,
+                            start_date:
+                              e.target.value,
+                          })
+                        }
+                      />
+
+                    </div>
+
+                    <div>
+
+                      <label className="text-sm font-medium text-gray-700 mb-2 block">
+                        To Date
+                      </label>
+
+                      <Input
+                        type="date"
+                        value={form.end_date}
+                        onChange={(e) =>
+                          setForm({
+                            ...form,
+                            end_date:
+                              e.target.value,
+                          })
+                        }
+                      />
+
+                    </div>
 
                   </div>
+
+                  {/* REASON */}
+                  <textarea
+                    placeholder="Reason"
+                    value={form.reason ?? ""}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        reason:
+                          e.target.value,
+                      })
+                    }
+                    className="w-full border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none rounded-2xl px-4 py-4 min-h-[120px] transition"
+                  />
+
+                  <button
+                    onClick={handleSubmit}
+                    className="w-full bg-blue-600 hover:bg-blue-700 transition text-white py-4 rounded-2xl font-semibold shadow-lg shadow-blue-200"
+                  >
+                    {editingId
+                      ? "Update Leave"
+                      : "Submit Leave Request"}
+                  </button>
 
                 </div>
-
-                {/* REASON */}
-                <textarea
-                  placeholder="Reason"
-                  value={form.reason ?? ""}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      reason:
-                        e.target.value,
-                    })
-                  }
-                  className="w-full border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none rounded-2xl px-4 py-4 min-h-[120px] transition"
-                />
-
-                <button
-                  onClick={handleSubmit}
-                  className="w-full bg-blue-600 hover:bg-blue-700 transition text-white py-4 rounded-2xl font-semibold shadow-lg shadow-blue-200"
-                >
-                  {editingId
-                    ? "Update Leave"
-                    : "Submit Leave Request"}
-                </button>
 
               </div>
 
             </div>
+          )}
 
-          </div>
-        )}
+        </div>
 
-      </div>
+      </Layout>
 
-    </Layout>
+    </ProtectedPage>
   );
 }
 
+// =========================================
 // STATUS BADGE
+// =========================================
+
 function StatusBadge({ status }) {
 
   return (
@@ -887,7 +1001,10 @@ function StatusBadge({ status }) {
   );
 }
 
+// =========================================
 // STAT CARD
+// =========================================
+
 function StatCard({
   title,
   value,
@@ -922,7 +1039,10 @@ function StatCard({
   );
 }
 
+// =========================================
 // INPUT
+// =========================================
+
 function Input({
   className = "",
   value = "",

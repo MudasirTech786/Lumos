@@ -6,10 +6,11 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Eye, EyeOff } from "lucide-react";
 import toast from "react-hot-toast";
+import useAuth from "@/hooks/useAuth";
 
 export default function RegisterPage() {
   const router = useRouter();
-
+const { refreshUser } = useAuth();
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -21,32 +22,55 @@ export default function RegisterPage() {
   const [showConfirm, setShowConfirm] = useState(false);
 
   const register = async () => {
-    if (form.password !== form.confirmPassword) {
-      toast.error("Passwords do not match");
-      return;
-    }
 
-    try {
-      const res = await api.post("/register", {
-        name: form.name,
-        email: form.email,
-        password: form.password,
-      });
+  if (form.password !== form.confirmPassword) {
 
-      localStorage.setItem("token", res.data.token);
+    toast.error("Passwords do not match");
 
-      toast.success("Account created successfully");
+    return;
+  }
 
-      router.push("/");
+  try {
 
-    } catch (err) {
-      console.log(err);
-      toast.error(
-        err?.response?.data?.message || "Register failed"
-      );
-    }
-  };
+    const res = await api.post("/register", {
 
+      name: form.name,
+
+      email: form.email,
+
+      password: form.password,
+    });
+
+    // SAVE TOKEN
+    localStorage.setItem(
+      "token",
+      res.data.token
+    );
+
+    // SET AUTH HEADER
+    api.defaults.headers.common.Authorization =
+      `Bearer ${res.data.token}`;
+
+    // LOAD USER
+    await refreshUser();
+
+    toast.success(
+      "Account created successfully"
+    );
+
+    // GO DASHBOARD
+    window.location.href = "/";
+
+  } catch (err) {
+
+    console.log(err);
+
+    toast.error(
+      err?.response?.data?.message ||
+      "Register failed"
+    );
+  }
+};
   return (
     <div className="relative min-h-screen w-full overflow-hidden">
 
