@@ -10,6 +10,7 @@ import {
   Users,
   Shield,
   Mail,
+  Lock,
 } from "lucide-react";
 
 import { useEffect, useState } from "react";
@@ -50,6 +51,9 @@ export default function UsersPage() {
   };
 
   const [form, setForm] = useState(initialForm);
+
+  // ✅ CHECK IF USER IS SUPER ADMIN
+  const isSuperAdmin = (user) => user.name === "Super Admin";
 
   useEffect(() => {
 
@@ -126,6 +130,12 @@ export default function UsersPage() {
 
   const openEdit = (user) => {
 
+    // ✅ PREVENT EDITING SUPER ADMIN
+    if (isSuperAdmin(user)) {
+      toast.error("Super Admin cannot be edited");
+      return;
+    }
+
     setEditingUser(user);
 
     setForm({
@@ -189,6 +199,14 @@ export default function UsersPage() {
 
   const handleDelete = async (id) => {
 
+    const user = users.find(u => u.id === id);
+
+    // ✅ PREVENT DELETING SUPER ADMIN
+    if (isSuperAdmin(user)) {
+      toast.error("Super Admin cannot be deleted");
+      return;
+    }
+
     if (!confirm("Delete this user?"))
       return;
 
@@ -206,9 +224,12 @@ export default function UsersPage() {
 
       toast.success("Deleted");
 
-    } catch {
+    } catch (err) {
+
+      console.log(err.response?.data);
 
       toast.error(
+        err.response?.data?.message ||
         "Delete failed"
       );
 
@@ -355,76 +376,111 @@ export default function UsersPage() {
 
                   ) : (
 
-                    users.map((user) => (
+                    users.map((user) => {
 
-                      <tr
-                        key={user.id}
-                        className="border-b border-gray-100 hover:bg-blue-50/40 transition"
-                      >
+                      const superAdmin = isSuperAdmin(user);
 
-                        <td className="p-4">
+                      return (
 
-                          <div className="flex items-center gap-3">
+                        <tr
+                          key={user.id}
+                          className={`border-b border-gray-100 transition ${
+                            superAdmin
+                              ? "bg-amber-50/40 hover:bg-amber-50/60"
+                              : "hover:bg-blue-50/40"
+                          }`}
+                        >
 
-                            <div className="w-11 h-11 rounded-2xl bg-blue-100 text-blue-700 flex items-center justify-center font-bold">
-                              {user.name?.charAt(0)}
+                          <td className="p-4">
+
+                            <div className="flex items-center gap-3">
+
+                              <div className={`w-11 h-11 rounded-2xl flex items-center justify-center font-bold ${
+                                superAdmin
+                                  ? "bg-amber-100 text-amber-700"
+                                  : "bg-blue-100 text-blue-700"
+                              }`}>
+                                {user.name?.charAt(0)}
+                              </div>
+
+                              <div className="flex items-center gap-2">
+
+                                <p className="font-semibold text-gray-900">
+                                  {user.name}
+                                </p>
+
+                                {superAdmin && (
+                                  <Lock size={14} className="text-amber-600" title="Super Admin - Protected" />
+                                )}
+
+                              </div>
+
                             </div>
 
-                            <div>
+                          </td>
 
-                              <p className="font-semibold text-gray-900">
-                                {user.name}
-                              </p>
+                          <td className="p-4 text-gray-600">
+                            {user.email}
+                          </td>
+
+                          <td className="p-4">
+
+                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                              superAdmin
+                                ? "bg-amber-100 text-amber-700"
+                                : "bg-blue-100 text-blue-700"
+                            }`}>
+                              {user.roles?.[0]?.name || "-"}
+                            </span>
+
+                          </td>
+
+                          <td className="p-4">
+
+                            <div className="flex justify-end gap-3">
+
+                              <button
+                                onClick={() =>
+                                  openEdit(user)
+                                }
+                                disabled={superAdmin}
+                                className={`transition ${
+                                  superAdmin
+                                    ? "text-gray-300 cursor-not-allowed"
+                                    : "text-blue-600 hover:text-blue-800"
+                                }`}
+                                title={superAdmin ? "Super Admin cannot be edited" : "Edit user"}
+                              >
+                                <Pencil size={16} />
+                              </button>
+
+                              <button
+                                onClick={() =>
+                                  handleDelete(user.id)
+                                }
+                                disabled={
+                                  superAdmin || loadingId === user.id
+                                }
+                                className={`transition ${
+                                  superAdmin
+                                    ? "text-gray-300 cursor-not-allowed"
+                                    : "text-red-500 hover:text-red-700"
+                                }`}
+                                title={superAdmin ? "Super Admin cannot be deleted" : "Delete user"}
+                              >
+                                <Trash2 size={16} />
+                              </button>
 
                             </div>
 
-                          </div>
+                          </td>
 
-                        </td>
+                        </tr>
 
-                        <td className="p-4 text-gray-600">
-                          {user.email}
-                        </td>
+                      );
 
-                        <td className="p-4">
+                    })
 
-                          <span className="px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-medium">
-                            {user.roles?.[0]?.name || "-"}
-                          </span>
-
-                        </td>
-
-                        <td className="p-4">
-
-                          <div className="flex justify-end gap-3">
-
-                            <button
-                              onClick={() =>
-                                openEdit(user)
-                              }
-                              className="text-blue-600 hover:text-blue-800"
-                            >
-                              <Pencil size={16} />
-                            </button>
-
-                            <button
-                              onClick={() =>
-                                handleDelete(user.id)
-                              }
-                              disabled={
-                                loadingId === user.id
-                              }
-                              className="text-red-500 hover:text-red-700"
-                            >
-                              <Trash2 size={16} />
-                            </button>
-
-                          </div>
-
-                        </td>
-
-                      </tr>
-                    ))
                   )}
 
                 </tbody>

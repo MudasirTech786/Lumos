@@ -3,7 +3,6 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import api from "@/lib/api";
-import Image from "next/image";
 import { Eye, EyeOff } from "lucide-react";
 import useAuth from "@/hooks/useAuth";
 import toast from "react-hot-toast";
@@ -58,7 +57,7 @@ export default function LoginPage() {
       await loadUser();
 
       toast.success(
-        "Login successful"
+        "Access initialized"
       );
 
       router.replace("/");
@@ -71,13 +70,13 @@ export default function LoginPage() {
       if (status === 401) {
 
         toast.error(
-          "Invalid email or password"
+          "Invalid credentials"
         );
 
       } else {
 
         toast.error(
-          "Something went wrong"
+          "System connection failed"
         );
       }
 
@@ -89,24 +88,25 @@ export default function LoginPage() {
 
   return (
 
-    <div className="relative min-h-screen overflow-hidden bg-black">
+    <div className="relative min-h-screen overflow-hidden bg-[#030712] text-white">
 
       {/* ================================= */}
-      {/* IMAGINARY CYBER WORLD */}
+      {/* BACKGROUND */}
       {/* ================================= */}
 
       <div className="absolute inset-0 overflow-hidden">
 
-        {/* MAIN BASE */}
+        {/* BASE */}
         <div className="absolute inset-0 bg-[#020617]" />
 
-        {/* GIANT GLOW */}
+        {/* CENTER GLOW */}
         <div
           className="
             absolute
-            top-[-20%]
+            top-1/2
             left-1/2
             -translate-x-1/2
+            -translate-y-1/2
             w-[900px]
             h-[900px]
             rounded-full
@@ -115,57 +115,55 @@ export default function LoginPage() {
           "
         />
 
-        {/* LEFT PLANET */}
+        {/* RADIAL LIGHT */}
         <div
           className="
             absolute
-            -left-40
-            top-20
-            w-[420px]
-            h-[420px]
-            rounded-full
-            bg-gradient-to-br
-            from-cyan-400/20
-            via-blue-500/10
-            to-transparent
-            blur-2xl
-            opacity-80
+            inset-0
+            bg-[radial-gradient(circle_at_center,rgba(0,255,255,0.08),transparent_65%)]
           "
         />
 
-        {/* RIGHT PLANET */}
+        {/* LEFT GLOW */}
         <div
           className="
             absolute
-            -right-32
-            bottom-10
+            left-[-10%]
+            top-[10%]
             w-[500px]
             h-[500px]
             rounded-full
-            bg-gradient-to-br
-            from-blue-500/20
-            via-cyan-400/10
-            to-transparent
-            blur-3xl
-            opacity-80
+            bg-cyan-500/10
+            blur-[140px]
           "
         />
 
-        {/* CYBER HORIZON */}
+        {/* RIGHT GLOW */}
         <div
           className="
             absolute
-            bottom-0
-            left-0
-            w-full
-            h-[45%]
-            bg-gradient-to-t
-            from-cyan-500/[0.07]
-            to-transparent
+            right-[-10%]
+            bottom-[5%]
+            w-[500px]
+            h-[500px]
+            rounded-full
+            bg-blue-500/10
+            blur-[140px]
           "
         />
 
-        {/* FUTURISTIC GRID */}
+        {/* GRID */}
+        <div
+          className="
+            absolute
+            inset-0
+            opacity-[0.07]
+            bg-[linear-gradient(rgba(0,255,255,0.4)_1px,transparent_1px),linear-gradient(90deg,rgba(0,255,255,0.4)_1px,transparent_1px)]
+            bg-[size:70px_70px]
+          "
+        />
+
+        {/* FLOOR GRID */}
         <div
           className="
             absolute
@@ -173,7 +171,7 @@ export default function LoginPage() {
             left-1/2
             -translate-x-1/2
             w-[180%]
-            h-[60%]
+            h-[55%]
             opacity-20
             perspective-[1200px]
             rotate-x-[75deg]
@@ -184,44 +182,12 @@ export default function LoginPage() {
             className="
               w-full
               h-full
-              bg-[linear-gradient(rgba(0,255,255,0.25)_1px,transparent_1px),linear-gradient(90deg,rgba(0,255,255,0.25)_1px,transparent_1px)]
+              bg-[linear-gradient(rgba(0,255,255,0.18)_1px,transparent_1px),linear-gradient(90deg,rgba(0,255,255,0.18)_1px,transparent_1px)]
               bg-[size:70px_70px]
             "
           />
 
         </div>
-
-        {/* ROTATING RING */}
-        <div
-          className="
-            absolute
-            top-[15%]
-            left-[12%]
-            w-40
-            h-40
-            rounded-full
-            border
-            border-cyan-400/20
-            animate-spin
-            [animation-duration:20s]
-          "
-        />
-
-        {/* SECOND RING */}
-        <div
-          className="
-            absolute
-            bottom-[20%]
-            right-[15%]
-            w-52
-            h-52
-            rounded-full
-            border
-            border-blue-400/20
-            animate-spin
-            [animation-duration:28s]
-          "
-        />
 
         {/* LIGHT BEAMS */}
         <div
@@ -233,9 +199,8 @@ export default function LoginPage() {
             h-full
             bg-gradient-to-b
             from-transparent
-            via-cyan-400/30
+            via-cyan-400/20
             to-transparent
-            blur-sm
           "
         />
 
@@ -243,28 +208,26 @@ export default function LoginPage() {
           className="
             absolute
             top-0
-            right-[25%]
+            right-[22%]
             w-px
             h-full
             bg-gradient-to-b
             from-transparent
-            via-blue-400/30
+            via-blue-400/20
             to-transparent
-            blur-sm
           "
         />
 
         {/* FLOATING LIGHTS */}
         <div className="absolute top-[12%] left-[30%] w-2 h-2 rounded-full bg-cyan-300 shadow-[0_0_30px_#00d9ff]" />
-        <div className="absolute top-[25%] right-[28%] w-3 h-3 rounded-full bg-blue-300 shadow-[0_0_35px_#2563eb]" />
-        <div className="absolute bottom-[22%] left-[18%] w-2 h-2 rounded-full bg-cyan-200 shadow-[0_0_25px_#67e8f9]" />
-        <div className="absolute bottom-[15%] right-[35%] w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_35px_#00d9ff]" />
-        <div className="absolute top-[50%] left-[50%] w-1.5 h-1.5 rounded-full bg-white shadow-[0_0_20px_white]" />
+        <div className="absolute top-[22%] right-[26%] w-2 h-2 rounded-full bg-blue-300 shadow-[0_0_35px_#2563eb]" />
+        <div className="absolute bottom-[18%] left-[15%] w-2 h-2 rounded-full bg-cyan-200 shadow-[0_0_25px_#67e8f9]" />
+        <div className="absolute bottom-[15%] right-[32%] w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_35px_#00d9ff]" />
 
       </div>
 
       {/* ================================= */}
-      {/* LOGIN CONTAINER */}
+      {/* CONTENT */}
       {/* ================================= */}
 
       <div className="relative z-20 flex items-center justify-center min-h-screen px-4">
@@ -272,12 +235,12 @@ export default function LoginPage() {
         <div className="relative w-full max-w-md">
 
           {/* ================================= */}
-          {/* AVATAR */}
+          {/* CAMERA CORE */}
           {/* ================================= */}
 
-          <div className="relative flex justify-center z-30 mb-[-52px]">
+          <div className="relative flex justify-center z-30 mb-[-70px]">
 
-            {/* OUTER GLOW */}
+            {/* MASSIVE GLOW */}
             <div
               className="
                 absolute
@@ -285,28 +248,56 @@ export default function LoginPage() {
                 left-1/2
                 -translate-x-1/2
                 -translate-y-1/2
-                w-44
-                h-44
+                w-[260px]
+                h-[260px]
                 rounded-full
                 bg-cyan-400/20
-                blur-[80px]
+                blur-[120px]
                 animate-pulse
               "
             />
 
-            {/* CYBER RING */}
+            {/* OUTER RING */}
+            <div
+              className="
+                absolute
+                w-44
+                h-44
+                rounded-full
+                border
+                border-cyan-400/20
+                animate-spin
+                [animation-duration:16s]
+              "
+            />
+
+            {/* SECOND RING */}
+            <div
+              className="
+                absolute
+                w-56
+                h-56
+                rounded-full
+                border
+                border-blue-400/10
+                animate-spin
+                [animation-duration:26s]
+              "
+            />
+
+            {/* CORE */}
             <div
               className="
                 relative
-                w-32
-                h-32
-                rounded-full
+                w-40
+                h-40
+                rounded-[32px]
                 p-[2px]
                 bg-gradient-to-br
                 from-cyan-300
                 via-blue-500
                 to-cyan-200
-                shadow-[0_0_60px_rgba(0,183,255,0.55)]
+                shadow-[0_0_90px_rgba(0,183,255,0.45)]
               "
             >
 
@@ -315,11 +306,14 @@ export default function LoginPage() {
                   relative
                   w-full
                   h-full
-                  rounded-full
+                  rounded-[30px]
                   overflow-hidden
-                  bg-[#020617]
+                  bg-[#050816]
                   border
                   border-white/10
+                  flex
+                  items-center
+                  justify-center
                 "
               >
 
@@ -330,21 +324,33 @@ export default function LoginPage() {
                     inset-0
                     opacity-20
                     bg-[linear-gradient(rgba(255,255,255,0.12)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.12)_1px,transparent_1px)]
-                    bg-[size:14px_14px]
+                    bg-[size:16px_16px]
                   "
                 />
 
-                {/* USER AVATAR */}
+                {/* CAMERA IMAGE */}
                 <img
-                  src="https://cdn-icons-png.flaticon.com/512/9131/9131529.png"
-                  alt="Avatar"
+                  src="/images/icon.png"
+                  alt="Camera"
                   className="
                     relative
                     z-10
-                    w-full
-                    h-full
-                    object-cover
-                    scale-110
+                    w-[85%]
+                    object-contain
+                    drop-shadow-[0_0_35px_rgba(0,255,255,0.45)]
+                  "
+                />
+
+                {/* SCAN LINE */}
+                <div
+                  className="
+                    absolute
+                    inset-x-0
+                    top-0
+                    h-10
+                    bg-cyan-400/10
+                    blur-xl
+                    animate-pulse
                   "
                 />
 
@@ -367,7 +373,7 @@ export default function LoginPage() {
               border-cyan-400/20
               bg-white/[0.04]
               backdrop-blur-2xl
-              shadow-[0_0_80px_rgba(0,183,255,0.12)]
+              shadow-[0_0_90px_rgba(0,183,255,0.12)]
               px-7
               pt-24
               pb-8
@@ -387,16 +393,32 @@ export default function LoginPage() {
               "
             />
 
-            {/* LOGO */}
-            <div className="flex justify-center mb-8">
+            {/* HEADER */}
+            <div className="text-center mb-8">
 
-              <Image
-                src="/images/Header.png"
-                alt="Logo"
-                width={220}
-                height={100}
-                className="w-48 h-auto object-contain"
-              />
+              <h1
+                className="
+                  text-4xl
+                  font-black
+                  tracking-[0.25em]
+                  text-white
+                  uppercase
+                "
+              >
+                NIZAAMO
+              </h1>
+
+              <p
+                className="
+                  mt-3
+                  text-cyan-300/70
+                  text-sm
+                  tracking-[0.18em]
+                  uppercase
+                "
+              >
+                Production Control System
+              </p>
 
             </div>
 
@@ -405,7 +427,7 @@ export default function LoginPage() {
 
               <input
                 type="email"
-                placeholder="Email Address"
+                placeholder="Email"
                 value={email}
                 onChange={(e) =>
                   setEmail(
@@ -424,7 +446,8 @@ export default function LoginPage() {
                   placeholder:text-gray-500
                   outline-none
                   focus:border-cyan-400/40
-                  focus:bg-white/[0.05]
+                  focus:ring-4
+                  focus:ring-cyan-500/10
                   transition-all
                 "
               />
@@ -440,7 +463,7 @@ export default function LoginPage() {
                     ? "text"
                     : "password"
                 }
-                placeholder="Password"
+                placeholder="password"
                 value={password}
                 onChange={(e) =>
                   setPassword(
@@ -460,7 +483,8 @@ export default function LoginPage() {
                   placeholder:text-gray-500
                   outline-none
                   focus:border-cyan-400/40
-                  focus:bg-white/[0.05]
+                  focus:ring-4
+                  focus:ring-cyan-500/10
                   transition-all
                 "
               />
@@ -487,7 +511,7 @@ export default function LoginPage() {
 
             </div>
 
-            {/* BUTTON */}
+            {/* LOGIN BUTTON */}
             <button
               onClick={login}
               disabled={loading}
@@ -503,6 +527,7 @@ export default function LoginPage() {
                 to-cyan-400
                 text-white
                 font-semibold
+                tracking-wide
                 shadow-[0_0_45px_rgba(0,183,255,0.45)]
                 hover:scale-[1.01]
                 transition-all
@@ -540,8 +565,8 @@ export default function LoginPage() {
                 )}
 
                 {loading
-                  ? "Authenticating..."
-                  : "Enter System"}
+                  ? "Initializing..."
+                  : "Access Control"}
 
               </span>
 
@@ -564,7 +589,7 @@ export default function LoginPage() {
                 text-center
               "
             >
-              Create new account
+              Create New Account
             </button>
 
           </div>
