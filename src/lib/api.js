@@ -1,10 +1,10 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://72.62.71.176/api",
+  baseURL: process.env.NEXT_PUBLIC_API_URL,
 });
 
-// 🔥 safe cookie reader
+// SAFE COOKIE READER
 const getCookie = (name) => {
   if (typeof document === "undefined") return null;
 
@@ -15,12 +15,16 @@ const getCookie = (name) => {
 };
 
 api.interceptors.request.use((config) => {
+
   if (typeof window !== "undefined") {
+
     const token =
-      localStorage.getItem("token") || getCookie("token");
+      localStorage.getItem("token") ||
+      getCookie("token");
 
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+      config.headers.Authorization =
+        `Bearer ${token}`;
     }
   }
 

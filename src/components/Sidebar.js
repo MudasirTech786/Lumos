@@ -905,7 +905,7 @@ export default function Sidebar({ open, setOpen }) {
                   {user?.avatar ? (
 
                     <img
-                      src={`http://localhost:8000/storage/${user.avatar}`}
+                      src={`${process.env.NEXT_PUBLIC_BACKEND_URL}/storage/${user.avatar}`}
                       className="w-full h-full object-cover"
                     />
 

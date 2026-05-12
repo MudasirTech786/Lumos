@@ -58,8 +58,9 @@ export default function Layout({ children }) {
 
   const avatar =
     localAvatar ||
-    user?.avatar_url ||
-    (user?.avatar ? `http://localhost:8000/storage/${user.avatar}` : null);
+    (user?.avatar
+      ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/storage/${user.avatar}`
+      : null);
 
   useEffect(() => {
     if (user) {
@@ -73,7 +74,7 @@ export default function Layout({ children }) {
         setPreview(
           user?.avatar_url ||
           (user?.avatar
-            ? `http://localhost:8000/storage/${user.avatar}`
+            ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/storage/${user.avatar}`
             : null)
         );
       }
@@ -597,8 +598,8 @@ export default function Layout({ children }) {
 
                       <div className="flex flex-col items-start">
                         <span className={`text-sm font-medium ${user?.name === "Super Admin"
-                            ? "text-gray-400"
-                            : "text-slate-700"
+                          ? "text-gray-400"
+                          : "text-slate-700"
                           }`}>
                           Edit Profile
                         </span>
