@@ -76,8 +76,10 @@ export default function LoginPage() {
       } else {
 
         toast.error(
-          "System connection failed"
+          err?.message || "Connection failed"
         );
+
+        console.log(err);
       }
 
     } finally {
