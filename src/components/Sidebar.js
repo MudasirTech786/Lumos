@@ -17,6 +17,7 @@ import {
   DollarSign,
   Settings,
   ChevronDown,
+  Briefcase,
 } from "lucide-react";
 
 export default function Sidebar({ open, setOpen }) {
@@ -93,6 +94,14 @@ export default function Sidebar({ open, setOpen }) {
 
       setActiveMenu("inventory");
 
+    } else if (
+      pathname.includes("/shoots") ||
+      pathname.includes("/shoots/create") ||
+      pathname.includes("/shoots/crew")
+    ) {
+
+      setActiveMenu("shoots");
+
     } else {
 
       setActiveMenu(null);
@@ -134,6 +143,11 @@ export default function Sidebar({ open, setOpen }) {
     pathname.includes("/products") ||
     pathname.includes("/categories") ||
     pathname.includes("/stock");
+
+  const shootsActive =
+    pathname.includes("/dashboard/shoots") ||
+    pathname.includes("/dashboard/shoots/create") ||
+    pathname.includes("/dashboard/shoots/crew");
 
   // =========================================
   // MENU STYLES
@@ -591,6 +605,84 @@ export default function Sidebar({ open, setOpen }) {
 
             )}
 
+
+            {/* SHOOTS */}
+
+            {can("shoots.view") && (
+
+              <div className="mt-2">
+
+                <button
+                  onClick={() => toggleMenu("shoots")}
+                  className={menuClass(shootsActive)}
+                >
+
+                  <div className="flex items-center gap-4">
+
+                    <MenuIcon active={shootsActive}>
+                      <Briefcase size={19} />
+                    </MenuIcon>
+
+                    {isExpanded && (
+                      <span className="font-medium">
+                        Shoots
+                      </span>
+                    )}
+
+                  </div>
+
+                  {isExpanded && (
+
+                    <ChevronDown
+                      size={16}
+                      className={`
+                          transition-all
+                          duration-300
+
+                        ${activeMenu === "shoots"
+                          ? "rotate-180 text-cyan-300"
+                          : "text-white/30"
+                        }
+                      `}
+                    />
+
+                  )}
+
+                </button>
+
+                {isExpanded && activeMenu === "shoots" && (
+
+                  <div className="ml-14 mt-2 border-l border-white/[0.05] pl-4 space-y-2">
+
+                    <Link
+                      href="/dashboard/shoots"
+                      className={subMenuClass("/dashboard/shoots")}
+                    >
+                      Productions
+                    </Link>
+
+                    <Link
+                      href="/dashboard/shoots/create"
+                      className={subMenuClass("/dashboard/shoots/create")}
+                    >
+                      New Shoot
+                    </Link>
+
+                    <Link
+                      href="/dashboard/shoots/crew"
+                      className={subMenuClass("/dashboard/shoots/crew")}
+                    >
+                      Crew Assignments
+                    </Link>
+
+                  </div>
+
+                )}
+
+              </div>
+
+            )}
+
             {/* INVENTORY */}
 
             {can("products.view") && (
@@ -640,22 +732,22 @@ export default function Sidebar({ open, setOpen }) {
                   <div className="ml-14 mt-2 border-l border-white/[0.05] pl-4 space-y-2">
 
                     <Link
-                      href="/products"
-                      className={subMenuClass("/products")}
+                      href="/dashboard/inventory/products"
+                      className={subMenuClass("/dashboard/products")}
                     >
                       Products
                     </Link>
 
                     <Link
-                      href="/categories"
-                      className={subMenuClass("/categories")}
+                      href="/dashboard/inventory/categories"
+                      className={subMenuClass("/dashboard/categories")}
                     >
                       Categories
                     </Link>
 
                     <Link
-                      href="/stock"
-                      className={subMenuClass("/stock")}
+                      href="/dashboard/inventory/stock"
+                      className={subMenuClass("/dashboard/stock")}
                     >
                       Stock
                     </Link>
