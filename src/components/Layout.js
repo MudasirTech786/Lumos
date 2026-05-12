@@ -56,10 +56,15 @@ export default function Layout({ children }) {
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
 
-  const avatar =
-    localAvatar ||
-    user?.avatar_url ||
-    (user?.avatar ? `http://localhost:8000/storage/${user.avatar}` : null);
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_BACKEND_URL;
+
+const avatar =
+  localAvatar ||
+  user?.avatar_url ||
+  (user?.avatar
+    ? `${BACKEND_URL}/storage/${user.avatar}`
+    : null);
 
   useEffect(() => {
     if (user) {
