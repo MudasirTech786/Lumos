@@ -100,7 +100,7 @@ export default function Sidebar({ open, setOpen }) {
       pathname.includes("/shoots/crew")
     ) {
 
-      setActiveMenu("shoots");
+      setActiveMenu("productions");
 
     } else {
 
@@ -144,7 +144,7 @@ export default function Sidebar({ open, setOpen }) {
     pathname.includes("/categories") ||
     pathname.includes("/stock");
 
-  const shootsActive =
+  const productionsActive =
     pathname.includes("/dashboard/shoots") ||
     pathname.includes("/dashboard/shoots/create") ||
     pathname.includes("/dashboard/shoots/crew");
@@ -606,27 +606,33 @@ export default function Sidebar({ open, setOpen }) {
             )}
 
 
-            {/* SHOOTS */}
+            { /* PRODUCTIONS */}
 
             {can("shoots.view") && (
 
               <div className="mt-2">
 
                 <button
-                  onClick={() => toggleMenu("shoots")}
-                  className={menuClass(shootsActive)}
+                  onClick={() =>
+                    toggleMenu("productions")
+                  }
+                  className={menuClass(
+                    productionsActive
+                  )}
                 >
 
                   <div className="flex items-center gap-4">
 
-                    <MenuIcon active={shootsActive}>
+                    <MenuIcon active={productionsActive}>
                       <Briefcase size={19} />
                     </MenuIcon>
 
                     {isExpanded && (
+
                       <span className="font-medium">
-                        Shoots
+                        Productions
                       </span>
+
                     )}
 
                   </div>
@@ -636,52 +642,120 @@ export default function Sidebar({ open, setOpen }) {
                     <ChevronDown
                       size={16}
                       className={`
-                          transition-all
-                          duration-300
 
-                        ${activeMenu === "shoots"
+            transition-all
+            duration-300
+
+            ${activeMenu === "productions"
                           ? "rotate-180 text-cyan-300"
                           : "text-white/30"
                         }
-                      `}
+          `}
                     />
 
                   )}
 
                 </button>
 
-                {isExpanded && activeMenu === "shoots" && (
+                {isExpanded &&
+                  activeMenu === "productions" && (
 
-                  <div className="ml-14 mt-2 border-l border-white/[0.05] pl-4 space-y-2">
+                    <div className="
+        ml-14
+        mt-2
+        border-l
+        border-white/[0.05]
+        pl-4
+        space-y-2
+      ">
 
-                    <Link
-                      href="/dashboard/shoots"
-                      className={subMenuClass("/dashboard/shoots")}
-                    >
-                      Productions
-                    </Link>
+                      {/* ALL PRODUCTIONS */}
+                      <Link
+                        href="/dashboard/shoots"
+                        className={subMenuClass(
+                          "/dashboard/shoots"
+                        )}
+                      >
+                        All Productions
+                      </Link>
 
-                    <Link
-                      href="/dashboard/shoots/create"
-                      className={subMenuClass("/dashboard/shoots/create")}
-                    >
-                      New Shoot
-                    </Link>
+                      {/* CREATE */}
+                      <Link
+                        href="/dashboard/shoots/create"
+                        className={subMenuClass(
+                          "/dashboard/shoots/create"
+                        )}
+                      >
+                        Create Production
+                      </Link>
 
-                    <Link
-                      href="/dashboard/shoots/crew"
-                      className={subMenuClass("/dashboard/shoots/crew")}
-                    >
-                      Crew Assignments
-                    </Link>
+                      {/* CREW */}
+                      <Link
+                        href="/dashboard/shoots/crew"
+                        className={subMenuClass(
+                          "/dashboard/shoots/crew"
+                        )}
+                      >
+                        Crew Assignments
+                      </Link>
 
-                  </div>
+                      {/* FUTURE */}
+                      <button
+                        disabled
+                        className="
+            w-full
+            text-left
+            rounded-xl
+            px-4
+            py-2.5
+            text-sm
+            text-white/25
+            cursor-not-allowed
+          "
+                      >
+                        Scheduling
+                      </button>
 
-                )}
+                      <button
+                        disabled
+                        className="
+            w-full
+            text-left
+            rounded-xl
+            px-4
+            py-2.5
+            text-sm
+            text-white/25
+            cursor-not-allowed
+          "
+                      >
+                        Logistics
+                      </button>
+
+                      <button
+                        disabled
+                        className="
+            w-full
+            text-left
+            rounded-xl
+            px-4
+            py-2.5
+            text-sm
+            text-white/25
+            cursor-not-allowed
+          "
+                      >
+                        Deliverables
+                      </button>
+
+                    </div>
+
+                  )}
 
               </div>
 
             )}
+
 
             {/* INVENTORY */}
 

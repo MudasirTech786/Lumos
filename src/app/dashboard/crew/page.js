@@ -11,6 +11,10 @@ import {
     UserCheck,
     UserX,
     Briefcase,
+    Sparkles,
+    BadgeDollarSign,
+    FileText,
+
 } from "lucide-react";
 
 import { useEffect, useMemo, useState } from "react";
@@ -310,12 +314,54 @@ export default function CrewPage() {
 
                         <div>
 
-                            <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
+                            <div className="
+    inline-flex
+    items-center
+    gap-2
+    rounded-full
+    border
+    border-blue-100
+    bg-blue-50
+    px-4
+    py-2
+    text-[11px]
+    font-semibold
+    uppercase
+    tracking-[0.22em]
+    text-blue-700
+  ">
+
+                                <Sparkles size={12} />
+
+                                Workforce Operations
+
+                            </div>
+
+                            <h1 className="
+    mt-4
+    text-4xl
+    md:text-5xl
+    font-black
+    tracking-[-0.06em]
+    text-gray-900
+  ">
+
                                 Crew Management
+
                             </h1>
 
-                            <p className="text-gray-500 text-sm mt-1">
-                                Manage workforce & freelancer database
+                            <p className="
+    mt-4
+    max-w-3xl
+    text-base
+    leading-relaxed
+    text-gray-500
+  ">
+
+                                Manage production workforce, freelancers,
+                                operational staffing and crew coordination
+                                across active production pipelines.
+
                             </p>
 
                         </div>
@@ -330,32 +376,107 @@ export default function CrewPage() {
 
                     </div>
 
-                    {/* STATS */}
-                    <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+                    {/* ===================================================== */}
+                    {/* CREW STATS */}
+                    {/* ===================================================== */}
 
-                        <StatCard
-                            title="Total Crew"
-                            value={stats.total}
-                            icon={<Users size={18} />}
-                        />
+                    <div className="
+  relative
+  overflow-hidden
+  rounded-[36px]
+  border
+  border-blue-200/20
+  bg-gradient-to-br
+  from-[#071120]
+  via-[#0f3ba8]
+  to-[#2563eb]
+  p-6
+  shadow-[0_25px_120px_rgba(37,99,235,0.25)]
+">
 
-                        <StatCard
-                            title="Freelancers"
-                            value={stats.freelancers}
-                            icon={<Briefcase size={18} />}
-                        />
+                        {/* BACKGROUND LIGHT */}
 
-                        <StatCard
-                            title="Full Time"
-                            value={stats.fullTime}
-                            icon={<UserCheck size={18} />}
-                        />
+                        <div className="
+    absolute
+    inset-0
+    bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.14),transparent_22%),radial-gradient(circle_at_bottom_left,rgba(125,211,252,0.10),transparent_30%)]
+  " />
 
-                        <StatCard
-                            title="Inactive"
-                            value={stats.inactive}
-                            icon={<UserX size={18} />}
-                        />
+                        {/* GRID */}
+
+                        <div className="
+    absolute
+    inset-0
+    opacity-[0.05]
+    [background-image:linear-gradient(to_right,#fff_1px,transparent_1px),linear-gradient(to_bottom,#fff_1px,transparent_1px)]
+    [background-size:42px_42px]
+  " />
+
+                        {/* GLOW */}
+
+                        <div className="
+    absolute
+    top-[-120px]
+    right-[-100px]
+    h-[320px]
+    w-[320px]
+    rounded-full
+    bg-cyan-300/20
+    blur-[120px]
+  " />
+
+                        <div className="
+    absolute
+    bottom-[-140px]
+    left-[-100px]
+    h-[280px]
+    w-[280px]
+    rounded-full
+    bg-blue-500/20
+    blur-[120px]
+  " />
+
+                        {/* CONTENT */}
+
+                        <div className="
+    relative
+    z-10
+  ">
+
+                            <div className="
+      grid
+      grid-cols-2
+      gap-5
+      xl:grid-cols-4
+    ">
+
+                                <AdminMetricCard
+                                    title="Total Crew"
+                                    value={stats.total}
+                                    icon={<Users size={18} />}
+                                />
+
+                                <AdminMetricCard
+                                    title="Freelancers"
+                                    value={stats.freelancers}
+                                    icon={<Briefcase size={18} />}
+                                />
+
+                                <AdminMetricCard
+                                    title="Full Time"
+                                    value={stats.fullTime}
+                                    icon={<UserCheck size={18} />}
+                                />
+
+                                <AdminMetricCard
+                                    title="Inactive"
+                                    value={stats.inactive}
+                                    icon={<UserX size={18} />}
+                                />
+
+                            </div>
+
+                        </div>
 
                     </div>
 
@@ -799,10 +920,16 @@ export default function CrewPage() {
                     </div>
 
                     {/* MODAL */}
-                    {/* PREMIUM MODAL */}
                     {(openModal || editModal) && (
 
-                        <div className="fixed inset-0 z-[9999] overflow-y-auto">
+                        <div className="
+    fixed
+    inset-0
+    z-[9999]
+    overflow-y-auto
+    bg-[#020817]/70
+    backdrop-blur-md
+  ">
 
                             {/* BACKDROP */}
                             <div
@@ -810,409 +937,432 @@ export default function CrewPage() {
                                     setOpenModal(false);
                                     setEditModal(false);
                                 }}
-                                className="fixed inset-0 bg-black/50 backdrop-blur-sm"
+                                className="fixed inset-0"
                             />
 
-                            {/* CONTAINER */}
-                            <div className="min-h-screen px-4 py-10 flex items-start justify-center">
+                            {/* ===================================================== */}
+                            {/* WRAPPER */}
+                            {/* ===================================================== */}
 
+                            <div className="
+      relative
+      flex
+      min-h-screen
+      items-start
+      justify-center
+      px-4
+      py-8
+      md:items-center
+    ">
+
+                                {/* ===================================================== */}
                                 {/* MODAL */}
-                                <div className="relative w-full max-w-5xl bg-white rounded-[32px] shadow-2xl border border-blue-100 overflow-hidden animate-in fade-in zoom-in duration-200">
+                                {/* ===================================================== */}
 
-                                    {/* TOP BAR */}
-                                    <div className="sticky top-0 z-10 bg-white/95 backdrop-blur border-b border-gray-100 px-6 md:px-8 py-5 flex items-center justify-between">
+                                <div className="
+        relative
+        mt-12
+        w-full
+        max-w-6xl
+        max-h-[90vh]
+        overflow-y-auto
+        no-scrollbar
+        rounded-[38px]
+        border
+        border-blue-100/70
+        bg-[rgba(255,255,255,0.92)]
+        shadow-[0_25px_120px_rgba(37,99,235,0.18)]
+        backdrop-blur-3xl
+      ">
 
-                                        <div>
+                                    {/* GRID BG */}
 
-                                            <h2 className="text-2xl font-bold text-gray-900">
-                                                {editModal
-                                                    ? "Edit Crew Member"
-                                                    : "Add Crew Member"}
-                                            </h2>
+                                    <div className="
+          pointer-events-none
+          absolute
+          inset-0
+          opacity-[0.03]
+          [background-image:linear-gradient(to_right,#2563eb_1px,transparent_1px),linear-gradient(to_bottom,#2563eb_1px,transparent_1px)]
+          [background-size:42px_42px]
+        " />
 
-                                            <p className="text-sm text-gray-500 mt-1">
-                                                Manage workforce information & payroll structure
-                                            </p>
+                                    {/* GLOW */}
 
-                                        </div>
+                                    <div className="
+          absolute
+          -top-24
+          right-[-120px]
+          h-[320px]
+          w-[320px]
+          rounded-full
+          bg-blue-400/20
+          blur-[120px]
+        " />
 
-                                        <button
-                                            onClick={() => {
-                                                setOpenModal(false);
-                                                setEditModal(false);
-                                            }}
-                                            className="w-10 h-10 rounded-2xl hover:bg-gray-100 transition flex items-center justify-center text-gray-500 hover:text-black"
-                                        >
-                                            ✕
-                                        </button>
+                                    <div className="
+          absolute
+          bottom-[-120px]
+          left-[-120px]
+          h-[280px]
+          w-[280px]
+          rounded-full
+          bg-cyan-300/10
+          blur-[120px]
+        " />
 
-                                    </div>
+                                    {/* ===================================================== */}
+                                    {/* HEADER */}
+                                    {/* ===================================================== */}
 
-                                    {/* BODY */}
-                                    <div className="p-6 md:p-8 space-y-8 max-h-[85vh] overflow-y-auto">
+                                    <div className="
+          sticky
+          top-0
+          z-20
+          border-b
+          border-blue-100/70
+          bg-white/85
+          px-6
+          py-5
+          backdrop-blur-2xl
+          md:px-8
+        ">
 
-                                        {/* BASIC INFO */}
-                                        <div className="space-y-5">
-
-                                            <div>
-
-                                                <h3 className="text-lg font-semibold text-gray-900">
-                                                    Basic Information
-                                                </h3>
-
-                                                <p className="text-sm text-gray-500 mt-1">
-                                                    Personal & employment details
-                                                </p>
-
-                                            </div>
-
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-
-                                                <Input
-                                                    placeholder="Full Name"
-                                                    value={form.name}
-                                                    onChange={(e) =>
-                                                        setForm({
-                                                            ...form,
-                                                            name: e.target.value
-                                                        })
-                                                    }
-                                                />
-
-                                                <Input
-                                                    placeholder="Phone"
-                                                    value={form.phone}
-                                                    onChange={(e) =>
-                                                        setForm({
-                                                            ...form,
-                                                            phone: e.target.value
-                                                        })
-                                                    }
-                                                />
-
-                                                <Input
-                                                    placeholder="Email"
-                                                    value={form.email}
-                                                    onChange={(e) =>
-                                                        setForm({
-                                                            ...form,
-                                                            email: e.target.value
-                                                        })
-                                                    }
-                                                    className="md:col-span-2"
-                                                />
-
-                                                <Input
-                                                    placeholder="Designation"
-                                                    value={form.designation}
-                                                    onChange={(e) =>
-                                                        setForm({
-                                                            ...form,
-                                                            designation: e.target.value
-                                                        })
-                                                    }
-                                                />
-
-                                                <select
-                                                    value={form.employment_type}
-                                                    onChange={(e) =>
-                                                        setForm({
-                                                            ...form,
-                                                            employment_type: e.target.value
-                                                        })
-                                                    }
-                                                    className="w-full border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none rounded-2xl px-4 py-4 bg-white transition"
-                                                >
-                                                    <option value="freelancer">
-                                                        Freelancer
-                                                    </option>
-
-                                                    <option value="full_time">
-                                                        Full Time
-                                                    </option>
-
-                                                    <option value="part_time">
-                                                        Part Time
-                                                    </option>
-
-                                                </select>
-
-                                            </div>
-
-                                        </div>
-
-                                        {/* EXTRA INFO */}
-                                        <div className="space-y-5">
+                                        <div className="
+            flex
+            items-start
+            justify-between
+            gap-4
+          ">
 
                                             <div>
 
-                                                <h3 className="text-lg font-semibold text-gray-900">
-                                                    Additional Information
-                                                </h3>
+                                                <div className="
+                inline-flex
+                items-center
+                gap-2
+                rounded-full
+                border
+                border-blue-100
+                bg-blue-50
+                px-4
+                py-2
+                text-[11px]
+                font-semibold
+                uppercase
+                tracking-[0.22em]
+                text-blue-700
+              ">
 
-                                                <p className="text-sm text-gray-500 mt-1">
-                                                    Internal workforce records
+                                                    <Sparkles size={12} />
+
+                                                    Crew Operations
+
+                                                </div>
+
+                                                <h2 className="
+                mt-4
+                text-3xl
+                font-black
+                tracking-[-0.05em]
+                text-slate-900
+              ">
+
+                                                    {editModal
+                                                        ? "Edit Crew Member"
+                                                        : "Create Crew Member"}
+
+                                                </h2>
+
+                                                <p className="
+                mt-2
+                max-w-2xl
+                text-sm
+                leading-relaxed
+                text-slate-500
+              ">
+
+                                                    Manage workforce information,
+                                                    payroll structure, operational records
+                                                    and production crew assignments.
+
                                                 </p>
 
                                             </div>
-
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-
-                                                <Input
-                                                    type="date"
-                                                    value={form.joining_date}
-                                                    onChange={(e) =>
-                                                        setForm({
-                                                            ...form,
-                                                            joining_date: e.target.value
-                                                        })
-                                                    }
-                                                />
-
-                                                <Input
-                                                    placeholder="CNIC"
-                                                    value={form.cnic}
-                                                    onChange={(e) =>
-                                                        setForm({
-                                                            ...form,
-                                                            cnic: e.target.value
-                                                        })
-                                                    }
-                                                />
-
-                                                <Input
-                                                    placeholder="Emergency Contact"
-                                                    value={form.emergency_contact}
-                                                    onChange={(e) =>
-                                                        setForm({
-                                                            ...form,
-                                                            emergency_contact: e.target.value
-                                                        })
-                                                    }
-                                                />
-
-                                                <Input
-                                                    placeholder="Profile Photo URL"
-                                                    value={form.profile_photo}
-                                                    onChange={(e) =>
-                                                        setForm({
-                                                            ...form,
-                                                            profile_photo: e.target.value
-                                                        })
-                                                    }
-                                                />
-
-                                                <textarea
-                                                    rows={4}
-                                                    placeholder="Address"
-                                                    value={form.address}
-                                                    onChange={(e) =>
-                                                        setForm({
-                                                            ...form,
-                                                            address: e.target.value
-                                                        })
-                                                    }
-                                                    className="md:col-span-2 w-full border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none rounded-2xl px-4 py-4 transition resize-none"
-                                                />
-
-                                            </div>
-
-                                        </div>
-
-                                        {/* PAYROLL */}
-                                        <div className="space-y-5">
-
-                                            <div>
-
-                                                <h3 className="text-lg font-semibold text-gray-900">
-                                                    Payroll Structure
-                                                </h3>
-
-                                                <p className="text-sm text-gray-500 mt-1">
-                                                    Salary & allowance management
-                                                </p>
-
-                                            </div>
-
-                                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-
-                                                <Input
-                                                    type="number"
-                                                    placeholder="Basic Salary"
-                                                    value={form.basic_salary}
-                                                    onChange={(e) =>
-                                                        setForm({
-                                                            ...form,
-                                                            basic_salary: e.target.value
-                                                        })
-                                                    }
-                                                />
-
-                                                <Input
-                                                    type="number"
-                                                    placeholder="Rate Per Shift"
-                                                    value={form.rate_per_shift}
-                                                    onChange={(e) =>
-                                                        setForm({
-                                                            ...form,
-                                                            rate_per_shift: e.target.value
-                                                        })
-                                                    }
-                                                />
-
-                                                <Input
-                                                    type="number"
-                                                    placeholder="Hourly Rate"
-                                                    value={form.hourly_rate}
-                                                    onChange={(e) =>
-                                                        setForm({
-                                                            ...form,
-                                                            hourly_rate: e.target.value
-                                                        })
-                                                    }
-                                                />
-
-                                                <Input
-                                                    type="number"
-                                                    placeholder="Commission"
-                                                    value={form.commission}
-                                                    onChange={(e) =>
-                                                        setForm({
-                                                            ...form,
-                                                            commission: e.target.value
-                                                        })
-                                                    }
-                                                />
-
-                                                <Input
-                                                    type="number"
-                                                    placeholder="Home Allowance"
-                                                    value={form.home_allowance}
-                                                    onChange={(e) =>
-                                                        setForm({
-                                                            ...form,
-                                                            home_allowance: e.target.value
-                                                        })
-                                                    }
-                                                />
-
-                                                <Input
-                                                    type="number"
-                                                    placeholder="Fuel Allowance"
-                                                    value={form.fuel_allowance}
-                                                    onChange={(e) =>
-                                                        setForm({
-                                                            ...form,
-                                                            fuel_allowance: e.target.value
-                                                        })
-                                                    }
-                                                />
-
-                                            </div>
-
-                                        </div>
-
-                                        {/* SKILLS */}
-                                        <div className="space-y-5">
-
-                                            <div>
-
-                                                <h3 className="text-lg font-semibold text-gray-900">
-                                                    Skills
-                                                </h3>
-
-                                                <p className="text-sm text-gray-500 mt-1">
-                                                    Add comma separated skills
-                                                </p>
-
-                                            </div>
-
-                                            <Input
-                                                placeholder="Camera, Drone, Lighting"
-                                                value={form.skills?.join(", ")}
-                                                onChange={(e) =>
-                                                    setForm({
-                                                        ...form,
-                                                        skills: e.target.value
-                                                            .split(",")
-                                                            .map((s) => s.trim())
-                                                            .filter(Boolean)
-                                                    })
-                                                }
-                                            />
-
-                                        </div>
-
-                                        {/* NOTES */}
-                                        <div className="space-y-5">
-
-                                            <div>
-
-                                                <h3 className="text-lg font-semibold text-gray-900">
-                                                    Notes
-                                                </h3>
-
-                                                <p className="text-sm text-gray-500 mt-1">
-                                                    Internal team remarks
-                                                </p>
-
-                                            </div>
-
-                                            <textarea
-                                                rows={5}
-                                                placeholder="Additional notes..."
-                                                value={form.notes}
-                                                onChange={(e) =>
-                                                    setForm({
-                                                        ...form,
-                                                        notes: e.target.value
-                                                    })
-                                                }
-                                                className="w-full border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none rounded-2xl px-4 py-4 transition resize-none"
-                                            />
-
-                                        </div>
-
-                                        {/* STATUS */}
-                                        <div className="border border-blue-100 rounded-3xl p-5 flex items-center justify-between bg-blue-50/50">
-
-                                            <div>
-
-                                                <h4 className="font-semibold text-gray-900">
-                                                    Active Status
-                                                </h4>
-
-                                                <p className="text-sm text-gray-500 mt-1">
-                                                    Inactive crew members won't appear in scheduling
-                                                </p>
-
-                                            </div>
-
-                                            <input
-                                                type="checkbox"
-                                                checked={form.is_active}
-                                                onChange={(e) =>
-                                                    setForm({
-                                                        ...form,
-                                                        is_active: e.target.checked
-                                                    })
-                                                }
-                                                className="w-6 h-6 accent-blue-600"
-                                            />
-
-                                        </div>
-
-                                        {/* BUTTONS */}
-                                        <div className="flex flex-col md:flex-row gap-4 pt-2">
 
                                             <button
                                                 onClick={() => {
                                                     setOpenModal(false);
                                                     setEditModal(false);
                                                 }}
-                                                className="w-full border border-gray-200 hover:bg-gray-50 transition py-4 rounded-2xl font-medium"
+                                                className="
+                flex
+                h-12
+                w-12
+                items-center
+                justify-center
+                rounded-2xl
+                border
+                border-blue-100
+                bg-white
+                text-slate-500
+                transition-all
+                hover:bg-blue-50
+                hover:text-blue-700
+              "
                                             >
+
+                                                ✕
+
+                                            </button>
+
+                                        </div>
+
+                                    </div>
+
+                                    {/* ===================================================== */}
+                                    {/* BODY */}
+                                    {/* ===================================================== */}
+
+                                    <div className="
+          relative
+          z-10
+          space-y-8
+          p-6
+          md:p-8
+        ">
+
+                                        {/* ===================================================== */}
+                                        {/* BASIC INFO */}
+                                        {/* ===================================================== */}
+
+                                        <GlassSection
+                                            title="Basic Information"
+                                            subtitle="Personal & operational details"
+                                            icon={<Users size={20} />}
+                                        >
+
+                                            <div className="
+              grid
+              grid-cols-1
+              gap-5
+              md:grid-cols-2
+            ">
+
+                                                <Input
+                                                    label="Full Name"
+                                                    placeholder="John Carter"
+                                                    value={form.name || ""}
+                                                    onChange={(e) =>
+                                                        setForm({
+                                                            ...form,
+                                                            name: e.target.value,
+                                                        })
+                                                    }
+                                                />
+
+                                                <Input
+                                                    label="Phone Number"
+                                                    placeholder="+92 300 0000000"
+                                                    value={form.phone || ""}
+                                                    onChange={(e) =>
+                                                        setForm({
+                                                            ...form,
+                                                            phone: e.target.value,
+                                                        })
+                                                    }
+                                                />
+
+                                                <Input
+                                                    label="Email Address"
+                                                    placeholder="john@email.com"
+                                                    value={form.email || ""}
+                                                    onChange={(e) =>
+                                                        setForm({
+                                                            ...form,
+                                                            email: e.target.value,
+                                                        })
+                                                    }
+                                                />
+
+                                                <Input
+                                                    label="Designation"
+                                                    placeholder="Camera Operator"
+                                                    value={form.designation || ""}
+                                                    onChange={(e) =>
+                                                        setForm({
+                                                            ...form,
+                                                            designation: e.target.value,
+                                                        })
+                                                    }
+                                                />
+
+                                            </div>
+
+                                        </GlassSection>
+
+                                        {/* ===================================================== */}
+                                        {/* EXTRA */}
+                                        {/* ===================================================== */}
+
+                                        <GlassSection
+                                            title="Additional Information"
+                                            subtitle="Internal workforce records"
+                                            icon={<Briefcase size={20} />}
+                                        >
+
+                                            <div className="
+              grid
+              grid-cols-1
+              gap-5
+              md:grid-cols-2
+            ">
+
+                                                <Input
+                                                    label="Joining Date"
+                                                    type="date"
+                                                    value={form.joining_date || ""}
+                                                    onChange={(e) =>
+                                                        setForm({
+                                                            ...form,
+                                                            joining_date: e.target.value,
+                                                        })
+                                                    }
+                                                />
+
+                                                <Input
+                                                    label="CNIC"
+                                                    placeholder="42101-1234567-1"
+                                                    value={form.cnic || ""}
+                                                    onChange={(e) =>
+                                                        setForm({
+                                                            ...form,
+                                                            cnic: e.target.value,
+                                                        })
+                                                    }
+                                                />
+
+                                                <Input
+                                                    label="Emergency Contact"
+                                                    placeholder="+92 300 0000000"
+                                                    value={form.emergency_contact || ""}
+                                                    onChange={(e) =>
+                                                        setForm({
+                                                            ...form,
+                                                            emergency_contact: e.target.value,
+                                                        })
+                                                    }
+                                                />
+
+                                                <Input
+                                                    label="Profile Photo URL"
+                                                    placeholder="https://..."
+                                                    value={form.profile_photo || ""}
+                                                    onChange={(e) =>
+                                                        setForm({
+                                                            ...form,
+                                                            profile_photo: e.target.value,
+                                                        })
+                                                    }
+                                                />
+
+                                            </div>
+
+                                        </GlassSection>
+
+                                        {/* ===================================================== */}
+                                        {/* PAYROLL */}
+                                        {/* ===================================================== */}
+
+                                        <GlassSection
+                                            title="Payroll Structure"
+                                            subtitle="Salary & allowance management"
+                                            icon={<BadgeDollarSign size={20} />}
+                                        >
+
+                                            <div className="
+              grid
+              grid-cols-1
+              gap-5
+              md:grid-cols-2
+              xl:grid-cols-3
+            ">
+
+                                                <Input
+                                                    label="Basic Salary"
+                                                    type="number"
+                                                    placeholder="150000"
+                                                    value={form.basic_salary || ""}
+                                                    onChange={(e) =>
+                                                        setForm({
+                                                            ...form,
+                                                            basic_salary: e.target.value,
+                                                        })
+                                                    }
+                                                />
+
+                                                <Input
+                                                    label="Rate Per Shift"
+                                                    type="number"
+                                                    placeholder="12000"
+                                                    value={form.rate_per_shift || ""}
+                                                    onChange={(e) =>
+                                                        setForm({
+                                                            ...form,
+                                                            rate_per_shift: e.target.value,
+                                                        })
+                                                    }
+                                                />
+
+                                                <Input
+                                                    label="Hourly Rate"
+                                                    type="number"
+                                                    placeholder="2500"
+                                                    value={form.hourly_rate || ""}
+                                                    onChange={(e) =>
+                                                        setForm({
+                                                            ...form,
+                                                            hourly_rate: e.target.value,
+                                                        })
+                                                    }
+                                                />
+
+                                            </div>
+
+                                        </GlassSection>
+
+                                        {/* ===================================================== */}
+                                        {/* ACTIONS */}
+                                        {/* ===================================================== */}
+
+                                        <div className="
+            flex
+            flex-col-reverse
+            gap-4
+            pt-2
+            md:flex-row
+          ">
+
+                                            <button
+                                                onClick={() => {
+                                                    setOpenModal(false);
+                                                    setEditModal(false);
+                                                }}
+                                                className="
+                w-full
+                rounded-2xl
+                border
+                border-blue-100
+                bg-white
+                py-4
+                font-semibold
+                text-slate-700
+                transition-all
+                hover:bg-blue-50
+              "
+                                            >
+
                                                 Cancel
+
                                             </button>
 
                                             <button
@@ -1221,11 +1371,23 @@ export default function CrewPage() {
                                                         ? handleUpdate
                                                         : handleSubmit
                                                 }
-                                                className="w-full bg-blue-600 hover:bg-blue-700 transition text-white py-4 rounded-2xl font-semibold shadow-lg shadow-blue-200"
+                                                className="
+                w-full
+                rounded-2xl
+                bg-blue-600
+                py-4
+                font-semibold
+                text-white
+                shadow-[0_20px_50px_rgba(37,99,235,0.28)]
+                transition-all
+                hover:bg-blue-700
+              "
                                             >
+
                                                 {editModal
                                                     ? "Update Crew Member"
-                                                    : "Save Crew Member"}
+                                                    : "Create Crew Member"}
+
                                             </button>
 
                                         </div>
@@ -1237,6 +1399,7 @@ export default function CrewPage() {
                             </div>
 
                         </div>
+
                     )}
 
                 </div>
@@ -1278,16 +1441,341 @@ function StatCard({ title, value, icon }) {
 }
 
 function Input({
-    className = "",
-    ...props
+  label,
+  value,
+  onChange,
+  type = "text",
+  placeholder = "",
+}) {
+
+  return (
+
+    <div className="space-y-2">
+      {/* INPUT WRAPPER */}
+
+      <div className="relative">
+
+        {/* INSIDE NAME */}
+
+        <div className="
+          pointer-events-none
+          absolute
+          left-4
+          top-3
+          z-10
+          text-[10px]
+          font-bold
+          uppercase
+          tracking-[0.16em]
+          text-blue-500
+        ">
+
+          {label}
+
+        </div>
+
+        {/* INPUT */}
+
+        <input
+          type={type}
+          value={value || ""}
+          placeholder={placeholder}
+          onChange={onChange}
+          className="
+            h-[72px]
+            w-full
+            rounded-[24px]
+            border
+            border-blue-100
+            bg-white/80
+            px-4
+            pb-3
+            pt-7
+            text-sm
+            font-medium
+            text-slate-800
+            outline-none
+            transition-all
+            placeholder:text-slate-400
+            focus:border-blue-400
+            focus:ring-4
+            focus:ring-blue-100
+          "
+        />
+
+      </div>
+
+    </div>
+
+  );
+}
+
+
+function AdminMetricCard({
+    title,
+    value,
+    icon,
 }) {
 
     return (
 
-        <input
-            {...props}
-            value={props.value ?? ""}
-            className={`w-full border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none rounded-2xl px-4 py-4 transition ${className}`}
-        />
+        <div className="
+      relative
+      overflow-hidden
+      rounded-[28px]
+      border
+      border-white/10
+      bg-white/10
+      p-5
+      backdrop-blur-2xl
+      shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]
+      transition-all
+      duration-300
+      hover:translate-y-[-2px]
+      hover:bg-white/[0.12]
+    ">
+
+            {/* GLOW */}
+
+            <div className="
+        absolute
+        right-[-30px]
+        top-[-30px]
+        h-28
+        w-28
+        rounded-full
+        bg-cyan-300/10
+        blur-3xl
+      " />
+
+            {/* CONTENT */}
+
+            <div className="
+        relative
+        z-10
+        flex
+        items-start
+        justify-between
+      ">
+
+                <div>
+
+                    <p className="
+            text-[11px]
+            font-semibold
+            uppercase
+            tracking-[0.22em]
+            text-blue-100/70
+          ">
+
+                        {title}
+
+                    </p>
+
+                    <h3 className="
+            mt-4
+            text-4xl
+            font-black
+            tracking-[-0.05em]
+            text-white
+          ">
+
+                        {value}
+
+                    </h3>
+
+                </div>
+
+                <div className="
+          flex
+          h-12
+          w-12
+          items-center
+          justify-center
+          rounded-2xl
+          border
+          border-white/10
+          bg-white/10
+          text-cyan-200
+          backdrop-blur-xl
+        ">
+
+                    {icon}
+
+                </div>
+
+            </div>
+
+        </div>
+    );
+}
+
+function SectionHeader({
+    title,
+    subtitle,
+    icon,
+}) {
+
+    return (
+
+        <div className="
+      flex
+      items-center
+      gap-4
+    ">
+
+            <div className="
+        flex
+        h-14
+        w-14
+        items-center
+        justify-center
+        rounded-3xl
+        bg-blue-100
+        text-blue-700
+        shadow-[0_10px_30px_rgba(37,99,235,0.12)]
+      ">
+
+                {icon}
+
+            </div>
+
+            <div>
+
+                <h3 className="
+          text-xl
+          font-bold
+          tracking-[-0.03em]
+          text-slate-900
+        ">
+
+                    {title}
+
+                </h3>
+
+                <p className="
+          mt-1
+          text-sm
+          text-slate-500
+        ">
+
+                    {subtitle}
+
+                </p>
+
+            </div>
+
+        </div>
+    );
+}
+
+function GlassSection({
+    title,
+    subtitle,
+    icon,
+    children,
+}) {
+
+    return (
+
+        <div className="
+      relative
+      overflow-hidden
+      rounded-[32px]
+      border
+      border-blue-100/80
+      bg-white/75
+      p-6
+      shadow-[0_10px_40px_rgba(37,99,235,0.06)]
+      backdrop-blur-2xl
+    ">
+
+            {/* GRID */}
+
+            <div className="
+        pointer-events-none
+        absolute
+        inset-0
+        opacity-[0.03]
+        [background-image:linear-gradient(to_right,#2563eb_1px,transparent_1px),linear-gradient(to_bottom,#2563eb_1px,transparent_1px)]
+        [background-size:34px_34px]
+      " />
+
+            {/* GLOW */}
+
+            <div className="
+        absolute
+        top-[-60px]
+        right-[-60px]
+        h-[160px]
+        w-[160px]
+        rounded-full
+        bg-blue-200/20
+        blur-[70px]
+      " />
+
+            {/* CONTENT */}
+
+            <div className="relative z-10">
+
+                {/* HEADER */}
+
+                <div className="
+          mb-6
+          flex
+          items-start
+          gap-4
+        ">
+
+                    <div className="
+            flex
+            h-14
+            w-14
+            items-center
+            justify-center
+            rounded-3xl
+            bg-blue-100
+            text-blue-700
+            shadow-[0_10px_30px_rgba(37,99,235,0.18)]
+          ">
+
+                        {icon}
+
+                    </div>
+
+                    <div>
+
+                        <h3 className="
+              text-xl
+              font-black
+              tracking-[-0.03em]
+              text-slate-900
+            ">
+
+                            {title}
+
+                        </h3>
+
+                        <p className="
+              mt-1
+              text-sm
+              text-slate-500
+            ">
+
+                            {subtitle}
+
+                        </p>
+
+                    </div>
+
+                </div>
+
+                {/* BODY */}
+
+                {children}
+
+            </div>
+
+        </div>
     );
 }

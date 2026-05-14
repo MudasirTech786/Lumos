@@ -13,6 +13,8 @@ import {
   CheckCircle2,
   XCircle,
   ShieldAlert,
+  Sparkles,
+  Plane
 } from "lucide-react";
 
 import { useEffect, useState } from "react";
@@ -190,7 +192,7 @@ export default function LeavesPage() {
         res.data?.employees?.data || []
       );
 
-    } catch {}
+    } catch { }
   };
 
   // =========================================
@@ -480,12 +482,54 @@ export default function LeavesPage() {
 
             <div>
 
-              <h1 className="text-3xl md:text-4xl font-bold text-gray-900">
-                Leaves
+              <div className="
+    inline-flex
+    items-center
+    gap-2
+    rounded-full
+    border
+    border-blue-100
+    bg-blue-50
+    px-4
+    py-2
+    text-[11px]
+    font-semibold
+    uppercase
+    tracking-[0.22em]
+    text-blue-700
+  ">
+
+                <Sparkles size={12} />
+
+                Leave Operations
+
+              </div>
+
+              <h1 className="
+    mt-4
+    text-4xl
+    md:text-5xl
+    font-black
+    tracking-[-0.06em]
+    text-gray-900
+  ">
+
+                Leave Management
+
               </h1>
 
-              <p className="text-gray-500 mt-2">
-                Manage employee leave requests
+              <p className="
+    mt-4
+    max-w-3xl
+    text-base
+    leading-relaxed
+    text-gray-500
+  ">
+
+                Manage employee leave requests,
+                approvals, attendance flow and
+                workforce availability.
+
               </p>
 
             </div>
@@ -511,32 +555,98 @@ export default function LeavesPage() {
 
           </div>
 
-          {/* STATS */}
-          <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+          <div className="
+  relative
+  overflow-hidden
+  rounded-[36px]
+  border
+  border-blue-200/20
+  bg-gradient-to-br
+  from-[#071120]
+  via-[#0f3ba8]
+  to-[#2563eb]
+  p-6
+  shadow-[0_25px_120px_rgba(37,99,235,0.25)]
+">
 
-            <StatCard
-              title="Total Leaves"
-              value={visibleLeaves.length}
-              icon={<CalendarDays size={18} />}
-            />
+            {/* BACKGROUND LIGHT */}
 
-            <StatCard
-              title="Approved"
-              value={approvedLeaves}
-              icon={<CheckCircle2 size={18} />}
-            />
+            <div className="
+    absolute
+    inset-0
+    bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.14),transparent_22%),radial-gradient(circle_at_bottom_left,rgba(125,211,252,0.10),transparent_30%)]
+  " />
 
-            <StatCard
-              title="Pending"
-              value={pendingLeaves}
-              icon={<Clock3 size={18} />}
-            />
+            {/* GRID */}
 
-            <StatCard
-              title="Rejected"
-              value={rejectedLeaves}
-              icon={<XCircle size={18} />}
-            />
+            <div className="
+    absolute
+    inset-0
+    opacity-[0.05]
+    [background-image:linear-gradient(to_right,#fff_1px,transparent_1px),linear-gradient(to_bottom,#fff_1px,transparent_1px)]
+    [background-size:42px_42px]
+  " />
+
+            {/* GLOW */}
+
+            <div className="
+    absolute
+    top-[-120px]
+    right-[-100px]
+    h-[320px]
+    w-[320px]
+    rounded-full
+    bg-cyan-300/20
+    blur-[120px]
+  " />
+
+            <div className="
+    absolute
+    bottom-[-140px]
+    left-[-100px]
+    h-[280px]
+    w-[280px]
+    rounded-full
+    bg-blue-500/20
+    blur-[120px]
+  " />
+
+            {/* CONTENT */}
+
+            <div className="
+    relative
+    z-10
+    grid
+    grid-cols-2
+    gap-5
+    xl:grid-cols-4
+  ">
+
+              <AdminMetricCard
+                title="Total Leaves"
+                value={visibleLeaves.length}
+                icon={<CalendarDays size={18} />}
+              />
+
+              <AdminMetricCard
+                title="Approved"
+                value={approvedLeaves}
+                icon={<CheckCircle2 size={18} />}
+              />
+
+              <AdminMetricCard
+                title="Pending"
+                value={pendingLeaves}
+                icon={<Clock3 size={18} />}
+              />
+
+              <AdminMetricCard
+                title="Rejected"
+                value={rejectedLeaves}
+                icon={<XCircle size={18} />}
+              />
+
+            </div>
 
           </div>
 
@@ -988,13 +1098,12 @@ function StatusBadge({ status }) {
   return (
 
     <span
-      className={`px-3 py-1 rounded-full text-xs font-medium border ${
-        status === "approved"
-          ? "bg-green-100 text-green-700 border-green-200"
-          : status === "rejected"
+      className={`px-3 py-1 rounded-full text-xs font-medium border ${status === "approved"
+        ? "bg-green-100 text-green-700 border-green-200"
+        : status === "rejected"
           ? "bg-red-100 text-red-700 border-red-200"
           : "bg-yellow-100 text-yellow-700 border-yellow-200"
-      }`}
+        }`}
     >
       {status}
     </span>
@@ -1056,5 +1165,98 @@ function Input({
       value={value ?? ""}
       className={`w-full border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none rounded-2xl px-4 py-4 transition ${className}`}
     />
+  );
+}
+
+function AdminMetricCard({
+  title,
+  value,
+  icon,
+}) {
+
+  return (
+
+    <div className="
+      relative
+      overflow-hidden
+      rounded-[28px]
+      border
+      border-white/10
+      bg-white/10
+      p-5
+      backdrop-blur-2xl
+    ">
+
+      {/* SOFT GLOW */}
+
+      <div className="
+        absolute
+        top-0
+        right-0
+        h-24
+        w-24
+        rounded-full
+        bg-white/10
+        blur-3xl
+      " />
+
+      <div className="relative z-10">
+
+        <div className="
+          flex
+          items-center
+          justify-between
+        ">
+
+          <div className="
+            flex
+            h-12
+            w-12
+            items-center
+            justify-center
+            rounded-2xl
+            bg-white/10
+            text-white
+          ">
+
+            {icon}
+
+          </div>
+
+          <Plane
+            size={18}
+            className="text-blue-100/40"
+          />
+
+        </div>
+
+        <p className="
+          mt-5
+          text-xs
+          font-semibold
+          uppercase
+          tracking-[0.18em]
+          text-blue-100/70
+        ">
+
+          {title}
+
+        </p>
+
+        <h3 className="
+          mt-2
+          text-4xl
+          font-black
+          tracking-[-0.05em]
+          text-white
+        ">
+
+          {value}
+
+        </h3>
+
+      </div>
+
+    </div>
   );
 }

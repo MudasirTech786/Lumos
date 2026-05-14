@@ -9,6 +9,7 @@ import {
   Pencil,
   Trash2,
   LockKeyhole,
+  Sparkles
 } from "lucide-react";
 
 import { useEffect, useState } from "react";
@@ -206,12 +207,54 @@ export default function PermissionsPage() {
 
             <div>
 
-              <h1 className="text-3xl font-bold text-gray-900">
-                Permissions
+              <div className="
+    inline-flex
+    items-center
+    gap-2
+    rounded-full
+    border
+    border-blue-100
+    bg-blue-50
+    px-4
+    py-2
+    text-[11px]
+    font-semibold
+    uppercase
+    tracking-[0.22em]
+    text-blue-700
+  ">
+
+                <Sparkles size={12} />
+
+                Permission Control
+
+              </div>
+
+              <h1 className="
+    mt-4
+    text-4xl
+    md:text-5xl
+    font-black
+    tracking-[-0.06em]
+    text-gray-900
+  ">
+
+                System Permissions
+
               </h1>
 
-              <p className="text-gray-500 mt-1">
-                Manage system access permissions
+              <p className="
+    mt-4
+    max-w-3xl
+    text-base
+    leading-relaxed
+    text-gray-500
+  ">
+
+                Configure access permissions, operational controls,
+                authorization layers and secure workflow management
+                across the platform ecosystem.
+
               </p>
 
             </div>
@@ -227,25 +270,102 @@ export default function PermissionsPage() {
           </div>
 
           {/* STATS */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+          {/* ===================================================== */}
+          {/* PERMISSION STATS */}
+          {/* ===================================================== */}
 
-            <StatCard
-              title="Total Permissions"
-              value={permissions.length}
-              icon={<ShieldCheck size={18} />}
-            />
+          <div className="
+  relative
+  overflow-hidden
+  rounded-[36px]
+  border
+  border-blue-200/20
+  bg-gradient-to-br
+  from-[#071120]
+  via-[#0f3ba8]
+  to-[#2563eb]
+  p-6
+  shadow-[0_25px_120px_rgba(37,99,235,0.25)]
+">
 
-            <StatCard
-              title="Security Layer"
-              value="Active"
-              icon={<LockKeyhole size={18} />}
-            />
+            {/* BACKGROUND LIGHT */}
 
-            <StatCard
-              title="Access Control"
-              value="Protected"
-              icon={<ShieldCheck size={18} />}
-            />
+            <div className="
+    absolute
+    inset-0
+    bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.14),transparent_22%),radial-gradient(circle_at_bottom_left,rgba(125,211,252,0.10),transparent_30%)]
+  " />
+
+            {/* GRID */}
+
+            <div className="
+    absolute
+    inset-0
+    opacity-[0.05]
+    [background-image:linear-gradient(to_right,#fff_1px,transparent_1px),linear-gradient(to_bottom,#fff_1px,transparent_1px)]
+    [background-size:42px_42px]
+  " />
+
+            {/* GLOW */}
+
+            <div className="
+    absolute
+    top-[-120px]
+    right-[-100px]
+    h-[320px]
+    w-[320px]
+    rounded-full
+    bg-cyan-300/20
+    blur-[120px]
+  " />
+
+            <div className="
+    absolute
+    bottom-[-140px]
+    left-[-100px]
+    h-[280px]
+    w-[280px]
+    rounded-full
+    bg-blue-500/20
+    blur-[120px]
+  " />
+
+            {/* CONTENT */}
+
+            <div className="
+    relative
+    z-10
+  ">
+
+              <div className="
+      grid
+      grid-cols-1
+      gap-5
+      sm:grid-cols-2
+      xl:grid-cols-3
+    ">
+
+                <AdminMetricCard
+                  title="Total Permissions"
+                  value={permissions.length}
+                  icon={<ShieldCheck size={18} />}
+                />
+
+                <AdminMetricCard
+                  title="Security Layer"
+                  value="Active"
+                  icon={<LockKeyhole size={18} />}
+                />
+
+                <AdminMetricCard
+                  title="Access Control"
+                  value="Protected"
+                  icon={<ShieldCheck size={18} />}
+                />
+
+              </div>
+
+            </div>
 
           </div>
 
@@ -546,5 +666,104 @@ function Input(props) {
       {...props}
       className="w-full border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none rounded-2xl px-4 py-4 transition"
     />
+  );
+}
+
+function AdminMetricCard({
+  title,
+  value,
+  icon,
+}) {
+
+  return (
+
+    <div className="
+      relative
+      overflow-hidden
+      rounded-[28px]
+      border
+      border-white/10
+      bg-white/10
+      p-5
+      backdrop-blur-2xl
+      shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]
+      transition-all
+      duration-300
+      hover:translate-y-[-2px]
+      hover:bg-white/[0.12]
+    ">
+
+      {/* GLOW */}
+
+      <div className="
+        absolute
+        right-[-30px]
+        top-[-30px]
+        h-28
+        w-28
+        rounded-full
+        bg-cyan-300/10
+        blur-3xl
+      " />
+
+      {/* CONTENT */}
+
+      <div className="
+        relative
+        z-10
+        flex
+        items-start
+        justify-between
+      ">
+
+        <div>
+
+          <p className="
+            text-[11px]
+            font-semibold
+            uppercase
+            tracking-[0.22em]
+            text-blue-100/70
+          ">
+
+            {title}
+
+          </p>
+
+          <h3 className="
+            mt-4
+            text-4xl
+            font-black
+            tracking-[-0.05em]
+            text-white
+          ">
+
+            {value}
+
+          </h3>
+
+        </div>
+
+        <div className="
+          flex
+          h-12
+          w-12
+          items-center
+          justify-center
+          rounded-2xl
+          border
+          border-white/10
+          bg-white/10
+          text-cyan-200
+          backdrop-blur-xl
+        ">
+
+          {icon}
+
+        </div>
+
+      </div>
+
+    </div>
   );
 }
