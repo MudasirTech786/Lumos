@@ -13,22 +13,47 @@ import toast from "react-hot-toast";
 import Link from "next/link";
 
 import {
-  Briefcase,
+  ArrowLeft,
   CalendarDays,
   MapPin,
   Users,
-  FileText,
-  ArrowLeft,
-  Activity,
+  Truck,
   Clock3,
-  Film,
-  Sparkles,
   ChevronRight,
-  UserCheck,
+  Film,
+  Car,
 } from "lucide-react";
 
-export default function ShootDetailsPage() {
+/* ========================================================= */
+/* STATUS */
+/* ========================================================= */
 
+const STATUS_OPTIONS = [
+  "planned",
+  "scheduled",
+  "active",
+  "completed",
+  "cancelled",
+];
+
+const STATUS_STYLES = {
+  planned:
+    "bg-gray-100 text-gray-700 border-gray-200",
+
+  scheduled:
+    "bg-blue-100 text-blue-700 border-blue-200",
+
+  active:
+    "bg-green-100 text-green-700 border-green-200",
+
+  completed:
+    "bg-purple-100 text-purple-700 border-purple-200",
+
+  cancelled:
+    "bg-red-100 text-red-700 border-red-200",
+};
+
+export default function ShootDetailsPage() {
   const params = useParams();
 
   const router = useRouter();
@@ -39,709 +64,727 @@ export default function ShootDetailsPage() {
   const [loading, setLoading] =
     useState(true);
 
-  /*
-  |--------------------------------------------------------------------------
-  | FETCH PRODUCTION
-  |--------------------------------------------------------------------------
-  */
+  const [statusLoading, setStatusLoading] =
+    useState(false);
+
+  /* ========================================================= */
+  /* FETCH */
+  /* ========================================================= */
 
   const fetchShoot = async () => {
-
     try {
-
-      const res =
-        await api.get(
-          `/shoots/${params.id}`
-        );
-
-      setShoot(res.data);
-
-    } catch {
-
-      toast.error(
-        "Failed to load production"
+      const res = await api.get(
+        `/shoots/${params.id}`
       );
 
+      setShoot(res.data);
+    } catch {
+      toast.error(
+        "Failed to load shoot"
+      );
     } finally {
-
       setLoading(false);
     }
   };
 
   useEffect(() => {
-
     if (params.id) {
-
       fetchShoot();
     }
-
   }, [params.id]);
 
-  /*
-  |--------------------------------------------------------------------------
-  | CREW COUNT
-  |--------------------------------------------------------------------------
-  */
+  /* ========================================================= */
+  /* UPDATE STATUS */
+  /* ========================================================= */
 
-  const crewCount =
-    useMemo(() => {
+  const updateStatus = async (
+    status
+  ) => {
+    try {
+      setStatusLoading(true);
 
-      return (
-        shoot?.crew_members?.length ||
-        shoot?.crewMembers?.length ||
-        0
+      await api.patch(
+        `/shoots/${shoot.id}/status`,
+        {
+          status,
+        }
       );
 
-    }, [shoot]);
+      setShoot((prev) => ({
+        ...prev,
+        status,
+      }));
 
-  /*
-  |--------------------------------------------------------------------------
-  | LOADING
-  |--------------------------------------------------------------------------
-  */
+      toast.success(
+        "Status updated"
+      );
+    } catch {
+      toast.error(
+        "Failed to update status"
+      );
+    } finally {
+      setStatusLoading(false);
+    }
+  };
+
+  /* ========================================================= */
+  /* CREW COUNT */
+  /* ========================================================= */
+
+  const crewCount = useMemo(() => {
+    return (
+      shoot?.crew_members?.length ||
+      shoot?.crewMembers?.length ||
+      0
+    );
+  }, [shoot]);
+
+  /* ========================================================= */
+  /* LOADING */
+  /* ========================================================= */
 
   if (loading) {
-
     return (
-
       <Layout>
-
-        <div className="
-          py-32
-          text-center
-          text-gray-500
-        ">
-          Loading production...
+        <div className="py-24 text-center text-gray-500">
+          Loading shoot...
         </div>
-
       </Layout>
     );
   }
 
-  /*
-  |--------------------------------------------------------------------------
-  | NO DATA
-  |--------------------------------------------------------------------------
-  */
+  /* ========================================================= */
+  /* NO DATA */
+  /* ========================================================= */
 
   if (!shoot) {
-
     return (
-
       <Layout>
-
-        <div className="
-          py-32
-          text-center
-          text-gray-500
-        ">
-          Production not found
+        <div className="py-24 text-center text-gray-500">
+          Shoot not found
         </div>
-
       </Layout>
     );
   }
 
   return (
-
     <Layout>
 
-      <div className="
-        space-y-7
-        pb-24
-      ">
+      <div className="mx-auto max-w-5xl pb-24">
 
-        {/* ================================================= */}
-        {/* TOP HEADER */}
-        {/* ================================================= */}
+        {/* ========================================================= */}
+        {/* HEADER */}
+        {/* ========================================================= */}
 
-        <div className="
-          flex
-          flex-col
-          xl:flex-row
-          xl:items-center
-          xl:justify-between
-          gap-6
-        ">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
 
-          <div>
+          {/* LEFT */}
+
+          <div className="flex-1">
 
             <button
               onClick={() =>
                 router.back()
               }
               className="
-                inline-flex
-                items-center
-                gap-2
-                rounded-2xl
-                border
-                border-blue-100
-                bg-white
-                px-4
-                py-2.5
-                text-sm
-                font-semibold
-                text-blue-700
-                hover:bg-blue-50
-                transition-all
-              "
+        inline-flex
+        items-center
+        gap-2
+        rounded-2xl
+        border
+        border-gray-200
+        bg-white
+        px-4
+        py-3
+        text-sm
+        font-medium
+        text-gray-700
+        transition
+        hover:bg-gray-50
+      "
             >
-
               <ArrowLeft size={16} />
 
-              Back to Productions
-
+              Back
             </button>
+
+            {/* TITLE */}
 
             <div className="mt-6">
 
-              <div className="
-                inline-flex
-                items-center
-                gap-2
-                rounded-full
-                border
-                border-blue-100
-                bg-blue-50
-                px-4
-                py-2
-                text-[11px]
-                font-semibold
-                uppercase
-                tracking-[0.22em]
-                text-blue-700
-              ">
-
-                <Sparkles size={12} />
-
-                Production Overview
-
-              </div>
-
-              {/* <h1 className="
-                mt-4
-                text-4xl
-                md:text-5xl
-                font-black
-                tracking-[-0.06em]
-                text-gray-900
-              ">
+              <h1 className="text-4xl font-bold tracking-tight text-gray-900">
 
                 {shoot.title}
 
               </h1>
 
-              <p className="
-                mt-4
-                max-w-3xl
-                text-base
-                leading-relaxed
-                text-gray-500
-              ">
+              <p className="mt-2 text-sm text-gray-500">
 
-                Centralized production overview,
-                operational data and crew management
-                for this production workflow.
+                Shoot details, crew and transport information
 
-              </p> */}
+              </p>
 
             </div>
 
-          </div>
+            {/* ========================================================= */}
+            {/* STATUS BAR */}
+            {/* ========================================================= */}
 
-          <div className="
+            <div
+              className="
+        mt-6
+        flex
+        flex-col
+        gap-5
+        rounded-3xl
+        border
+        border-gray-200
+        bg-white
+        p-5
+        shadow-sm
+        sm:flex-row
+        sm:items-center
+        sm:justify-between
+      "
+            >
+
+              {/* LEFT STATUS */}
+
+              <div className="flex items-center gap-4">
+
+                {/* ICON */}
+
+                <div
+                  className={`
             flex
+            h-14
+            w-14
             items-center
-            gap-3
-            flex-wrap
-          ">
+            justify-center
+            rounded-2xl
+            ${shoot.status ===
+                      "planned"
+                      ? "bg-gray-100"
+                      : shoot.status ===
+                        "scheduled"
+                        ? "bg-blue-100"
+                        : shoot.status ===
+                          "active"
+                          ? "bg-green-100"
+                          : shoot.status ===
+                            "completed"
+                            ? "bg-purple-100"
+                            : "bg-red-100"
+                    }
+          `}
+                >
 
-            <Link
-              href="/dashboard/shoots/crew"
-              className="
-                inline-flex
-                items-center
-                gap-2
-                rounded-2xl
-                border
-                border-blue-100
-                bg-white
-                px-5
-                py-3
-                text-sm
-                font-semibold
-                text-gray-700
-                hover:bg-blue-50
-                transition-all
-              "
-            >
-
-              <Users size={18} />
-
-              Assign Crew
-
-            </Link>
-
-            <button
-              className="
-                inline-flex
-                items-center
-                gap-2
-                rounded-2xl
-                bg-blue-600
-                px-5
-                py-3
-                text-sm
-                font-semibold
-                text-white
-                shadow-[0_12px_40px_rgba(37,99,235,0.28)]
-                hover:bg-blue-700
-                transition-all
-              "
-            >
-
-              Production Active
-
-            </button>
-
-          </div>
-
-        </div>
-
-        {/* ================================================= */}
-        {/* HERO */}
-        {/* ================================================= */}
-
-
-        <div className="
-  relative
-  overflow-hidden
-  rounded-[36px]
-  border
-  border-blue-200/20
-  bg-gradient-to-br
-  from-[#071120]
-  via-[#0f3ba8]
-  to-[#2563eb]
-  p-6
-  shadow-[0_25px_120px_rgba(37,99,235,0.25)]
-">
-
-          {/* LIGHT */}
-
-          <div className="
-    absolute
-    inset-0
-    bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.14),transparent_22%),radial-gradient(circle_at_bottom_left,rgba(125,211,252,0.10),transparent_30%)]
-  " />
-
-          {/* GRID */}
-
-          <div className="
-    absolute
-    inset-0
-    opacity-[0.05]
-    [background-image:linear-gradient(to_right,#fff_1px,transparent_1px),linear-gradient(to_bottom,#fff_1px,transparent_1px)]
-    [background-size:42px_42px]
-  " />
-
-          {/* GLOW */}
-
-          <div className="
-    absolute
-    top-[-120px]
-    right-[-100px]
-    h-[320px]
-    w-[320px]
-    rounded-full
-    bg-cyan-300/20
-    blur-[120px]
-  " />
-
-          {/* CONTENT */}
-
-          <div className="relative z-10">
-
-            {/* TOP */}
-
-            <div className="
-      flex
-      items-center
-      justify-between
-    ">
-
-              <div>
-
-                <div className={`
-          inline-flex
-          items-center
-          gap-2
-          rounded-full
-          border
-          px-4
-          py-2
-          text-[11px]
-          font-semibold
-          uppercase
-          tracking-[0.18em]
-          backdrop-blur-xl
-
-          ${shoot.status === "completed"
-                    ? "border-emerald-400/20 bg-emerald-500/15 text-emerald-200"
-                    : shoot.status === "active"
-                      ? "border-cyan-400/20 bg-cyan-500/15 text-cyan-200"
-                      : "border-white/10 bg-white/10 text-blue-100"
-                  }
-        `}>
-
-                  <div className="
-            h-2
-            w-2
-            rounded-full
-            bg-current
-            animate-pulse
-          " />
-
-                  {shoot.status || "planned"}
+                  <div
+                    className={`
+              h-4
+              w-4
+              rounded-full
+              ${shoot.status ===
+                        "planned"
+                        ? "bg-gray-500"
+                        : shoot.status ===
+                          "scheduled"
+                          ? "bg-blue-500"
+                          : shoot.status ===
+                            "active"
+                            ? "bg-green-500 animate-pulse"
+                            : shoot.status ===
+                              "completed"
+                              ? "bg-purple-500"
+                              : "bg-red-500"
+                      }
+            `}
+                  />
 
                 </div>
 
-                <h2 className="
-          mt-5
-          text-4xl
-          font-black
-          tracking-[-0.06em]
-          text-white
-        ">
+                {/* TEXT */}
 
-                  {shoot.title}
+                <div>
 
-                </h2>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+
+                    Shoot Status
+
+                  </p>
+
+                  <h3 className="mt-1 text-xl font-bold capitalize text-gray-900">
+
+                    {shoot.status}
+
+                  </h3>
+
+                  <p className="mt-1 text-sm text-gray-500">
+
+                    {shoot.status ===
+                      "planned" &&
+                      "Waiting to be scheduled"}
+
+                    {shoot.status ===
+                      "scheduled" &&
+                      "Ready for production"}
+
+                    {shoot.status ===
+                      "active" &&
+                      "Production in progress"}
+
+                    {shoot.status ===
+                      "completed" &&
+                      "Production completed"}
+
+                    {shoot.status ===
+                      "cancelled" &&
+                      "Production cancelled"}
+
+                  </p>
+
+                </div>
+
+              </div>
+
+              {/* RIGHT CONTROLS */}
+
+              <div className="flex flex-col gap-2">
+
+                <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+
+                  Change Status
+
+                </p>
+
+                <div className="relative">
+
+                  <select
+                    value={shoot.status}
+                    disabled={statusLoading}
+                    onChange={(e) =>
+                      updateStatus(
+                        e.target.value
+                      )
+                    }
+                    className="
+              min-w-[220px]
+              appearance-none
+              rounded-2xl
+              border
+              border-gray-200
+              bg-gray-50
+              px-5
+              py-3
+              pr-12
+              text-sm
+              font-semibold
+              capitalize
+              text-gray-800
+              outline-none
+              transition
+              hover:border-gray-300
+              focus:border-blue-500
+              focus:bg-white
+              focus:ring-4
+              focus:ring-blue-100
+            "
+                  >
+
+                    {STATUS_OPTIONS.map(
+                      (status) => (
+
+                        <option
+                          key={status}
+                          value={status}
+                        >
+
+                          {status}
+
+                        </option>
+
+                      )
+                    )}
+
+                  </select>
+
+                  {/* CUSTOM ARROW */}
+
+                  <div
+                    className="
+              pointer-events-none
+              absolute
+              right-4
+              top-1/2
+              -translate-y-1/2
+              text-gray-400
+            "
+                  >
+
+                    ▼
+
+                  </div>
+
+                </div>
+
+                {statusLoading && (
+
+                  <p className="text-xs text-blue-500">
+
+                    Updating status...
+
+                  </p>
+
+                )}
 
               </div>
 
             </div>
 
-            {/* METRICS */}
+          </div>
 
-            <div className="
-      mt-7
-      grid
-      grid-cols-2
-      gap-5
-      xl:grid-cols-4
-    ">
+          {/* RIGHT ACTIONS */}
 
-              <MetricCard
-                title="Crew"
-                value={crewCount}
-                glow="blue"
-              />
+          <div className="flex flex-wrap gap-3">
 
-              <MetricCard
-                title="Status"
-                value={shoot.status || "Draft"}
-                glow="cyan"
-              />
+            <Link
+              href={`/dashboard/shoots/${shoot.id}/crew`}
+              className="
+        inline-flex
+        items-center
+        gap-2
+        rounded-2xl
+        border
+        border-gray-200
+        bg-white
+        px-5
+        py-3
+        text-sm
+        font-semibold
+        text-gray-700
+        transition
+        hover:bg-gray-50
+      "
+            >
+              <Users size={18} />
 
-              <MetricCard
-                title="Client"
-                value={
-                  shoot.client_name
-                    ? "Assigned"
-                    : "Pending"
-                }
-                glow="violet"
-              />
+              Crew
+            </Link>
 
-              <MetricCard
-                title="Location"
-                value={
-                  shoot.location
-                    ? "Ready"
-                    : "Pending"
-                }
-                glow="emerald"
-              />
+            <Link
+              href={`/dashboard/shoots/${shoot.id}/logistics`}
+              className="
+        inline-flex
+        items-center
+        gap-2
+        rounded-2xl
+        bg-blue-600
+        px-5
+        py-3
+        text-sm
+        font-semibold
+        text-white
+        transition
+        hover:bg-blue-700
+      "
+            >
+              <Truck size={18} />
 
-            </div>
+              Logistics
+            </Link>
 
           </div>
 
         </div>
 
+        {/* ========================================================= */}
+        {/* IMPORTANT INFO */}
+        {/* ========================================================= */}
 
-        {/* ================================================= */}
-        {/* DETAILS GRID */}
-        {/* ================================================= */}
+        <div className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-2">
 
-        <div className="
-          grid
-          grid-cols-1
-          xl:grid-cols-[1fr_0.42fr]
-          gap-7
-        ">
+          <SimpleInfoCard
+            icon={<MapPin size={20} />}
+            title="Location"
+            value={
+              shoot.location ||
+              "Not added"
+            }
+          />
 
-          {/* LEFT */}
-          <div className="
-            rounded-[36px]
-            border
-            border-blue-100
-            bg-white/70
-            backdrop-blur-2xl
-            p-6
-            md:p-8
-            shadow-[0_20px_80px_rgba(37,99,235,0.06)]
-          ">
+          <SimpleInfoCard
+            icon={
+              <CalendarDays size={20} />
+            }
+            title="Schedule"
+            value={
+              shoot.start_datetime
+                ? new Date(
+                  shoot.start_datetime
+                ).toLocaleString()
+                : "Not scheduled"
+            }
+          />
 
-            <div className="
-              flex
-              items-center
-              justify-between
-              mb-8
-            ">
+          <SimpleInfoCard
+            icon={<Film size={20} />}
+            title="Client"
+            value={
+              shoot.client_name ||
+              "Not added"
+            }
+          />
 
-              <div>
+          <SimpleInfoCard
+            icon={<Users size={20} />}
+            title="Crew Members"
+            value={`${crewCount} assigned`}
+          />
 
-                <h3 className="
-                  text-3xl
-                  font-black
-                  tracking-[-0.05em]
-                  text-gray-900
-                ">
-                  Production Information
+        </div>
+
+        {/* ========================================================= */}
+        {/* NOTES */}
+        {/* ========================================================= */}
+
+        <div className="mt-6">
+
+          <Card title="Notes">
+
+            <div
+              className="
+                rounded-2xl
+                border
+                border-gray-200
+                bg-gray-50
+                p-5
+                text-sm
+                leading-relaxed
+                text-gray-700
+              "
+            >
+
+              {shoot.notes ||
+                "No notes added yet."}
+
+            </div>
+
+          </Card>
+
+        </div>
+
+        {/* ========================================================= */}
+        {/* TRANSPORT */}
+        {/* ========================================================= */}
+
+        <div className="mt-6">
+
+          <Card title="Vehicles & Transport">
+
+            {!shoot.logistics ||
+              shoot.logistics.length === 0 ? (
+
+              <div
+                className="
+                  rounded-2xl
+                  border
+                  border-dashed
+                  border-gray-300
+                  py-14
+                  text-center
+                "
+              >
+
+                <Truck
+                  size={42}
+                  className="
+                    mx-auto
+                    text-gray-300
+                  "
+                />
+
+                <h3 className="mt-4 text-lg font-semibold text-gray-900">
+
+                  No transport added
+
                 </h3>
 
-                <p className="
-                  mt-2
-                  text-sm
-                  text-gray-500
-                ">
-                  Operational production details and metadata
+                <p className="mt-2 text-sm text-gray-500">
+
+                  Add vehicles and pickup details
+
                 </p>
 
               </div>
 
-              <div className="
-                inline-flex
-                items-center
-                gap-2
-                rounded-2xl
-                bg-blue-50
-                px-4
-                py-3
-                text-sm
-                font-semibold
-                text-blue-700
-              ">
+            ) : (
 
-                <Clock3 size={16} />
+              <div className="space-y-4">
 
-                Live Data
+                {shoot.logistics.map(
+                  (item) => (
 
-              </div>
+                    <div
+                      key={item.id}
+                      className="
+                        rounded-2xl
+                        border
+                        border-gray-200
+                        p-5
+                      "
+                    >
 
-            </div>
+                      <h3 className="text-lg font-bold text-gray-900">
 
-            <div className="
-              grid
-              grid-cols-1
-              md:grid-cols-2
-              gap-5
-            ">
+                        {item.vehicle ||
+                          "Unnamed Vehicle"}
 
-              <InfoCard
-                icon={<Briefcase size={18} />}
-                title="Client / Brand"
-                value={
-                  shoot.client_name ||
-                  "Not assigned"
-                }
-              />
+                      </h3>
 
-              <InfoCard
-                icon={<MapPin size={18} />}
-                title="Location"
-                value={
-                  shoot.location ||
-                  "Not assigned"
-                }
-              />
+                      <div className="mt-5 space-y-4">
 
-              <InfoCard
-                icon={<CalendarDays size={18} />}
-                title="Shoot Date"
-                value={
-                  shoot.shoot_date ||
-                  "Not assigned"
-                }
-              />
+                        <TransportRow
+                          icon={
+                            <Car size={18} />
+                          }
+                          label="Vehicle Type"
+                          value={
+                            item.logistics_type
+                              ? item.logistics_type.replaceAll(
+                                "_",
+                                " "
+                              )
+                              : "Not added"
+                          }
+                        />
 
-              <InfoCard
-                icon={<Users size={18} />}
-                title="Crew Members"
-                value={`${crewCount} Assigned`}
-              />
+                        <TransportRow
+                          icon={
+                            <Users size={18} />
+                          }
+                          label="Driver"
+                          value={
+                            item.driver_name ||
+                            "Not assigned"
+                          }
+                        />
 
-            </div>
+                        <TransportRow
+                          icon={
+                            <MapPin size={18} />
+                          }
+                          label="Pickup Location"
+                          value={
+                            item.pickup_location ||
+                            "Not added"
+                          }
+                        />
 
-            {/* NOTES */}
-            <div className="mt-10">
+                        <TransportRow
+                          icon={
+                            <Clock3 size={18} />
+                          }
+                          label="Pickup Time"
+                          value={
+                            item.pickup_time
+                              ? new Date(
+                                item.pickup_time
+                              ).toLocaleString()
+                              : "Not scheduled"
+                          }
+                        />
 
-              <div className="
-                flex
-                items-center
-                gap-3
-              ">
+                        <TransportRow
+                          icon={
+                            <Truck size={18} />
+                          }
+                          label="Status"
+                          value={
+                            item.status
+                              ? item.status.replaceAll(
+                                "_",
+                                " "
+                              )
+                              : "Pending"
+                          }
+                        />
 
-                <div className="
-                  w-12
-                  h-12
-                  rounded-2xl
-                  bg-blue-50
-                  flex
-                  items-center
-                  justify-center
-                  text-blue-600
-                ">
+                      </div>
 
-                  <FileText size={20} />
+                    </div>
 
-                </div>
-
-                <div>
-
-                  <h3 className="
-                    text-xl
-                    font-bold
-                    text-gray-900
-                  ">
-                    Production Notes
-                  </h3>
-
-                  <p className="
-                    text-sm
-                    text-gray-500
-                    mt-1
-                  ">
-                    Operational remarks and planning details
-                  </p>
-
-                </div>
+                  )
+                )}
 
               </div>
 
-              <div className="
+            )}
+
+            <Link
+              href={`/dashboard/shoots/${shoot.id}/logistics`}
+              className="
                 mt-5
-                rounded-[30px]
-                border
-                border-blue-100
-                bg-blue-50/40
-                p-6
-                text-gray-600
-                leading-relaxed
-              ">
-
-                {shoot.notes ||
-                  "No production notes added yet."}
-
-              </div>
-
-            </div>
-
-          </div>
-
-          {/* RIGHT */}
-          <div className="
-            space-y-6
-          ">
-
-            {/* CREW */}
-            <div className="
-              rounded-[36px]
-              border
-              border-blue-100
-              bg-white/70
-              backdrop-blur-2xl
-              p-6
-              shadow-[0_20px_80px_rgba(37,99,235,0.06)]
-            ">
-
-              <div className="
                 flex
                 items-center
                 justify-between
-              ">
+                rounded-2xl
+                bg-blue-600
+                px-5
+                py-4
+                text-sm
+                font-semibold
+                text-white
+                hover:bg-blue-700
+              "
+            >
 
-                <div>
+              Open Logistics
 
-                  <h3 className="
-                    text-2xl
-                    font-black
-                    tracking-[-0.04em]
-                    text-gray-900
-                  ">
-                    Assigned Crew
-                  </h3>
+              <ChevronRight size={16} />
 
-                  <p className="
-                    mt-1
-                    text-sm
-                    text-gray-500
-                  ">
-                    Production operators
-                  </p>
+            </Link>
 
-                </div>
+          </Card>
 
-                <div className="
-                  w-12
-                  h-12
+        </div>
+
+        {/* ========================================================= */}
+        {/* CREW MEMBERS */}
+        {/* ========================================================= */}
+
+        <div className="mt-6">
+
+          <Card title="Crew Members">
+
+            {(shoot.crew_members ||
+              shoot.crewMembers ||
+              []).length === 0 ? (
+
+              <div
+                className="
                   rounded-2xl
-                  bg-blue-50
-                  flex
-                  items-center
-                  justify-center
-                  text-blue-600
-                ">
+                  border
+                  border-dashed
+                  border-gray-300
+                  py-14
+                  text-center
+                  text-sm
+                  text-gray-500
+                "
+              >
 
-                  <UserCheck size={20} />
-
-                </div>
+                No crew assigned yet
 
               </div>
 
-              <div className="
-                mt-6
-                space-y-4
-              ">
+            ) : (
+
+              <div className="space-y-3">
 
                 {(shoot.crew_members ||
                   shoot.crewMembers ||
-                  []).length === 0 ? (
-
-                  <div className="
-                    rounded-3xl
-                    border
-                    border-dashed
-                    border-blue-100
-                    bg-blue-50/30
-                    p-6
-                    text-center
-                    text-sm
-                    text-gray-500
-                  ">
-
-                    No crew assigned yet
-
-                  </div>
-
-                ) : (
-
-                  (shoot.crew_members ||
-                    shoot.crewMembers ||
-                    []).map((crew) => (
+                  []).map(
+                    (crew) => (
 
                       <div
                         key={crew.id}
@@ -749,39 +792,37 @@ export default function ShootDetailsPage() {
                           flex
                           items-center
                           gap-4
-                          rounded-3xl
+                          rounded-2xl
                           border
-                        border-blue-100
-                        bg-white/70 backdrop-blur-xl
-                        hover:border-blue-200
-                          hover:shadow-[0_0_35px_rgba(59,130,246,0.12)]
-                          transition-all
+                          border-gray-200
                           p-4
                         "
                       >
 
-                        <div className="
-                          w-14
-                          h-14
-                          rounded-3xl
-                          overflow-hidden
-                          bg-blue-100
-                          flex
-                          items-center
-                          justify-center
-                          text-blue-700
-                          font-bold
-                          text-lg
-                          shrink-0
-                        ">
+                        <div
+                          className="
+                            flex
+                            h-14
+                            w-14
+                            items-center
+                            justify-center
+                            overflow-hidden
+                            rounded-2xl
+                            bg-blue-100
+                            text-lg
+                            font-bold
+                            text-blue-700
+                            shrink-0
+                          "
+                        >
 
                           {crew.profile_photo ? (
 
                             <img
                               src={`${process.env.NEXT_PUBLIC_BACKEND_URL}/storage/${crew.profile_photo}`}
                               className="
-                                w-full
                                 h-full
+                                w-full
                                 object-cover
                               "
                             />
@@ -794,50 +835,85 @@ export default function ShootDetailsPage() {
 
                         </div>
 
-                        <div className="
-                          min-w-0
-                          flex-1
-                        ">
+                        <div className="min-w-0 flex-1">
 
-                          <h4 className="
-                            text-sm
-                            font-bold
-                            text-gray-900
-                            truncate
-                          ">
+                          <h3 className="truncate text-sm font-semibold text-gray-900">
+
                             {crew.name}
-                          </h4>
 
-                          <p className="
-                            mt-1
-                            text-xs
-                            text-blue-700
-                            font-medium
-                          ">
+                          </h3>
+
+                          <p className="mt-1 text-sm text-gray-500">
+
                             {crew.designation ||
                               "Crew Member"}
+
                           </p>
 
                         </div>
 
                       </div>
 
-                    ))
-
-                )}
+                    )
+                  )}
 
               </div>
 
+            )}
+
+            <Link
+              href={`/dashboard/shoots/${shoot.id}/crew`}
+              className="
+                mt-5
+                flex
+                items-center
+                justify-between
+                rounded-2xl
+                bg-blue-600
+                px-5
+                py-4
+                text-sm
+                font-semibold
+                text-white
+                hover:bg-blue-700
+              "
+            >
+
+              Open Crew Management
+
+              <ChevronRight size={16} />
+
+            </Link>
+
+          </Card>
+
+        </div>
+
+        {/* ========================================================= */}
+        {/* QUICK ACTIONS */}
+        {/* ========================================================= */}
+
+        <div className="mt-6">
+
+          <Card title="Quick Actions">
+
+            <div className="space-y-3">
+
               <Link
-                href="/dashboard/shoots/crew"
+                href={`/dashboard/shoots/${shoot.id}/crew`}
                 className="
-                  mt-6
-                  inline-flex
+                  flex
                   items-center
-                  gap-2
+                  justify-between
+                  rounded-2xl
+                  border
+                  border-gray-200
+                  px-4
+                  py-4
                   text-sm
-                  font-semibold
-                  text-blue-700
+                  font-medium
+                  text-gray-700
+                  hover:bg-gray-50
                 "
               >
 
@@ -847,131 +923,33 @@ export default function ShootDetailsPage() {
 
               </Link>
 
-            </div>
+              <Link
+                href={`/dashboard/shoots/${shoot.id}/logistics`}
+                className="
+                  flex
+                  items-center
+                  justify-between
+                  rounded-2xl
+                  border
+                  border-gray-200
+                  px-4
+                  py-4
+                  text-sm
+                  font-medium
+                  text-gray-700
+                  hover:bg-gray-50
+                "
+              >
 
-            {/* QUICK ACTIONS */}
-            <div className="
-              rounded-[36px]
-              border
-              border-blue-100
-              bg-gradient-to-br
-             from-[#0f3ba8]
-            to-[#2563eb]
-              p-6
-              text-white
-              shadow-[0_20px_80px_rgba(37,99,235,0.20)]
-            ">
+                Manage Logistics
 
-              <p className="
-                text-xs
-                uppercase
-                tracking-[0.24em]
-                text-blue-100/70
-              ">
-                Production Actions
-              </p>
+                <ChevronRight size={16} />
 
-              <h3 className="
-                mt-3
-                text-3xl
-                font-black
-                tracking-[-0.05em]
-              ">
-                Continue workflow
-              </h3>
-
-              <p className="
-                mt-4
-                text-sm
-                leading-relaxed
-                text-blue-100/80
-              ">
-
-                Manage crew operations,
-                scheduling and production
-                execution workflows.
-
-              </p>
-
-              <div className="
-                mt-8
-                space-y-3
-              ">
-
-                <Link
-                  href="/dashboard/shoots/crew"
-                  className="
-                    flex
-                    items-center
-                    justify-between
-                    rounded-2xl
-                    bg-white/10
-                    px-5
-                    py-4
-                    text-sm
-                    font-semibold
-                    hover:bg-white/15
-                    transition-all
-                  "
-                >
-
-                  Assign Crew
-
-                  <ChevronRight size={16} />
-
-                </Link>
-
-                <button
-                  className="
-                    w-full
-                    flex
-                    items-center
-                    justify-between
-                    rounded-2xl
-                    bg-white/10
-                    px-5
-                    py-4
-                    text-sm
-                    font-semibold
-                    hover:bg-white/15
-                    transition-all
-                  "
-                >
-
-                  Scheduling
-
-                  <ChevronRight size={16} />
-
-                </button>
-
-                <button
-                  className="
-                    w-full
-                    flex
-                    items-center
-                    justify-between
-                    rounded-2xl
-                    bg-white/10
-                    px-5
-                    py-4
-                    text-sm
-                    font-semibold
-                    hover:bg-white/15
-                    transition-all
-                  "
-                >
-
-                  Logistics
-
-                  <ChevronRight size={16} />
-
-                </button>
-
-              </div>
+              </Link>
 
             </div>
 
-          </div>
+          </Card>
 
         </div>
 
@@ -982,48 +960,75 @@ export default function ShootDetailsPage() {
 }
 
 /* ========================================================= */
-/* INFO CARD */
+/* CARD */
 /* ========================================================= */
 
-function InfoCard({
+function Card({
+  title,
+  children,
+}) {
+  return (
+    <div
+      className="
+        rounded-3xl
+        border
+        border-gray-200
+        bg-white
+        p-6
+      "
+    >
+
+      <h2 className="text-xl font-bold text-gray-900">
+
+        {title}
+
+      </h2>
+
+      <div className="mt-5">
+
+        {children}
+
+      </div>
+
+    </div>
+  );
+}
+
+/* ========================================================= */
+/* SIMPLE INFO CARD */
+/* ========================================================= */
+
+function SimpleInfoCard({
   icon,
   title,
   value,
 }) {
-
   return (
+    <div
+      className="
+        rounded-3xl
+        border
+        border-gray-200
+        bg-white
+        p-5
+      "
+    >
 
-    <div className="
-      group
-      rounded-[28px]
-      border
-      border-blue-100
-      bg-white/70
-      p-5
-      backdrop-blur-2xl
-      transition-all
-      duration-300
+      <div className="flex items-start gap-4">
 
-      hover:border-blue-200
-      hover:shadow-[0_0_40px_rgba(59,130,246,0.10)]
-    ">
-
-      <div className="
-        flex
-        items-center
-        gap-4
-      ">
-
-        <div className="
-          flex
-          h-12
-          w-12
-          items-center
-          justify-center
-          rounded-2xl
-          bg-blue-50
-          text-blue-600
-        ">
+        <div
+          className="
+            flex
+            h-12
+            w-12
+            items-center
+            justify-center
+            rounded-2xl
+            bg-blue-50
+            text-blue-600
+            shrink-0
+          "
+        >
 
           {icon}
 
@@ -1031,24 +1036,13 @@ function InfoCard({
 
         <div className="min-w-0">
 
-          <p className="
-            text-[11px]
-            uppercase
-            tracking-[0.18em]
-            text-slate-400
-          ">
+          <p className="text-sm text-gray-500">
 
             {title}
 
           </p>
 
-          <h3 className="
-            mt-1
-            truncate
-            text-base
-            font-bold
-            text-slate-900
-          ">
+          <h3 className="mt-2 text-base font-semibold text-gray-900 break-words">
 
             {value}
 
@@ -1062,117 +1056,42 @@ function InfoCard({
   );
 }
 
-
 /* ========================================================= */
-/* HERO PILL */
+/* TRANSPORT ROW */
 /* ========================================================= */
 
-function HeroPill({
+function TransportRow({
   icon,
   label,
-}) {
-
-  return (
-
-    <div className="
-      inline-flex
-      items-center
-      gap-2
-      rounded-2xl
-      border
-      border-white/10
-      bg-white/10
-      px-4
-      py-3
-      text-sm
-      font-medium
-      text-white
-    ">
-
-      {icon}
-
-      {label}
-
-    </div>
-  );
-}
-
-/* ========================================================= */
-/* STATS */
-/* ========================================================= */
-
-function MetricCard({
-  title,
   value,
-  glow,
 }) {
-
-  const glowStyles = {
-
-    blue:
-      "from-blue-500/20 to-blue-400/5 border-blue-300/10",
-
-    cyan:
-      "from-cyan-500/20 to-cyan-400/5 border-cyan-300/10",
-
-    violet:
-      "from-violet-500/20 to-violet-400/5 border-violet-300/10",
-
-    emerald:
-      "from-emerald-500/20 to-emerald-400/5 border-emerald-300/10",
-  };
-
   return (
+    <div className="flex items-start gap-3">
 
-    <div className={`
-      group
-      relative
-      overflow-hidden
-      rounded-[28px]
-      border
-      bg-gradient-to-br
-      p-5
-      backdrop-blur-2xl
-      transition-all
-      duration-300
+      <div
+        className="
+          mt-0.5
+          text-gray-400
+        "
+      >
 
-      hover:-translate-y-1
-      hover:shadow-[0_0_45px_rgba(59,130,246,0.22)]
+        {icon}
 
-      ${glowStyles[glow]}
-    `}>
+      </div>
 
-      <div className="
-        absolute
-        inset-0
-        bg-[linear-gradient(to_bottom_right,rgba(255,255,255,0.08),transparent)]
-      " />
+      <div>
 
-      <div className="relative z-10">
+        <p className="text-xs text-gray-500">
 
-        <p className="
-          text-[11px]
-          uppercase
-          tracking-[0.18em]
-          text-blue-100/60
-        ">
-
-          {title}
+          {label}
 
         </p>
 
-        <h3 className="
-          mt-4
-          text-3xl
-          font-black
-          tracking-[-0.05em]
-          text-white
-          break-words
-        ">
+        <p className="mt-1 text-sm font-medium text-gray-900">
 
           {value}
 
-        </h3>
+        </p>
 
       </div>
 

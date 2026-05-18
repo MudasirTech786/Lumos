@@ -37,7 +37,8 @@ export default function CreateShootPage() {
       title: "",
       client_name: "",
       location: "",
-      shoot_date: "",
+      start_datetime: "",
+      end_datetime: "",
       status: "planned",
       notes: "",
     });
@@ -351,16 +352,28 @@ export default function CreateShootPage() {
                 })
               }
             />
-
             <Input
-              type="date"
+              type="datetime-local"
               icon={<CalendarDays size={18} />}
-              label="Shoot Date"
-              value={form.shoot_date}
+              label="Start Schedule"
+              value={form.start_datetime}
               onChange={(value) =>
                 setForm({
                   ...form,
-                  shoot_date: value,
+                  start_datetime: value,
+                })
+              }
+            />
+
+            <Input
+              type="datetime-local"
+              icon={<Clock3 size={18} />}
+              label="End Schedule"
+              value={form.end_datetime}
+              onChange={(value) =>
+                setForm({
+                  ...form,
+                  end_datetime: value,
                 })
               }
             />

@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 
 import Layout from "@/components/Layout";
-
 import api from "@/lib/api";
 
 import Link from "next/link";
@@ -11,741 +10,312 @@ import Link from "next/link";
 import toast from "react-hot-toast";
 
 import {
-  Briefcase,
-  CalendarDays,
-  Users,
-  MapPin,
   Plus,
-  Trash2,
+  MapPin,
+  CalendarDays,
+  Search,
   ChevronRight,
-  Activity,
   Film,
-  Clock3,
-  Sparkles,
+  MoreVertical,
+  Trash2,
+  Edit3,
 } from "lucide-react";
 
 export default function ShootsPage() {
-
   const [shoots, setShoots] = useState([]);
-
   const [loading, setLoading] = useState(true);
 
-  /*
-  |--------------------------------------------------------------------------
-  | FETCH PRODUCTIONS
-  |--------------------------------------------------------------------------
-  */
+  const [search, setSearch] = useState("");
+
+  const [activeTab, setActiveTab] = useState("all");
+
+  /* ========================================================= */
+  /* FETCH SHOOTS */
+  /* ========================================================= */
 
   const fetchShoots = async () => {
-
     try {
-
-      const res =
-        await api.get("/shoots");
+      const res = await api.get("/shoots");
 
       setShoots(
         Array.isArray(res.data)
           ? res.data
           : res.data?.data || []
       );
-
     } catch {
-
-      toast.error(
-        "Failed to load productions"
-      );
-
+      toast.error("Failed to load shoots");
     } finally {
-
       setLoading(false);
     }
   };
 
   useEffect(() => {
-
     fetchShoots();
-
   }, []);
 
-  /*
-  |--------------------------------------------------------------------------
-  | DELETE
-  |--------------------------------------------------------------------------
-  */
+  /* ========================================================= */
+  /* DELETE */
+  /* ========================================================= */
 
   const deleteShoot = async (id) => {
-
-    const confirmDelete =
-      confirm(
-        "Delete this production?"
-      );
+    const confirmDelete = confirm(
+      "Delete this shoot?"
+    );
 
     if (!confirmDelete) return;
 
     try {
+      await api.delete(`/shoots/${id}`);
 
-      await api.delete(
-        `/shoots/${id}`
-      );
-
-      toast.success(
-        "Production deleted"
-      );
+      toast.success("Shoot deleted");
 
       fetchShoots();
-
     } catch {
-
-      toast.error(
-        "Delete failed"
-      );
+      toast.error("Delete failed");
     }
   };
 
-  /*
-  |--------------------------------------------------------------------------
-  | STATS
-  |--------------------------------------------------------------------------
-  */
+  /* ========================================================= */
+  /* FILTERED SHOOTS */
+  /* ========================================================= */
+
+  const filteredShoots = useMemo(() => {
+    let filtered = [...shoots];
+
+    /* STATUS FILTER */
+
+    if (activeTab !== "all") {
+      filtered = filtered.filter(
+        (shoot) =>
+          (shoot.status || "planned")
+            .toLowerCase() === activeTab
+      );
+    }
+
+    /* SEARCH FILTER */
+
+    if (search.trim()) {
+      filtered = filtered.filter((shoot) => {
+        const text = `
+          ${shoot.title || ""}
+          ${shoot.client_name || ""}
+          ${shoot.location || ""}
+        `.toLowerCase();
+
+        return text.includes(search.toLowerCase());
+      });
+    }
+
+    /* SORT BY DATE */
+
+    filtered.sort((a, b) => {
+      return (
+        new Date(a.start_datetime || 0) -
+        new Date(b.start_datetime || 0)
+      );
+    });
+
+    return filtered;
+  }, [shoots, activeTab, search]);
+
+  /* ========================================================= */
+  /* STATS */
+  /* ========================================================= */
 
   const stats = useMemo(() => {
-
-    const active =
-      shoots.filter(
-        (s) =>
-          s.status === "active"
-      ).length;
-
-    const planned =
-      shoots.filter(
-        (s) =>
-          s.status === "planned"
-      ).length;
-
-    const completed =
-      shoots.filter(
-        (s) =>
-          s.status === "completed"
-      ).length;
-
     return {
-      total: shoots.length,
-      active,
-      planned,
-      completed,
+      all: shoots.length,
+      active: shoots.filter(
+        (s) => s.status === "active"
+      ).length,
+      planned: shoots.filter(
+        (s) => s.status === "planned"
+      ).length,
+      completed: shoots.filter(
+        (s) => s.status === "completed"
+      ).length,
     };
-
   }, [shoots]);
 
   return (
-
     <Layout>
+      <div className="mx-auto max-w-6xl pb-24">
 
-      <div className="space-y-7 pb-24">
+        {/* ========================================================= */}
+        {/* HEADER */}
+        {/* ========================================================= */}
 
-        {/* ===================================================== */}
-        {/* TOP HEADER */}
-        {/* ===================================================== */}
-
-        <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-6">
+        <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
 
           <div>
-
-            <div className="
-              inline-flex
-              items-center
-              gap-2
-              rounded-full
-              border
-              border-blue-100
-              bg-blue-50
-              px-4
-              py-2
-              text-[11px]
-              font-semibold
-              uppercase
-              tracking-[0.22em]
-              text-blue-700
-            ">
-
-              <Sparkles size={12} />
-
-              Production Operations
-
-            </div>
-
-            <h1 className="
-              mt-4
-              text-4xl
-              md:text-5xl
-              font-black
-              tracking-[-0.06em]
-              text-gray-900
-            ">
-
-              Production Control Center
-
+            <h1 className="text-3xl font-bold text-gray-900">
+              Shoots
             </h1>
 
-            <p className="
-              mt-4
-              max-w-3xl
-              text-base
-              leading-relaxed
-              text-gray-500
-            ">
-
-              Manage production workflows, crew operations,
-              schedules, locations and field execution
-              from a centralized command system.
-
+            <p className="mt-1 text-sm text-gray-500">
+              Manage productions, schedules and crew
             </p>
-
           </div>
 
-          <div className="flex items-center gap-3">
+          <Link
+            href="/dashboard/shoots/create"
+            className="
+              inline-flex
+              items-center
+              justify-center
+              gap-2
+              rounded-2xl
+              bg-blue-600
+              px-5
+              py-3
+              text-sm
+              font-semibold
+              text-white
+              transition-all
+              hover:bg-blue-700
+            "
+          >
+            <Plus size={18} />
 
-            <Link
-              href="/dashboard/shoots/crew"
+            New Shoot
+          </Link>
+        </div>
+
+        {/* ========================================================= */}
+        {/* SEARCH */}
+        {/* ========================================================= */}
+
+        <div className="mt-8">
+
+          <div
+            className="
+              flex
+              items-center
+              gap-3
+              rounded-2xl
+              border
+              border-gray-200
+              bg-white
+              px-4
+              py-3
+            "
+          >
+            <Search
+              size={18}
+              className="text-gray-400"
+            />
+
+            <input
+              type="text"
+              placeholder="Search shoots..."
+              value={search}
+              onChange={(e) =>
+                setSearch(e.target.value)
+              }
               className="
-                inline-flex
-                items-center
-                gap-2
-                rounded-2xl
-                border
-                border-blue-100
-                bg-white
-                px-5
-                py-3
+                w-full
+                bg-transparent
                 text-sm
-                font-semibold
                 text-gray-700
-                hover:border-blue-200
-                hover:bg-blue-50
-                transition-all
+                outline-none
+                placeholder:text-gray-400
               "
-            >
-
-              <Users size={18} />
-
-              Crew Assignments
-
-            </Link>
-
-            <Link
-              href="/dashboard/shoots/create"
-              className="
-                inline-flex
-                items-center
-                gap-2
-                rounded-2xl
-                bg-blue-600
-                px-5
-                py-3
-                text-sm
-                font-semibold
-                text-white
-                shadow-[0_12px_40px_rgba(37,99,235,0.28)]
-                hover:bg-blue-700
-                transition-all
-              "
-            >
-
-              <Plus size={18} />
-
-              New Production
-
-            </Link>
-
+            />
           </div>
+        </div>
+
+        {/* ========================================================= */}
+        {/* FILTER TABS */}
+        {/* ========================================================= */}
+
+        <div className="mt-6 flex flex-wrap gap-3">
+
+          <TabButton
+            active={activeTab === "all"}
+            label={`All (${stats.all})`}
+            onClick={() => setActiveTab("all")}
+          />
+
+          <TabButton
+            active={activeTab === "active"}
+            label={`Active (${stats.active})`}
+            onClick={() =>
+              setActiveTab("active")
+            }
+          />
+
+          <TabButton
+            active={activeTab === "planned"}
+            label={`Planned (${stats.planned})`}
+            onClick={() =>
+              setActiveTab("planned")
+            }
+          />
+
+          <TabButton
+            active={activeTab === "completed"}
+            label={`Completed (${stats.completed})`}
+            onClick={() =>
+              setActiveTab("completed")
+            }
+          />
 
         </div>
 
-        {/* ===================================================== */}
-        {/* HERO */}
-        {/* ===================================================== */}
+        {/* ========================================================= */}
+        {/* TODAY SECTION */}
+        {/* ========================================================= */}
 
+        <div className="mt-10">
 
-        <div className="
-  relative
-  overflow-hidden
-  rounded-[36px]
-  border
-  border-blue-200/20
-  bg-gradient-to-br
-  from-[#071120]
-  via-[#0f3ba8]
-  to-[#2563eb]
-  p-6
-  shadow-[0_25px_120px_rgba(37,99,235,0.25)]
-">
+          <div className="mb-5">
+            <h2 className="text-lg font-semibold text-gray-900">
+              Productions
+            </h2>
 
-          {/* ===================================================== */}
-          {/* BACKGROUND LIGHT */}
-          {/* ===================================================== */}
-
-          <div className="
-    absolute
-    inset-0
-    bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.14),transparent_22%),radial-gradient(circle_at_bottom_left,rgba(125,211,252,0.10),transparent_30%)]
-  " />
-
-          {/* GRID */}
-
-          <div className="
-    absolute
-    inset-0
-    opacity-[0.05]
-    [background-image:linear-gradient(to_right,#fff_1px,transparent_1px),linear-gradient(to_bottom,#fff_1px,transparent_1px)]
-    [background-size:42px_42px]
-  " />
-
-          {/* GLOW */}
-
-          <div className="
-    absolute
-    top-[-120px]
-    right-[-100px]
-    h-[320px]
-    w-[320px]
-    rounded-full
-    bg-cyan-300/20
-    blur-[120px]
-  " />
-
-          <div className="
-    absolute
-    bottom-[-140px]
-    left-[-100px]
-    h-[280px]
-    w-[280px]
-    rounded-full
-    bg-blue-500/20
-    blur-[120px]
-  " />
-
-          {/* ===================================================== */}
-          {/* CONTENT */}
-          {/* ===================================================== */}
-
-          <div className="
-    relative
-    z-10
-  ">
-
-            {/* TOP BAR */}
-
-            <div className="
-      mb-6
-      flex
-      items-center
-      justify-between
-    ">
-            </div>
-
-            {/* METRICS GRID */}
-
-            <div className="
-      grid
-      grid-cols-2
-      gap-5
-      xl:grid-cols-4
-    ">
-
-              <MetricCard
-                title="Total Productions"
-                value={stats.total}
-                glow="blue"
-              />
-
-              <MetricCard
-                title="Active Shoots"
-                value={stats.active}
-                glow="cyan"
-              />
-
-              <MetricCard
-                title="Planned"
-                value={stats.planned}
-                glow="violet"
-              />
-
-              <MetricCard
-                title="Completed"
-                value={stats.completed}
-                glow="emerald"
-              />
-
-            </div>
-
+            <p className="mt-1 text-sm text-gray-500">
+              {filteredShoots.length} shoots found
+            </p>
           </div>
 
-        </div>
-
-
-        {/* ===================================================== */}
-        {/* PRODUCTIONS */}
-        {/* ===================================================== */}
-
-        <div className="
-  overflow-hidden
-  rounded-[36px]
-  border
-  border-blue-100/70
-  bg-white/70
-  backdrop-blur-2xl
-  shadow-[0_20px_80px_rgba(37,99,235,0.06)]
-">
-
-          {/* ===================================================== */}
-          {/* HEADER */}
-          {/* ===================================================== */}
-
-          <div className="
-    flex
-    flex-col
-    gap-5
-    border-b
-    border-blue-100/70
-    px-6
-    py-5
-    lg:flex-row
-    lg:items-center
-    lg:justify-between
-  ">
-
-            {/* LEFT */}
-
-            <div>
-
-              <h3 className="
-        text-2xl
-        font-black
-        tracking-[-0.05em]
-        text-slate-900
-      ">
-
-                Active Productions
-
-              </h3>
-
-              <p className="
-        mt-1
-        text-sm
-        text-slate-500
-      ">
-
-                Centralized operational overview
-
-              </p>
-
-            </div>
-
-            {/* RIGHT */}
-
-            <div className="
-      flex
-      flex-col
-      gap-3
-      lg:flex-row
-      lg:items-center
-    ">
-
-              {/* SEARCH */}
-
-              <div className="
-        flex
-        items-center
-        gap-3
-        rounded-2xl
-        border
-        border-blue-100
-        bg-white/80
-        px-4
-        py-3
-        backdrop-blur-xl
-      ">
-
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-4 w-4 text-slate-400"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M21 21l-4.35-4.35m1.85-5.15a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
-
-                <input
-                  type="text"
-                  placeholder="Search productions..."
-                  className="
-            bg-transparent
-            text-sm
-            text-slate-700
-            outline-none
-            placeholder:text-slate-400
-          "
-                />
-
-              </div>
-
-              {/* COUNT */}
-
-              <div className="
-        inline-flex
-        items-center
-        gap-2
-        rounded-2xl
-        border
-        border-blue-100
-        bg-blue-50
-        px-4
-        py-3
-        text-sm
-        font-semibold
-        text-blue-700
-      ">
-
-                <Clock3 size={16} />
-
-                {shoots.length} Productions
-
-              </div>
-
-            </div>
-
-          </div>
-
-          {/* ===================================================== */}
-          {/* CONTENT */}
-          {/* ===================================================== */}
+          {/* ========================================================= */}
+          {/* LOADING */}
+          {/* ========================================================= */}
 
           {loading ? (
 
-            <div className="
-      py-24
-      text-center
-      text-slate-500
-    ">
-
-              Loading productions...
-
+            <div
+              className="
+                rounded-3xl
+                border
+                border-gray-200
+                bg-white
+                py-20
+                text-center
+                text-sm
+                text-gray-500
+              "
+            >
+              Loading shoots...
             </div>
 
-          ) : shoots.length === 0 ? (
+          ) : filteredShoots.length === 0 ? (
 
             <EmptyState />
 
           ) : (
 
-            <div className="p-4">
+            <div className="space-y-4">
 
-              <div className="space-y-3">
+              {filteredShoots.map((shoot) => (
 
-                {shoots.map((shoot) => (
+                <ShootCard
+                  key={shoot.id}
+                  shoot={shoot}
+                  onDelete={deleteShoot}
+                />
 
-                  <div
-                    key={shoot.id}
-                    className="
-              group
-              flex
-              flex-col
-              gap-5
-              rounded-[28px]
-              border
-              border-blue-100
-              bg-white/80
-              p-5
-              transition-all
-              hover:border-blue-200
-              hover:shadow-[0_0_45px_rgba(59,130,246,0.14)]
-              xl:flex-row
-              xl:items-center
-              xl:justify-between
-            "
-                  >
-
-                    {/* ===================================================== */}
-                    {/* LEFT */}
-                    {/* ===================================================== */}
-
-                    <div className="
-              flex
-              flex-1
-              flex-col
-              gap-5
-              xl:flex-row
-              xl:items-center
-            ">
-
-                      {/* STATUS */}
-
-                      <div className={`
-                inline-flex
-                items-center
-                gap-2
-                rounded-full
-                px-3
-                py-1.5
-                text-[11px]
-                font-bold
-                uppercase
-                tracking-wide
-
-                ${shoot.status === "completed"
-                          ? "bg-emerald-100 text-emerald-700"
-                          : shoot.status === "active"
-                            ? "bg-blue-100 text-blue-700"
-                            : "bg-orange-100 text-orange-700"
-                        }
-              `}>
-
-                        <div className="
-                  h-2
-                  w-2
-                  rounded-full
-                  bg-current
-                  animate-pulse
-                " />
-
-                        {shoot.status || "planned"}
-
-                      </div>
-
-                      {/* TITLE */}
-
-                      <div className="min-w-[240px]">
-
-                        <h3 className="
-                  text-lg
-                  font-bold
-                  tracking-[-0.03em]
-                  text-slate-900
-                ">
-
-                          {shoot.title}
-
-                        </h3>
-
-                        <p className="
-                  mt-1
-                  text-sm
-                  text-slate-500
-                ">
-
-                          Production #{shoot.id}
-
-                        </p>
-
-                      </div>
-
-                      {/* META */}
-
-                      <RowInfo
-                        icon={<Briefcase size={15} />}
-                        label={
-                          shoot.client_name ||
-                          "No client"
-                        }
-                      />
-
-                      <RowInfo
-                        icon={<MapPin size={15} />}
-                        label={
-                          shoot.location ||
-                          "No location"
-                        }
-                      />
-
-                      <RowInfo
-                        icon={<CalendarDays size={15} />}
-                        label={
-                          shoot.shoot_date ||
-                          "No date"
-                        }
-                      />
-
-                    </div>
-
-                    {/* ===================================================== */}
-                    {/* ACTIONS */}
-                    {/* ===================================================== */}
-
-                    <div className="
-              flex
-              items-center
-              gap-3
-            ">
-
-                      <Link
-                        href={`/dashboard/shoots/${shoot.id}`}
-                        className="
-                  inline-flex
-                  items-center
-                  gap-2
-                  rounded-2xl
-                  bg-blue-600
-                  px-5
-                  py-3
-                  text-sm
-                  font-semibold
-                  text-white
-                  shadow-[0_10px_30px_rgba(37,99,235,0.28)]
-                  transition-all
-                  hover:bg-blue-700
-                  hover:shadow-[0_0_45px_rgba(59,130,246,0.35)]
-                "
-                      >
-
-                        Open
-
-                        <ChevronRight
-                          size={16}
-                          className="
-                    transition-transform
-                    group-hover:translate-x-1
-                  "
-                        />
-
-                      </Link>
-
-                      <button
-                        onClick={() =>
-                          deleteShoot(shoot.id)
-                        }
-                        className="
-                  flex
-                  h-12
-                  w-12
-                  items-center
-                  justify-center
-                  rounded-2xl
-                  border
-                  border-red-100
-                  bg-red-50
-                  text-red-500
-                  transition-all
-                  hover:bg-red-100
-                "
-                      >
-
-                        <Trash2 size={18} />
-
-                      </button>
-
-                    </div>
-
-                  </div>
-
-                ))}
-
-              </div>
+              ))}
 
             </div>
 
@@ -753,124 +323,285 @@ export default function ShootsPage() {
 
         </div>
 
-
       </div>
-
     </Layout>
   );
 }
 
 /* ========================================================= */
-/* HERO PILL */
+/* TAB BUTTON */
 /* ========================================================= */
 
-function HeroPill({
-  icon,
+function TabButton({
   label,
+  active,
+  onClick,
 }) {
-
   return (
-
-    <div className="
-      inline-flex
-      items-center
-      gap-2
-      rounded-2xl
-      border
-      border-white/10
-      bg-white/10
-      px-4
-      py-3
-      text-sm
-      font-medium
-      text-white
-    ">
-
-      {icon}
-
-      {label}
-
-    </div>
-  );
-}
-
-/* ========================================================= */
-/* STAT CARD */
-/* ========================================================= */
-
-function StatCard({
-  title,
-  value,
-}) {
-
-  return (
-
-    <div className="
-      rounded-3xl
-      border
-      border-white/10
-      bg-black/10
-      p-5
-    ">
-
-      <p className="
-        text-xs
-        uppercase
-        tracking-[0.18em]
-        text-blue-100/60
-      ">
-        {title}
-      </p>
-
-      <h3 className="
-        mt-3
-        text-4xl
-        font-black
-        tracking-[-0.05em]
-        text-white
-      ">
-        {value}
-      </h3>
-
-    </div>
-  );
-}
-
-/* ========================================================= */
-/* INFO */
-/* ========================================================= */
-
-function InfoRow({
-  icon,
-  label,
-}) {
-
-  return (
-
-    <div className="
-      flex
-      items-center
-      gap-3
-      text-sm
-      text-gray-600
-    ">
-
-      <div className="
-        w-10
-        h-10
+    <button
+      onClick={onClick}
+      className={`
         rounded-2xl
-        bg-blue-50
-        flex
-        items-center
-        justify-center
-        text-blue-600
-      ">
+        px-4
+        py-2.5
+        text-sm
+        font-medium
+        transition-all
+
+        ${
+          active
+            ? "bg-blue-600 text-white"
+            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+        }
+      `}
+    >
+      {label}
+    </button>
+  );
+}
+
+/* ========================================================= */
+/* SHOOT CARD */
+/* ========================================================= */
+
+function ShootCard({
+  shoot,
+  onDelete,
+}) {
+  const [showMenu, setShowMenu] =
+    useState(false);
+
+  return (
+    <div
+      className="
+        rounded-3xl
+        border
+        border-gray-200
+        bg-white
+        p-5
+        transition-all
+        hover:border-blue-200
+      "
+    >
+
+      <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+
+        {/* ========================================================= */}
+        {/* LEFT */}
+        {/* ========================================================= */}
+
+        <div className="flex-1">
+
+          {/* STATUS */}
+
+          <div
+            className={`
+              inline-flex
+              items-center
+              rounded-full
+              px-3
+              py-1
+              text-xs
+              font-semibold
+              capitalize
+
+              ${
+                shoot.status === "completed"
+                  ? "bg-green-100 text-green-700"
+                  : shoot.status === "active"
+                  ? "bg-blue-100 text-blue-700"
+                  : "bg-orange-100 text-orange-700"
+              }
+            `}
+          >
+            {shoot.status || "planned"}
+          </div>
+
+          {/* TITLE */}
+
+          <h3 className="mt-4 text-xl font-bold text-gray-900">
+            {shoot.title}
+          </h3>
+
+          {/* INFO */}
+
+          <div className="mt-5 flex flex-col gap-3 md:flex-row md:flex-wrap md:gap-5">
+
+            <InfoItem
+              icon={<MapPin size={16} />}
+              text={
+                shoot.location ||
+                "No location"
+              }
+            />
+
+            <InfoItem
+              icon={
+                <CalendarDays size={16} />
+              }
+              text={
+                shoot.start_datetime
+                  ? new Date(
+                      shoot.start_datetime
+                    ).toLocaleString()
+                  : "No schedule"
+              }
+            />
+
+            <InfoItem
+              icon={<Film size={16} />}
+              text={
+                shoot.client_name ||
+                "No client"
+              }
+            />
+
+          </div>
+
+        </div>
+
+        {/* ========================================================= */}
+        {/* ACTIONS */}
+        {/* ========================================================= */}
+
+        <div className="flex items-center gap-3">
+
+          <Link
+            href={`/dashboard/shoots/${shoot.id}`}
+            className="
+              inline-flex
+              items-center
+              justify-center
+              gap-2
+              rounded-2xl
+              bg-blue-600
+              px-5
+              py-3
+              text-sm
+              font-semibold
+              text-white
+              transition-all
+              hover:bg-blue-700
+            "
+          >
+            Open
+
+            <ChevronRight size={16} />
+          </Link>
+
+          {/* MENU */}
+
+          <div className="relative">
+
+            <button
+              onClick={() =>
+                setShowMenu(!showMenu)
+              }
+              className="
+                flex
+                h-12
+                w-12
+                items-center
+                justify-center
+                rounded-2xl
+                border
+                border-gray-200
+                bg-white
+                text-gray-600
+                hover:bg-gray-100
+              "
+            >
+              <MoreVertical size={18} />
+            </button>
+
+            {showMenu && (
+
+              <div
+                className="
+                  absolute
+                  right-0
+                  top-14
+                  z-20
+                  w-44
+                  overflow-hidden
+                  rounded-2xl
+                  border
+                  border-gray-200
+                  bg-white
+                  shadow-lg
+                "
+              >
+
+                <Link
+                  href={`/dashboard/shoots/${shoot.id}/edit`}
+                  className="
+                    flex
+                    items-center
+                    gap-3
+                    px-4
+                    py-3
+                    text-sm
+                    text-gray-700
+                    hover:bg-gray-50
+                  "
+                >
+                  <Edit3 size={16} />
+
+                  Edit
+                </Link>
+
+                <button
+                  onClick={() =>
+                    onDelete(shoot.id)
+                  }
+                  className="
+                    flex
+                    w-full
+                    items-center
+                    gap-3
+                    px-4
+                    py-3
+                    text-left
+                    text-sm
+                    text-red-600
+                    hover:bg-red-50
+                  "
+                >
+                  <Trash2 size={16} />
+
+                  Delete
+                </button>
+
+              </div>
+
+            )}
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+  );
+}
+
+/* ========================================================= */
+/* INFO ITEM */
+/* ========================================================= */
+
+function InfoItem({
+  icon,
+  text,
+}) {
+  return (
+    <div className="flex items-center gap-2 text-sm text-gray-600">
+
+      <div className="text-gray-400">
         {icon}
       </div>
 
-      <span className="font-medium">
-        {label}
-      </span>
+      <span>{text}</span>
 
     </div>
   );
@@ -881,57 +612,41 @@ function InfoRow({
 /* ========================================================= */
 
 function EmptyState() {
-
   return (
-
-    <div className="
-      py-28
-      flex
-      flex-col
-      items-center
-      justify-center
-      text-center
-    ">
-
-      <div className="
-        w-24
-        h-24
-        rounded-[32px]
-        bg-blue-50
+    <div
+      className="
+        rounded-3xl
         border
-        border-blue-100
-        flex
-        items-center
-        justify-center
-        text-blue-600
-      ">
+        border-gray-200
+        bg-white
+        px-6
+        py-20
+        text-center
+      "
+    >
 
-        <Film size={40} />
-
+      <div
+        className="
+          mx-auto
+          flex
+          h-20
+          w-20
+          items-center
+          justify-center
+          rounded-3xl
+          bg-blue-50
+          text-blue-600
+        "
+      >
+        <Film size={36} />
       </div>
 
-      <h3 className="
-        mt-8
-        text-3xl
-        font-black
-        tracking-[-0.05em]
-        text-gray-900
-      ">
-        No productions yet
+      <h3 className="mt-6 text-2xl font-bold text-gray-900">
+        No shoots yet
       </h3>
 
-      <p className="
-        mt-3
-        max-w-md
-        text-base
-        leading-relaxed
-        text-gray-500
-      ">
-
-        Create your first production and begin
-        managing operational workflows, schedules
-        and crew assignments.
-
+      <p className="mt-2 text-sm text-gray-500">
+        Create your first production shoot
       </p>
 
       <Link
@@ -943,136 +658,20 @@ function EmptyState() {
           gap-2
           rounded-2xl
           bg-blue-600
-          px-6
-          py-4
+          px-5
+          py-3
           text-sm
           font-semibold
           text-white
-          hover:bg-blue-700
           transition-all
+          hover:bg-blue-700
         "
       >
-
         <Plus size={18} />
 
-        Create Production
-
+        Create Shoot
       </Link>
 
     </div>
   );
 }
-
-
-function HeroTag({
-  label,
-}) {
-
-  return (
-
-    <div className="
-      rounded-2xl
-      border
-      border-white/10
-      bg-white/10
-      px-4
-      py-3
-      text-sm
-      font-medium
-      text-white
-      backdrop-blur-xl
-    ">
-
-      {label}
-
-    </div>
-  );
-}
-
-function MetricCard({
-  title,
-  value,
-}) {
-
-  return (
-
-    <div className="
-      min-w-[140px]
-      rounded-[24px]
-      border
-      border-white/10
-      bg-white/10
-      p-5
-      backdrop-blur-2xl
-    ">
-
-      <p className="
-        text-xs
-        uppercase
-        tracking-[0.18em]
-        text-blue-100/60
-      ">
-
-        {title}
-
-      </p>
-
-      <h3 className="
-        mt-3
-        text-4xl
-        font-black
-        tracking-[-0.05em]
-        text-white
-      ">
-
-        {value}
-
-      </h3>
-
-    </div>
-  );
-}
-
-
-function RowInfo({
-  icon,
-  label,
-}) {
-
-  return (
-
-    <div className="
-      flex
-      items-center
-      gap-3
-    ">
-
-      <div className="
-        flex
-        h-11
-        w-11
-        items-center
-        justify-center
-        rounded-2xl
-        bg-blue-50
-        text-blue-600
-      ">
-
-        {icon}
-
-      </div>
-
-      <p className="
-        text-sm
-        font-medium
-        text-slate-700
-      ">
-
-        {label}
-
-      </p>
-
-    </div>
-  );
-}
-

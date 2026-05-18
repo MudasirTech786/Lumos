@@ -679,55 +679,30 @@ export default function Sidebar({ open, setOpen }) {
                         All Productions
                       </Link>
 
-                      {/* CREATE */}
-                      <Link
-                        href="/dashboard/shoots/create"
-                        className={subMenuClass(
-                          "/dashboard/shoots/create"
-                        )}
-                      >
-                        Create Production
-                      </Link>
-
                       {/* CREW */}
                       <Link
-                        href="/dashboard/shoots/crew"
+                        href="/dashboard/shoots/scheduling"
                         className={subMenuClass(
-                          "/dashboard/shoots/crew"
+                          "/dashboard/shoots/scheduling"
                         )}
                       >
-                        Crew Assignments
+                        Scheduling
                       </Link>
 
-                      {/* FUTURE */}
-                      <button
-                        disabled
-                        className="
-            w-full
-            text-left
-            rounded-xl
-            px-4
-            py-2.5
-            text-sm
-            text-white/25
-            cursor-not-allowed
-          "
-                      >
-                        Scheduling
-                      </button>
+
 
                       <button
                         disabled
                         className="
-            w-full
-            text-left
-            rounded-xl
-            px-4
-            py-2.5
-            text-sm
-            text-white/25
-            cursor-not-allowed
-          "
+                        w-full
+                        text-left
+                        rounded-xl
+                        px-4
+                        py-2.5
+                        text-sm
+                       text-white/25
+                        cursor-not-allowed
+                      "
                       >
                         Logistics
                       </button>
@@ -735,15 +710,15 @@ export default function Sidebar({ open, setOpen }) {
                       <button
                         disabled
                         className="
-            w-full
-            text-left
-            rounded-xl
-            px-4
-            py-2.5
-            text-sm
-            text-white/25
-            cursor-not-allowed
-          "
+                        w-full
+                        text-left
+                        rounded-xl
+                        px-4
+                        py-2.5
+                        text-sm
+                       text-white/25
+                        cursor-not-allowed
+                      "
                       >
                         Deliverables
                       </button>
