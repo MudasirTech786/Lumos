@@ -1,0 +1,152 @@
+.rbc-calendar {
+  font-family: inherit;
+}
+
+.rbc-header {
+  padding: 14px 0;
+  background: #f9fafb;
+  font-size: 13px;
+  font-weight: 700;
+  color: #6b7280;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.rbc-month-view,
+.rbc-time-view {
+  border: none;
+}
+
+.rbc-date-cell {
+  padding: 8px;
+  text-align: right;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.rbc-day-bg + .rbc-day-bg {
+  border-left: 1px solid #f1f5f9;
+}
+
+.rbc-month-row + .rbc-month-row {
+  border-top: 1px solid #f1f5f9;
+}
+
+.rbc-off-range-bg {
+  background: #fafafa;
+}
+
+.rbc-today {
+  background: #eff6ff !important;
+}
+
+/* =========================================================
+   EVENT HOVER
+========================================================= */
+
+.rbc-event {
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    opacity 0.18s ease;
+
+  cursor: grab !important;
+
+  position: relative;
+
+  z-index: 2;
+}
+
+/* =========================================================
+   HOVER ENLARGE
+========================================================= */
+
+.rbc-event:hover {
+
+  transform: scale(1.08);
+
+  z-index: 999 !important;
+
+  box-shadow:
+    0 12px 30px rgba(0,0,0,0.18);
+
+}
+
+/* =========================================================
+   ACTIVE DRAG
+========================================================= */
+
+.rbc-addons-dnd-dragged-event {
+
+  transform: scale(1.1);
+
+  opacity: 0.85;
+
+  cursor: grabbing !important;
+
+  box-shadow:
+    0 18px 40px rgba(0,0,0,0.25);
+
+}
+
+/* =========================================================
+   EVENT ROW SPACING
+========================================================= */
+
+.rbc-row-segment {
+
+  padding:
+    4px 6px !important;
+
+}
+
+/* =========================================================
+   EVENT HEIGHT
+========================================================= */
+
+.rbc-event {
+
+  min-height: 34px;
+
+  display: flex;
+
+  align-items: center;
+
+  font-size: 13px !important;
+
+  font-weight: 700;
+
+}
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 768px) {
+
+  .rbc-toolbar {
+    display: none;
+  }
+
+  .rbc-month-row {
+    min-height: 120px !important;
+  }
+
+  .rbc-event {
+
+    font-size: 11px !important;
+
+    min-height: 30px;
+
+    padding: 4px 8px !important;
+  }
+
+  .rbc-btn-group {
+    flex-wrap: wrap;
+  }
+
+  .rbc-calendar {
+    font-size: 12px;
+  }
+
+}
+

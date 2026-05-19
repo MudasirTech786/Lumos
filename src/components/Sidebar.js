@@ -470,7 +470,7 @@ export default function Sidebar({ open, setOpen }) {
 
                     {isExpanded && (
                       <span className="font-medium">
-                        Users & Roles
+                        Access Control
                       </span>
                     )}
 
@@ -547,7 +547,7 @@ export default function Sidebar({ open, setOpen }) {
 
                     {isExpanded && (
                       <span className="font-medium">
-                        HR
+                        Workforce
                       </span>
                     )}
 
@@ -679,6 +679,16 @@ export default function Sidebar({ open, setOpen }) {
                         All Productions
                       </Link>
 
+                      {/* CALENDAR */}
+                      <Link
+                        href="/dashboard/shoots/calendar"
+                        className={subMenuClass(
+                          "/dashboard/shoots/calendar"
+                        )}
+                      >
+                        Calendar View
+                      </Link>
+                      
                       {/* CREW */}
                       <Link
                         href="/dashboard/shoots/scheduling"
