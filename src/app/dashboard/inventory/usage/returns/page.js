@@ -951,16 +951,52 @@ export default function ReturnsPage() {
                       <button
                         key={type.key}
                         onClick={() => {
-
                           setReturnType(type.key);
 
-                          setReturnForm({
-                            returned_quantity: 0,
-                            damaged_quantity: 0,
-                            lost_quantity: 0,
-                            notes: "",
-                          });
+                          if (type.key === "full") {
+                            setReturnForm({
+                              returned_quantity: outstanding,
+                              damaged_quantity: 0,
+                              lost_quantity: 0,
+                              notes: "",
+                            });
+                          }
 
+                          else if (type.key === "partial") {
+                            setReturnForm({
+                              returned_quantity: outstanding > 0 ? 1 : 0,
+                              damaged_quantity: 0,
+                              lost_quantity: 0,
+                              notes: "",
+                            });
+                          }
+
+                          else if (type.key === "lost") {
+                            setReturnForm({
+                              returned_quantity: 0,
+                              damaged_quantity: 0,
+                              lost_quantity: outstanding,
+                              notes: "",
+                            });
+                          }
+
+                          else if (type.key === "damaged") {
+                            setReturnForm({
+                              returned_quantity: outstanding,
+                              damaged_quantity: outstanding,
+                              lost_quantity: 0,
+                              notes: "",
+                            });
+                          }
+
+                          else if (type.key === "mixed") {
+                            setReturnForm({
+                              returned_quantity: 1,
+                              damaged_quantity: 0,
+                              lost_quantity: 0,
+                              notes: "",
+                            });
+                          }
                         }}
                         className={`
                     rounded-2xl

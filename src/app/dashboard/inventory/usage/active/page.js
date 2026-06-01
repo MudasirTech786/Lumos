@@ -605,6 +605,10 @@ export default function ActiveUsagePage() {
 
     }, [usages, search]);
 
+  const selectedItem = items.find(
+    (item) => item.id == form.inventory_item_id
+  );
+
   const statusClasses = {
 
     reserved:
@@ -1101,59 +1105,7 @@ export default function ActiveUsagePage() {
 
                             {/* PARTIALLY RETURNED → CONTINUE RETURN */}
 
-                            {(
-                              usage.status ===
-                              "checked_out" ||
-
-                              usage.status ===
-                              "partially_returned"
-                            ) && (
-
-                                <button
-                                  onClick={() => {
-
-                                    setSelectedUsage(
-                                      usage
-                                    );
-
-                                    setReturnForm({
-
-                                      returned_quantity: 1,
-
-                                      damaged_quantity: 0,
-
-                                      lost_quantity: 0,
-
-                                      notes: "",
-                                    });
-
-                                    setShowReturnModal(
-                                      true
-                                    );
-
-                                  }}
-                                  className="
-            flex
-            h-10
-            w-10
-            items-center
-            justify-center
-            rounded-xl
-            bg-orange-100
-            text-orange-700
-            transition
-            hover:bg-orange-200
-          "
-                                  title="Process Return"
-                                >
-
-                                  <RotateCcw
-                                    size={16}
-                                  />
-
-                                </button>
-
-                              )}
+                            
 
                           </div>
 
@@ -1276,305 +1228,210 @@ export default function ActiveUsagePage() {
 
             </div>
 
-            <div className="
-  flex-1
-  overflow-y-auto
-  space-y-6
-  p-6
-">
+            <div className="flex-1 overflow-y-auto p-8 bg-slate-50">
 
-              <div className="
-  rounded-[28px]
-  border
-  border-slate-200
-  bg-white
-  p-5
-  shadow-sm
-">
+              <div className="space-y-8">
 
-                <div className="
-    grid
-    grid-cols-1
-    gap-5
-    md:grid-cols-2
-  ">
+                {/* Equipment Selection */}
+                <div className="space-y-4">
 
-                  {/* ITEM */}
+                  <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                    Equipment Selection
+                  </h3>
 
-                  <select
-                    value={
-                      form.inventory_item_id
-                    }
-                    className={
-                      inputClass
-                    }
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        inventory_item_id:
-                          e.target.value,
-                      })
-                    }
-                  >
+                  <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
 
-                    <option value="">
-                      Inventory Item
-                    </option>
+                    <select
+                      value={form.inventory_item_id}
+                      className={inputClass}
+                      onChange={(e) =>
+                        setForm({
+                          ...form,
+                          inventory_item_id: e.target.value,
+                        })
+                      }
+                    >
+                      <option value="">Select Inventory Item</option>
 
-                    {items.map(
-                      (item) => (
-
+                      {items.map((item) => (
                         <option
                           key={item.id}
                           value={item.id}
+                          disabled={item.calculated_available <= 0}
                         >
                           {item.name}
                         </option>
+                      ))}
+                    </select>
 
-                      )
-                    )}
+                    {selectedItem && (
+  <div className="mt-2 flex items-center gap-2 px-1 text-xs">
 
-                  </select>
+    <span
+      className={`
+        h-2.5
+        w-2.5
+        rounded-full
+        ${
+          selectedItem.calculated_available > 0
+            ? "bg-green-500"
+            : "bg-red-500"
+        }
+      `}
+    />
 
-                  {/* TYPE */}
+    <span className="text-slate-500">
+      {selectedItem.calculated_available} of {selectedItem.quantity} available
+    </span>
 
-                  <select
-                    value={
-                      form.usage_type
-                    }
-                    className={
-                      inputClass
-                    }
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        usage_type:
-                          e.target.value,
+    <span
+      className={`
+        rounded-full
+        px-2 py-0.5
+        text-[11px] font-medium
+        ${
+          selectedItem.calculated_available > 0
+            ? "bg-green-50 text-green-700"
+            : "bg-red-50 text-red-700"
+        }
+      `}
+    >
+      {selectedItem.status}
+    </span>
 
-                        shoot_id: "",
+  </div>
+)}
 
-                        assigned_to: "",
+                  </div>
+                </div>
 
-                        notes: "",
-                      })
-                    }
-                  >
+                {/* Allocation Details */}
+                <div className="space-y-4">
 
-                    <option value="shoot">
-                      Shoot
-                    </option>
+                  <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                    Allocation Details
+                  </h3>
 
-                    <option value="rental">
-                      Rental
-                    </option>
+                  <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
 
-                    <option value="internal">
-                      Internal
-                    </option>
+                    <select
+                      value={form.usage_type}
+                      className={inputClass}
+                      onChange={(e) =>
+                        setForm({
+                          ...form,
+                          usage_type: e.target.value,
+                          shoot_id: "",
+                          assigned_to: "",
+                          notes: "",
+                        })
+                      }
+                    >
+                      <option value="shoot">Shoot</option>
+                      <option value="rental">Rental</option>
+                      <option value="internal">Internal</option>
+                      <option value="maintenance">Maintenance</option>
+                    </select>
 
-                    <option value="maintenance">
-                      Maintenance
-                    </option>
+                    <input
+                      type="number"
+                      min="1"
+                      max={selectedItem?.calculated_available || 1}
+                      placeholder="Quantity"
+                      value={form.quantity}
+                      className={inputClass}
+                      onChange={(e) =>
+                        setForm({
+                          ...form,
+                          quantity: Number(e.target.value),
+                        })
+                      }
+                    />
 
-                  </select>
-
-                  {/* SHOOT */}
-
-                  {form.usage_type ===
-                    "shoot" && (
-
+                    {form.usage_type === "shoot" && (
                       <select
-                        value={
-                          form.shoot_id
-                        }
-                        className={
-                          inputClass
-                        }
+                        value={form.shoot_id}
+                        className={inputClass}
                         onChange={(e) =>
                           setForm({
                             ...form,
-                            shoot_id:
-                              e.target.value,
+                            shoot_id: e.target.value,
                           })
                         }
                       >
-
-                        <option value="">
-                          Select Shoot
-                        </option>
-
-                        {Array.isArray(shoots) &&
-                          shoots.map((shoot) => (
-
-                            <option
-                              key={shoot.id}
-                              value={shoot.id}
-                            >
-                              {shoot.title}
-                            </option>
-
-                          ))}
-
+                        <option value="">Select Shoot</option>
+                        {shoots.map((shoot) => (
+                          <option key={shoot.id} value={shoot.id}>
+                            {shoot.title}
+                          </option>
+                        ))}
                       </select>
-
                     )}
 
-                  {/* RENTAL */}
+                    <select
+                      value={form.assigned_to}
+                      className={inputClass}
+                      onChange={(e) =>
+                        setForm({
+                          ...form,
+                          assigned_to: e.target.value,
+                        })
+                      }
+                    >
+                      <option value="">Assign To</option>
 
-                  {form.usage_type ===
-                    "rental" && (
-
-                      <input
-                        type="text"
-                        placeholder="Rental Client / Company"
-                        value={
-                          form.client_name
-                        }
-                        className={
-                          inputClass
-                        }
-                        onChange={(e) =>
-                          setForm({
-                            ...form,
-                            notes:
-                              e.target.value,
-                          })
-                        }
-                      />
-
-                    )}
-
-                  {/* SHOOT CREW */}
-
-                  {/* ASSIGNED TO */}
-
-                  <select
-                    value={
-                      form.assigned_to
-                    }
-                    className={
-                      inputClass
-                    }
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        assigned_to:
-                          e.target.value,
-                      })
-                    }
-                  >
-
-                    <option value="">
-                      Assigned To
-                    </option>
-
-                    {Array.isArray(users) &&
-                      users.map((user) => (
-
-                        <option
-                          key={user.id}
-                          value={user.id}
-                        >
+                      {users.map((user) => (
+                        <option key={user.id} value={user.id}>
                           {user.name}
                         </option>
-
                       ))}
+                    </select>
 
-                  </select>
+                  </div>
+                </div>
 
-                  {/* RENTAL */}
+                {/* Notes */}
+                <div className="space-y-3">
 
-                  {/* MAINTENANCE */}
+                  <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                    Notes
+                  </h3>
 
-                  {form.usage_type ===
-                    "maintenance" && (
-
-                      <input
-                        type="text"
-                        placeholder="Repair Vendor"
-                        value={
-                          form.notes
-                        }
-                        className={
-                          inputClass
-                        }
-                        onChange={(e) =>
-                          setForm({
-                            ...form,
-                            notes:
-                              e.target.value,
-                          })
-                        }
-                      />
-
-                    )}
-
-                  {/* QUANTITY */}
-
-                  <input
-                    type="number"
-                    placeholder="Quantity"
-                    value={
-                      form.quantity
-                    }
-                    className={
-                      inputClass
-                    }
+                  <textarea
+                    rows={5}
+                    value={form.notes}
+                    className={inputClass}
+                    placeholder="Add allocation notes..."
                     onChange={(e) =>
                       setForm({
                         ...form,
-                        quantity:
-                          Number(
-                            e.target.value
-                          ),
+                        notes: e.target.value,
                       })
                     }
                   />
 
                 </div>
 
-              </div>
+                <div className="flex justify-end pt-2">
 
-              <textarea
-                rows={5}
-                value={
-                  form.notes
-                }
-                className={inputClass}
-                placeholder="Notes..."
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    notes:
-                      e.target.value,
-                  })
-                }
-              />
+                  <button
+                    onClick={createUsage}
+                    className="
+          rounded-2xl
+          bg-blue-600
+          px-8
+          py-4
+          font-semibold
+          text-white
+          shadow-lg
+          transition
+          hover:bg-blue-700
+        "
+                  >
+                    Allocate Equipment
+                  </button>
 
-              <div className="
-                flex
-                justify-end
-              ">
-
-                <button
-                  onClick={
-                    createUsage
-                  }
-                  className="
-                    rounded-2xl
-                    bg-blue-600
-                    px-6
-                    py-3
-                    font-semibold
-                    text-white
-                    transition
-                    hover:bg-blue-700
-                  "
-                >
-
-                  Allocate Equipment
-
-                </button>
+                </div>
 
               </div>
 
@@ -1802,7 +1659,7 @@ export default function ActiveUsagePage() {
 
                 <div>
 
-                  <h2 className="
+                  {/* <h2 className="
             text-3xl
             font-bold
             text-slate-900
@@ -1810,7 +1667,7 @@ export default function ActiveUsagePage() {
 
                     Process Return
 
-                  </h2>
+                  </h2> */}
 
                 </div>
 
