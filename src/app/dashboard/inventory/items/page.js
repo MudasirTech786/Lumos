@@ -48,6 +48,8 @@ export default function InventoryItemsPage() {
 
     model: "",
 
+    daily_rental_value: "0",
+
     sku: "",
 
     serial_number: "",
@@ -272,6 +274,8 @@ export default function InventoryItemsPage() {
       model: item.model || "",
 
       sku: item.sku || "",
+      
+      daily_rental_value: item.daily_rental_value || "0",
 
       serial_number:
         item.serial_number || "",
@@ -762,11 +766,12 @@ export default function InventoryItemsPage() {
 
                   </Field>
 
-                  <Field label="SKU">
+                  <Field label="Rental Rate (per day)">
 
                     <input
+                      type="number"
                       value={
-                        form.sku
+                        form.daily_rental_value
                       }
                       className={
                         inputClass
@@ -774,7 +779,7 @@ export default function InventoryItemsPage() {
                       onChange={(e) =>
                         setForm({
                           ...form,
-                          sku:
+                          daily_rental_value:
                             e.target
                               .value,
                         })

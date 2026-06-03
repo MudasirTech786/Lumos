@@ -96,15 +96,7 @@ export default function ShootDetailsPage() {
       <div className="mx-auto max-w-6xl pb-32 px-4 sm:px-6">
 
         {/* ── BACK ─────────────────────────────────── */}
-        <div className="py-6">
-          <button
-            onClick={() => router.back()}
-            className="inline-flex items-center gap-2 text-sm font-medium text-gray-400 hover:text-gray-700 transition-colors"
-          >
-            <ArrowLeft size={15} />
-            Back to Shoots
-          </button>
-        </div>
+       
 
         {/* ── HERO ─────────────────────────────────── */}
         <div className="relative overflow-hidden rounded-2xl border border-gray-200 bg-white mb-6 shadow-sm">

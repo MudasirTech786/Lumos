@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Layout from "@/components/Layout";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
@@ -12,777 +12,747 @@ import {
     TrendingUp,
     Receipt,
     Users,
+    Truck,
+    Package,
+    ArrowLeft,
+    Calendar,
+    MapPin,
+    Building2,
+    CheckCircle2,
+    ChevronRight,
+    BarChart3,
 } from "lucide-react";
 
 export default function ShootFinanceReportPage() {
-
     const params = useParams();
-
+    const router = useRouter();
     const shootId = params.id;
 
-    const [loading, setLoading] =
-        useState(true);
+    const [loading, setLoading] = useState(true);
+    const [shoot, setShoot] = useState(null);
+    const [finance, setFinance] = useState(null);
+    const [expenses, setExpenses] = useState([]);
+    const [details, setDetails] = useState({
+        crew: [],
+        logistics: [],
+        inventory: [],
+        expenses: [],
+    });
+    const [selectedDays, setSelectedDays] = useState(null);
+    const [activeSection, setActiveSection] = useState("crew");
 
-    const [shoot, setShoot] =
-        useState(null);
-
-    const [finance, setFinance] =
-        useState(null);
-
-    const [expenses, setExpenses] =
-        useState([]);
-
-    const fetchReport =
-        async () => {
-
-            try {
-
-                setLoading(true);
-
-                const [
-                    shootRes,
-                    financeRes,
-                    expenseRes,
-                ] = await Promise.all([
-
-                    api.get(
-                        `/shoots/${shootId}`
-                    ),
-
-                    api.get(
-                        `/shoots/${shootId}/finance`
-                    ),
-
-                    api.get(
-                        `/shoots/${shootId}/expenses`
-                    ),
-
+    const fetchReport = async () => {
+        try {
+            setLoading(true);
+            const [shootRes, financeRes, expenseRes, detailsRes] =
+                await Promise.all([
+                    api.get(`/shoots/${shootId}`),
+                    api.get(`/shoots/${shootId}/finance`),
+                    api.get(`/shoots/${shootId}/expenses`),
+                    api.get(`/shoots/${shootId}/finance-details`),
                 ]);
-
-                setShoot(
-                    shootRes.data
-                );
-
-                setFinance(
-                    financeRes.data
-                );
-
-                setExpenses(
-                    expenseRes.data?.data || []
-                );
-
-            } catch {
-
-                toast.error(
-                    "Failed to load report"
-                );
-
-            } finally {
-
-                setLoading(false);
-
-            }
-        };
+            setShoot(shootRes.data);
+            setFinance(financeRes.data);
+            setExpenses(expenseRes.data?.data || []);
+            setDetails(
+                detailsRes.data || {
+                    crew: [],
+                    logistics: [],
+                    inventory: [],
+                    expenses: [],
+                }
+            );
+        } catch {
+            toast.error("Failed to load report");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-
-        if (shootId) {
-            fetchReport();
-        }
-
+        if (shootId) fetchReport();
     }, [shootId]);
 
     if (loading) {
-
         return (
             <Layout>
-                <div className="
-          py-32
-          text-center
-        ">
-                    Loading Report...
+                <div className="min-h-screen flex items-center justify-center bg-slate-50">
+                    <div className="text-center space-y-4">
+                        <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto" />
+                        <p className="text-slate-500 font-medium tracking-wide text-sm uppercase">
+                            Generating Report
+                        </p>
+                    </div>
                 </div>
             </Layout>
         );
     }
 
     if (!shoot || !finance) {
-
         return (
             <Layout>
-                <div className="
-          py-32
-          text-center
-        ">
-                    Report not found
+                <div className="min-h-screen flex items-center justify-center">
+                    <p className="text-slate-500">Report not found</p>
                 </div>
             </Layout>
         );
     }
 
+    const profitMargin =
+        finance?.revenue > 0
+            ? ((finance.profit / finance.revenue) * 100).toFixed(1)
+            : 0;
+
+    const activeDays = selectedDays || finance?.shoot_days || 1;
+
+    const crewCost = details.crew.reduce(
+        (sum, r) => sum + (r.rate ? r.rate * activeDays : r.amount || 0),
+        0
+    );
+    const logisticsCost = details.logistics.reduce(
+        (sum, r) => sum + (r.rate ? r.rate * activeDays : r.amount || 0),
+        0
+    );
+    const inventoryCost = details.inventory.reduce(
+        (sum, r) => sum + (r.rate ? r.rate * activeDays : r.amount || 0),
+        0
+    );
+
+    const totalBreakdown = crewCost + logisticsCost + inventoryCost;
+    const crewPct = totalBreakdown ? ((crewCost / totalBreakdown) * 100).toFixed(0) : 0;
+    const logisticsPct = totalBreakdown ? ((logisticsCost / totalBreakdown) * 100).toFixed(0) : 0;
+    const inventoryPct = totalBreakdown ? ((inventoryCost / totalBreakdown) * 100).toFixed(0) : 0;
+
+    const sectionTabs = [
+        { key: "crew", label: "Crew", icon: Users, count: details.crew?.length },
+        { key: "logistics", label: "Logistics", icon: Truck, count: details.logistics?.length },
+        { key: "inventory", label: "Inventory", icon: Package, count: details.inventory?.length },
+    ];
+
     return (
         <Layout>
+            <div className="min-h-screen bg-slate-50">
 
-            <div className="
-        max-w-7xl
-        mx-auto
-        px-6
-        pb-20
-      ">
+                {/* TOP ACCENT BAR */}
+                <div className="h-1 bg-gradient-to-r from-blue-500 via-blue-600 to-blue-800 w-full" />
 
-                {/* HERO */}
+                <div className="max-w-7xl mx-auto px-6 py-8 pb-24 space-y-8">
 
-                <div className="py-6">
+                    {/* BREADCRUMB NAV */}
+                    <div className="flex items-center gap-2 text-base">
+                        <button
+                            onClick={() => router.back()}
+                            className="flex items-center gap-1.5 text-blue-600 hover:text-blue-700 font-medium transition-colors"
+                        >
+                            <ArrowLeft size={14} />
+                            Finance Dashboard
+                        </button>
+                        <ChevronRight size={14} className="text-slate-300" />
+                        <span className="text-slate-500 truncate max-w-xs">{shoot.title}</span>
+                        <ChevronRight size={14} className="text-slate-300" />
+                        <span className="text-slate-800 font-semibold">Report</span>
+                    </div>
 
-                    <div className="
-            bg-white
-            border
-            border-gray-200
-            rounded-2xl
-            shadow-sm
-            overflow-hidden
-          ">
+                    {/* ── HERO HEADER ── */}
+                    <div className="relative bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm">
+                        {/* Blueprint grid watermark */}
+                        <div
+                            className="absolute inset-0 opacity-[0.03]"
+                            style={{
+                                backgroundImage:
+                                    "linear-gradient(#1d4ed8 1px, transparent 1px), linear-gradient(90deg, #1d4ed8 1px, transparent 1px)",
+                                backgroundSize: "40px 40px",
+                            }}
+                        />
+                        {/* Decorative circle */}
+                        <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full bg-blue-50 opacity-60" />
+                        <div className="absolute -bottom-16 -left-16 w-48 h-48 rounded-full bg-blue-100 opacity-40" />
 
-                        <div className="
-              h-1
-              bg-blue-600
-            " />
-
-                        <div className="p-8">
-
-                            <div className="
-                flex
-                items-start
-                justify-between
-              ">
-
-                                <div>
-
-                                    <div className="
-                    inline-flex
-                    items-center
-                    gap-2
-                    px-4
-                    py-1.5
-                    rounded-full
-                    bg-blue-50
-                    text-blue-700
-                    text-sm
-                    font-semibold
-                  ">
-                                        <Film size={14} />
-                                        Production Report
+                        <div className="relative p-8 md:p-10">
+                            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                                <div className="space-y-4">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-8 h-8 rounded-xl bg-blue-600 flex items-center justify-center">
+                                            <Film size={15} className="text-white" />
+                                        </div>
+                                        <span className="text-sm font-bold tracking-widest text-blue-600 uppercase">
+                                            Production Finance Report
+                                        </span>
                                     </div>
 
-                                    <h1 className="
-                    mt-4
-                    text-4xl
-                    font-bold
-                  ">
+                                    <h1 className="text-4xl md:text-5xl font-black text-slate-900 leading-tight tracking-tight">
                                         {shoot.title}
                                     </h1>
 
-                                    <p className="
-                    mt-2
-                    text-gray-500
-                  ">
-                                        Financial performance
-                                        report
-                                    </p>
-
+                                    <div className="flex flex-wrap items-center gap-4 text-base text-slate-500">
+                                        {shoot.client_name && (
+                                            <span className="flex items-center gap-1.5">
+                                                <Building2 size={13} className="text-blue-400" />
+                                                {shoot.client_name}
+                                            </span>
+                                        )}
+                                        {shoot.location && (
+                                            <span className="flex items-center gap-1.5">
+                                                <MapPin size={13} className="text-blue-400" />
+                                                {shoot.location}
+                                            </span>
+                                        )}
+                                        <span className="flex items-center gap-1.5">
+                                            <Calendar size={13} className="text-blue-400" />
+                                            {finance.shoot_days} Day{finance.shoot_days !== 1 ? "s" : ""}
+                                        </span>
+                                    </div>
                                 </div>
 
+                                <div className="flex items-center gap-3">
+                                    <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold uppercase tracking-wide">
+                                        <CheckCircle2 size={12} />
+                                        {shoot.status}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* ── SUMMARY CARDS ── */}
+                    <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+                        <MetricCard
+                            label="Revenue"
+                            value={finance.revenue}
+                            icon={DollarSign}
+                            accent="blue"
+                        />
+                        <MetricCard
+                            label="Total Cost"
+                            value={finance.total_cost}
+                            icon={Receipt}
+                            accent="slate"
+                        />
+                        <MetricCard
+                            label="Net Profit"
+                            value={finance.profit}
+                            icon={TrendingUp}
+                            accent="emerald"
+                            positive={finance.profit >= 0}
+                        />
+                        <MarginCard margin={profitMargin} />
+                    </div>
+
+                    {/* ── PRODUCTION INFO ── */}
+                    <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div className="px-8 py-5 border-b border-slate-100 flex items-center gap-3">
+                            <div className="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center">
+                                <Film size={13} className="text-blue-600" />
+                            </div>
+                            <h2 className="text-lg font-bold text-slate-800">Production Information</h2>
+                        </div>
+
+                        <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-y divide-slate-100">
+                            {[
+                                { label: "Client", value: shoot.client_name || "—" },
+                                { label: "Location", value: shoot.location || "—" },
+                                { label: "Start Date", value: shoot.start_datetime },
+                                { label: "End Date", value: shoot.end_datetime },
+                                {
+                                    label: "Budget",
+                                    value: `Rs ${Number(shoot.client_budget || 0).toLocaleString()}`,
+                                },
+                                {
+                                    label: "Invoice Amount",
+                                    value: `Rs ${Number(shoot.client_invoice_amount || 0).toLocaleString()}`,
+                                },
+                                { label: "Shoot Days", value: `${finance.shoot_days} Days` },
+                                { label: "Status", value: shoot.status, badge: true },
+                            ].map(({ label, value, badge }) => (
+                                <div key={label} className="px-6 py-5">
+                                    <p className="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-1.5">
+                                        {label}
+                                    </p>
+                                    {badge ? (
+                                        <span className="inline-flex px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 text-sm font-bold capitalize">
+                                            {value}
+                                        </span>
+                                    ) : (
+                                        <p className="text-base font-semibold text-slate-800">{value}</p>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* ── COST ANALYSIS WITH DAY SELECTOR ── */}
+                    <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div className="px-8 py-6 border-b border-slate-100">
+                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center">
+                                        <BarChart3 size={13} className="text-blue-600" />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-base font-bold text-slate-800">Cost Analysis</h2>
+                                        <p className="text-xs text-slate-400 mt-0.5">
+                                            Select shoot duration to calculate costs
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {/* Day Range Display */}
+                                <div className="flex items-center gap-2 text-xs font-bold text-slate-500 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2">
+                                    <Calendar size={13} className="text-blue-500" />
+                                    Viewing:&nbsp;
+                                    <span className="text-blue-600">
+                                        {activeDays === finance.shoot_days
+                                            ? "Full Shoot"
+                                            : `Day ${activeDays}`}
+                                    </span>
+                                    &nbsp;/&nbsp;{finance.shoot_days} Days
+                                </div>
                             </div>
 
-                        </div>
-
-                    </div>
-
-                </div>
-
-                {/* SUMMARY CARDS */}
-
-                <div className="
-          grid
-          grid-cols-1
-          md:grid-cols-2
-          xl:grid-cols-4
-          gap-5
-          mb-6
-        ">
-
-                    <SummaryCard
-                        title="Revenue"
-                        value={finance.revenue}
-                        icon={
-                            <DollarSign
-                                size={18}
-                            />
-                        }
-                    />
-
-                    <SummaryCard
-                        title="Total Cost"
-                        value={finance.total_cost}
-                        icon={
-                            <Receipt
-                                size={18}
-                            />
-                        }
-                    />
-
-                    <SummaryCard
-                        title="Profit"
-                        value={finance.profit}
-                        icon={
-                            <TrendingUp
-                                size={18}
-                            />
-                        }
-                    />
-
-                    <SummaryCard
-                        title="Crew Cost"
-                        value={finance.crew_cost}
-                        icon={
-                            <Users
-                                size={18}
-                            />
-                        }
-                    />
-
-                </div>
-
-                {/* PRODUCTION INFO */}
-
-                <div className="
-          bg-white
-          border
-          border-gray-200
-          rounded-2xl
-          shadow-sm
-          p-6
-          mb-6
-        ">
-
-                    <h2 className="
-            text-lg
-            font-semibold
-            mb-5
-          ">
-                        Production Information
-                    </h2>
-
-                    <div className="
-            grid
-            md:grid-cols-2
-            xl:grid-cols-4
-            gap-6
-          ">
-
-                        <div>
-
-                            <label className="
-                text-xs
-                text-gray-500
-              ">
-                                Production Title
-                            </label>
-
-                            <p className="
-                mt-1
-                font-medium
-              ">
-                                {shoot.title}
-                            </p>
-
-                        </div>
-
-                        <div>
-
-                            <label className="
-                text-xs
-                text-gray-500
-              ">
-                                Client
-                            </label>
-
-                            <p className="
-                mt-1
-                font-medium
-              ">
-                                {shoot.client_name ||
-                                    "No Client"}
-                            </p>
-
-                        </div>
-
-                        <div>
-
-                            <label className="
-                text-xs
-                text-gray-500
-              ">
-                                Location
-                            </label>
-
-                            <p className="
-                mt-1
-                font-medium
-              ">
-                                {shoot.location}
-                            </p>
-
-                        </div>
-
-                        <div>
-
-                            <label className="
-                text-xs
-                text-gray-500
-              ">
-                                Status
-                            </label>
-
-                            <div className="
-                mt-2
-              ">
-
-                                <span
-                                    className="
-                    px-3
-                    py-1
-                    rounded-full
-                    text-xs
-                    font-semibold
-                    bg-blue-50
-                    text-blue-700
-                    capitalize
-                  "
-                                >
-                                    {shoot.status}
-                                </span>
-
-                            </div>
-
-                        </div>
-
-                        <div>
-
-                            <label className="
-                text-xs
-                text-gray-500
-              ">
-                                Start Date
-                            </label>
-
-                            <p className="
-                mt-1
-                font-medium
-              ">
-                                {shoot.start_datetime}
-                            </p>
-
-                        </div>
-
-                        <div>
-
-                            <label className="
-                text-xs
-                text-gray-500
-              ">
-                                End Date
-                            </label>
-
-                            <p className="
-                mt-1
-                font-medium
-              ">
-                                {shoot.end_datetime}
-                            </p>
-
-                        </div>
-
-                        <div>
-
-                            <label className="
-                text-xs
-                text-gray-500
-              ">
-                                Budget
-                            </label>
-
-                            <p className="
-                mt-1
-                font-medium
-              ">
-                                Rs{" "}
-                                {Number(
-                                    shoot.client_budget || 0
-                                ).toLocaleString()}
-                            </p>
-
-                        </div>
-
-                        <div>
-
-                            <label className="
-                text-xs
-                text-gray-500
-              ">
-                                Invoice Amount
-                            </label>
-
-                            <p className="
-                mt-1
-                font-medium
-              ">
-                                Rs{" "}
-                                {Number(
-                                    shoot.client_invoice_amount || 0
-                                ).toLocaleString()}
-                            </p>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-                {/* COST BREAKDOWN */}
-
-                <div className="
-          bg-white
-          border
-          border-gray-200
-          rounded-2xl
-          shadow-sm
-          overflow-hidden
-          mb-6
-        ">
-
-                    <div className="
-            px-6
-            py-5
-            border-b
-            border-gray-100
-          ">
-
-                        <h2 className="
-              text-lg
-              font-semibold
-            ">
-                            Cost Breakdown
-                        </h2>
-
-                    </div>
-
-                    <div className="
-            p-6
-          ">
-
-                        <div className="
-              grid
-              md:grid-cols-2
-              xl:grid-cols-5
-              gap-4
-            ">
-
-                            <BreakdownCard
-                                title="Crew Cost"
-                                value={finance.crew_cost}
-                            />
-
-                            <BreakdownCard
-                                title="Logistics Cost"
-                                value={
-                                    finance.logistics_cost
-                                }
-                            />
-
-                            <BreakdownCard
-                                title="Inventory Cost"
-                                value={
-                                    finance.inventory_cost
-                                }
-                            />
-
-                            <BreakdownCard
-                                title="Repair Cost"
-                                value={
-                                    finance.repair_cost
-                                }
-                            />
-
-                            <BreakdownCard
-                                title="Expense Cost"
-                                value={
-                                    finance.expense_cost
-                                }
-                            />
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-                {/* EXPENSE RECORDS */}
-
-                <div
-                    className="
-            bg-white
-            border
-            border-gray-200
-            rounded-2xl
-            shadow-sm
-            overflow-hidden
-          "
-                >
-
-                    <div className="
-            px-6
-            py-5
-            border-b
-            border-gray-100
-          ">
-
-                        <h2 className="
-              text-lg
-              font-semibold
-            ">
-                            Expense Records
-                        </h2>
-
-                    </div>
-
-                    <div className="
-            overflow-x-auto
-          ">
-
-                        <table className="w-full">
-
-                            <thead>
-
-                                <tr className="
-                  bg-gray-50
-                  border-b
-                ">
-
-                                    <th className="p-4 text-left">
-                                        Category
-                                    </th>
-
-                                    <th className="p-4 text-left">
-                                        Description
-                                    </th>
-
-                                    <th className="p-4 text-left">
-                                        Amount
-                                    </th>
-
-                                    <th className="p-4 text-left">
-                                        Created
-                                    </th>
-
-                                </tr>
-
-                            </thead>
-
-                            <tbody>
-
-                                {expenses.length === 0 ? (
-
-                                    <tr>
-
-                                        <td
-                                            colSpan={4}
-                                            className="
-                        p-10
-                        text-center
-                        text-gray-500
-                      "
-                                        >
-                                            No expenses found
-                                        </td>
-
-                                    </tr>
-
-                                ) : (
-
-                                    expenses.map((expense) => (
-
-                                        <tr
-                                            key={expense.id}
-                                            className="
-                        border-b
-                        hover:bg-gray-50
-                      "
-                                        >
-
-                                            <td className="p-4">
-
-                                                <span
-                                                    className="
-                            px-3
-                            py-1
-                            rounded-full
-                            bg-blue-50
-                            text-blue-700
-                            text-xs
-                            font-semibold
-                          "
+                            {/* ── DAY SELECTOR TIMELINE ── */}
+                            <div className="mt-6">
+                                {/* Full Shoot Button */}
+                                <div className="flex items-center gap-3 mb-4">
+                                    <button
+                                        onClick={() => setSelectedDays(finance.shoot_days)}
+                                        className={`
+                                            inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl text-sm font-bold
+                                            border-2 transition-all duration-200
+                                            ${activeDays === finance.shoot_days
+                                                ? "bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-200"
+                                                : "bg-white border-slate-200 text-slate-600 hover:border-blue-300 hover:text-blue-600"
+                                            }
+                                        `}
+                                    >
+                                        <Film size={13} />
+                                        Full Shoot
+                                    </button>
+                                    <div className="h-px flex-1 bg-slate-100" />
+                                </div>
+
+                                {/* Day Pills Timeline */}
+                                <div className="relative">
+                                    {/* Track line */}
+                                    <div className="absolute top-[22px] left-0 right-0 h-0.5 bg-slate-100 z-0" />
+
+                                    <div className="relative z-10 flex items-start gap-2 overflow-x-auto pb-4 scrollbar-hide">
+                                        {Array.from({ length: finance.shoot_days }).map((_, index) => {
+                                            const day = index + 1;
+                                            const isActive = activeDays === day && activeDays !== finance.shoot_days;
+                                            const isPast = activeDays !== finance.shoot_days && day < activeDays;
+
+                                            return (
+                                                <button
+                                                    key={index}
+                                                    onClick={() => setSelectedDays(day)}
+                                                    className="flex flex-col items-center gap-2 group flex-shrink-0"
                                                 >
-                                                    {expense.category}
+                                                    {/* Circle dot */}
+                                                    <div
+                                                        className={`
+                                                            w-11 h-11 rounded-2xl flex flex-col items-center justify-center
+                                                            border-2 transition-all duration-200 text-[10px] leading-tight font-bold
+                                                            ${isActive
+                                                                ? "bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-200 scale-110"
+                                                                : isPast
+                                                                ? "bg-blue-50 border-blue-200 text-blue-500"
+                                                                : "bg-white border-slate-200 text-slate-500 group-hover:border-blue-300 group-hover:text-blue-600 group-hover:bg-blue-50"
+                                                            }
+                                                        `}
+                                                    >
+                                                        <span className="text-[9px] opacity-70">D</span>
+                                                        <span className="text-sm leading-none">{day}</span>
+                                                    </div>
+
+                                                    {/* Label */}
+                                                    <span
+                                                        className={`text-[10px] font-semibold transition-colors whitespace-nowrap ${
+                                                            isActive ? "text-blue-600" : "text-slate-400"
+                                                        }`}
+                                                    >
+                                                        Day {day}
+                                                    </span>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Cost Breakdown Bars */}
+                        <div className="px-8 py-6">
+                            <div className="grid md:grid-cols-3 gap-4 mb-8">
+                                <CostBar
+                                    label="Crew"
+                                    amount={crewCost}
+                                    pct={crewPct}
+                                    color="blue"
+                                    icon={Users}
+                                />
+                                <CostBar
+                                    label="Logistics"
+                                    amount={logisticsCost}
+                                    pct={logisticsPct}
+                                    color="indigo"
+                                    icon={Truck}
+                                />
+                                <CostBar
+                                    label="Inventory"
+                                    amount={inventoryCost}
+                                    pct={inventoryPct}
+                                    color="sky"
+                                    icon={Package}
+                                />
+                            </div>
+
+                            {/* ── TABBED SECTION TABLES ── */}
+                            <div className="border border-slate-200 rounded-2xl overflow-hidden">
+                                {/* Tabs */}
+                                <div className="flex border-b border-slate-200 bg-slate-50">
+                                    {sectionTabs.map(({ key, label, icon: Icon, count }) => (
+                                        <button
+                                            key={key}
+                                            onClick={() => setActiveSection(key)}
+                                            className={`
+                                                flex items-center gap-2 px-6 py-4 text-sm font-semibold
+                                                border-b-2 transition-all duration-200 flex-1 justify-center
+                                                ${activeSection === key
+                                                    ? "border-blue-600 text-blue-600 bg-white"
+                                                    : "border-transparent text-slate-500 hover:text-slate-700 hover:bg-white"
+                                                }
+                                            `}
+                                        >
+                                            <Icon size={14} />
+                                            {label}
+                                            {count > 0 && (
+                                                <span
+                                                    className={`
+                                                        inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold
+                                                        ${activeSection === key ? "bg-blue-100 text-blue-700" : "bg-slate-200 text-slate-600"}
+                                                    `}
+                                                >
+                                                    {count}
                                                 </span>
+                                            )}
+                                        </button>
+                                    ))}
+                                </div>
 
+                                {/* Tab Content */}
+                                <div className="p-0">
+                                    {activeSection === "crew" && (
+                                        <SectionTable
+                                            activeDays={activeDays}
+                                            rows={details.crew}
+                                            columns={["name", "position", "amount"]}
+                                        />
+                                    )}
+                                    {activeSection === "logistics" && (
+                                        <SectionTable
+                                            activeDays={activeDays}
+                                            rows={details.logistics}
+                                            columns={["name", "description", "amount"]}
+                                        />
+                                    )}
+                                    {activeSection === "inventory" && (
+                                        <SectionTable
+                                            activeDays={activeDays}
+                                            rows={details.inventory}
+                                            columns={["name", "quantity", "amount"]}
+                                        />
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* ── EXPENSE RECORDS ── */}
+                    <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div className="px-8 py-5 border-b border-slate-100 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center">
+                                    <Receipt size={13} className="text-blue-600" />
+                                </div>
+                                <h2 className="text-base font-bold text-slate-800">Expense Records</h2>
+                            </div>
+                            <span className="text-xs font-bold text-slate-400 bg-slate-100 px-3 py-1 rounded-full">
+                                {expenses.length} items
+                            </span>
+                        </div>
+
+                        <div className="overflow-x-auto">
+                            <table className="w-full">
+                                <thead>
+                                    <tr className="bg-slate-50 border-b border-slate-100">
+                                        {["Category", "Description", "Amount", "Date"].map((h) => (
+                                            <th
+                                                key={h}
+                                                className="px-6 py-4 text-left text-[11px] font-bold uppercase tracking-widest text-slate-400"
+                                            >
+                                                {h}
+                                            </th>
+                                        ))}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {expenses.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={4} className="px-6 py-16 text-center text-slate-400 text-sm">
+                                                No expense records found
                                             </td>
-
-                                            <td className="p-4">
-                                                {expense.description}
-                                            </td>
-
-                                            <td className="
-                        p-4
-                        font-semibold
-                      ">
-                                                Rs{" "}
-                                                {Number(
-                                                    expense.amount
-                                                ).toLocaleString()}
-                                            </td>
-
-                                            <td className="p-4">
-                                                {new Date(
-                                                    expense.created_at
-                                                ).toLocaleDateString()}
-                                            </td>
-
                                         </tr>
+                                    ) : (
+                                        expenses.map((expense, i) => (
+                                            <tr
+                                                key={expense.id}
+                                                className={`border-b border-slate-50 hover:bg-blue-50/30 transition-colors ${
+                                                    i % 2 === 0 ? "bg-white" : "bg-slate-50/30"
+                                                }`}
+                                            >
+                                                <td className="px-6 py-4">
+                                                    <span className="inline-flex px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-bold">
+                                                        {expense.category}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 text-sm text-slate-700">
+                                                    {expense.description}
+                                                </td>
+                                                <td className="px-6 py-4 text-sm font-bold text-slate-900">
+                                                    Rs {Number(expense.amount).toLocaleString()}
+                                                </td>
+                                                <td className="px-6 py-4 text-sm text-slate-400">
+                                                    {new Date(expense.created_at).toLocaleDateString("en-US", {
+                                                        day: "numeric",
+                                                        month: "short",
+                                                        year: "numeric",
+                                                    })}
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
 
-                                    ))
+                        {expenses.length > 0 && (
+                            <div className="px-8 py-4 bg-slate-50 border-t border-slate-100 flex justify-end">
+                                <div className="text-sm">
+                                    <span className="text-slate-400 font-medium">Total Expenses:</span>{" "}
+                                    <span className="font-black text-slate-900 text-base">
+                                        Rs{" "}
+                                        {Number(
+                                            expenses.reduce((s, e) => s + Number(e.amount), 0)
+                                        ).toLocaleString()}
+                                    </span>
+                                </div>
+                            </div>
+                        )}
+                    </div>
 
-                                )}
-
-                            </tbody>
-
-                        </table>
-
+                    {/* FOOTER STAMP */}
+                    <div className="flex items-center justify-center gap-4 pt-4 opacity-40">
+                        <div className="h-px flex-1 bg-slate-300" />
+                        <div className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-widest">
+                            <Film size={11} />
+                            Confidential Production Document
+                        </div>
+                        <div className="h-px flex-1 bg-slate-300" />
                     </div>
 
                 </div>
-
             </div>
-
         </Layout>
-
     );
 }
 
-function SummaryCard({
-    title,
-    value,
-    icon,
-}) {
+/* ── SUB-COMPONENTS ── */
+
+function MetricCard({ label, value, icon: Icon, accent, positive }) {
+    const accents = {
+        blue: {
+            bg: "bg-blue-600",
+            light: "bg-blue-50",
+            text: "text-blue-600",
+            border: "border-blue-100",
+        },
+        slate: {
+            bg: "bg-slate-600",
+            light: "bg-slate-50",
+            text: "text-slate-600",
+            border: "border-slate-100",
+        },
+        emerald: {
+            bg: "bg-emerald-600",
+            light: "bg-emerald-50",
+            text: "text-emerald-600",
+            border: "border-emerald-100",
+        },
+    };
+
+    const a = accents[accent] || accents.blue;
+    const isNegative = positive === false;
 
     return (
+        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 group hover:shadow-md transition-shadow">
+            <div className="flex items-start justify-between mb-4">
+                <p className="text-sm font-bold uppercase tracking-widest text-slate-400">{label}</p>
+                <div className={`w-9 h-9 rounded-xl ${a.light} flex items-center justify-center`}>
+                    <Icon size={15} className={a.text} />
+                </div>
+            </div>
+            <p
+                className={`text-3xl font-black tracking-tight ${
+                    isNegative ? "text-red-600" : "text-slate-900"
+                }`}
+            >
+                Rs {Number(value || 0).toLocaleString()}
+            </p>
+        </div>
+    );
+}
 
-        <div
-            className="
-        bg-white
-        border
-        border-gray-200
-        rounded-2xl
-        p-6
-        shadow-sm
-      "
-        >
+function MarginCard({ margin }) {
+    const isPositive = Number(margin) >= 0;
 
-            <div className="
-        flex
-        items-center
-        justify-between
-      ">
+    return (
+        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 group hover:shadow-md transition-shadow">
+            <div className="flex items-start justify-between mb-4">
+                <p className="text-sm font-bold uppercase tracking-widest text-slate-400">Profit Margin</p>
+                <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center">
+                    <TrendingUp size={15} className="text-blue-600" />
+                </div>
+            </div>
+            <p className={`text-3xl font-black tracking-tight ${isPositive ? "text-slate-900" : "text-red-600"}`}>
+                {margin}%
+            </p>
+        </div>
+    );
+}
 
-                <div>
+function CostBar({ label, amount, pct, color, icon: Icon }) {
+    const colors = {
+        blue: {
+            bar: "bg-blue-500",
+            track: "bg-blue-100",
+            text: "text-blue-600",
+            icon: "bg-blue-50",
+        },
+        indigo: {
+            bar: "bg-indigo-500",
+            track: "bg-indigo-100",
+            text: "text-indigo-600",
+            icon: "bg-indigo-50",
+        },
+        sky: {
+            bar: "bg-sky-500",
+            track: "bg-sky-100",
+            text: "text-sky-600",
+            icon: "bg-sky-50",
+        },
+    };
 
-                    <p className="
-            text-sm
-            text-gray-500
-          ">
-                        {title}
-                    </p>
+    const c = colors[color] || colors.blue;
 
-                    <h3 className="
-            mt-3
-            text-3xl
-            font-bold
-          ">
+    return (
+        <div className="border border-slate-200 rounded-2xl p-5 bg-slate-50/50">
+            <div className="flex items-center gap-2 mb-3">
+                <div className={`w-7 h-7 rounded-lg ${c.icon} flex items-center justify-center`}>
+                    <Icon size={13} className={c.text} />
+                </div>
+                <span className="text-sm font-bold text-slate-700">{label}</span>
+                <span className={`ml-auto text-sm font-black ${c.text}`}>{pct}%</span>
+            </div>
+            <div className={`h-2 rounded-full ${c.track} overflow-hidden mb-3`}>
+                <div
+                    className={`h-full ${c.bar} rounded-full transition-all duration-700`}
+                    style={{ width: `${pct}%` }}
+                />
+            </div>
+            <p className="text-xl font-black text-slate-900">
+                Rs {Number(amount).toLocaleString()}
+            </p>
+        </div>
+    );
+}
+
+function SectionTable({ rows, columns, activeDays }) {
+    if (!rows?.length) {
+        return (
+            <div className="py-12 text-center text-slate-400 text-sm">
+                No records found
+            </div>
+        );
+    }
+
+    const colLabels = {
+        name: "Name",
+        position: "Position",
+        description: "Description",
+        quantity: "Quantity",
+        amount: "Amount",
+    };
+
+    return (
+        <table className="w-full">
+            <thead>
+                <tr className="border-b border-slate-100">
+                    <td className="px-6 py-2" />
+                    {columns.map((col) => (
+                        <th
+                            key={col}
+                            className="px-6 py-4 text-left text-[11px] font-bold uppercase tracking-widest text-slate-400"
+                        >
+                            {colLabels[col] || col}
+                        </th>
+                    ))}
+                </tr>
+            </thead>
+            <tbody>
+                {rows.map((row, i) => (
+                    <tr
+                        key={i}
+                        className={`border-b border-slate-50 hover:bg-blue-50/30 transition-colors ${
+                            i % 2 === 0 ? "bg-white" : "bg-slate-50/20"
+                        }`}
+                    >
+                        <td className="px-6 py-4 text-slate-300 text-xs font-bold w-10">
+                            {String(i + 1).padStart(2, "0")}
+                        </td>
+                        {columns.map((col) => (
+                            <td key={col} className="px-6 py-4 text-sm text-slate-700">
+                                {col === "amount" ? (
+                                    <span className="font-black text-slate-900">
+                                        Rs{" "}
+                                        {Number(
+                                            row.rate ? row.rate * activeDays : row[col]
+                                        ).toLocaleString()}
+                                    </span>
+                                ) : (
+                                    row[col]
+                                )}
+                            </td>
+                        ))}
+                    </tr>
+                ))}
+            </tbody>
+            <tfoot>
+                <tr className="bg-slate-50 border-t border-slate-200">
+                    <td colSpan={columns.length} className="px-6 py-4 text-right text-sm font-bold text-slate-500">
+                        Subtotal
+                    </td>
+                    <td className="px-6 py-4 text-sm font-black text-blue-600">
                         Rs{" "}
                         {Number(
-                            value || 0
+                            rows.reduce(
+                                (sum, r) =>
+                                    sum + Number(r.rate ? r.rate * activeDays : r.amount || 0),
+                                0
+                            )
                         ).toLocaleString()}
-                    </h3>
-
-                </div>
-
-                <div
-                    className="
-            w-12
-            h-12
-            rounded-xl
-            bg-blue-50
-            text-blue-600
-            flex
-            items-center
-            justify-center
-          "
-                >
-                    {icon}
-                </div>
-
-            </div>
-
-        </div>
-
-    );
-}
-
-function BreakdownCard({
-    title,
-    value,
-}) {
-
-    return (
-
-        <div
-            className="
-        border
-        border-gray-200
-        rounded-xl
-        p-5
-      "
-        >
-
-            <p className="
-        text-sm
-        text-gray-500
-      ">
-                {title}
-            </p>
-
-            <h4 className="
-        mt-3
-        text-2xl
-        font-bold
-      ">
-                Rs{" "}
-                {Number(
-                    value || 0
-                ).toLocaleString()}
-            </h4>
-
-        </div>
-
+                    </td>
+                </tr>
+            </tfoot>
+        </table>
     );
 }

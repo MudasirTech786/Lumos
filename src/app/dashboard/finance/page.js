@@ -8,7 +8,7 @@ import toast from "react-hot-toast";
 import {
     DollarSign, TrendingUp, Receipt, Clock,
     Briefcase, Users, ArrowUpRight, Landmark,
-    Calendar, CheckCircle2, Minus, ArrowRight,
+    Calendar, CheckCircle2, Minus, ArrowRight, ArrowLeft,
 } from "lucide-react";
 
 const fmt = (n) => Number(n || 0).toLocaleString("en-PK");
@@ -111,13 +111,13 @@ const s = {
 };
 
 const pillStyles = {
-    completed:     { background: C.greenBg,  color: C.greenDark },
-    active:        { background: C.blueBg,   color: "#1e40af" },
-    "in progress": { background: C.blueBg,   color: "#1e40af" },
-    pending:       { background: C.amberBg2, color: C.amberDark },
-    paid:          { background: C.greenBg,  color: C.greenDark },
-    approved:      { background: C.blueBg,   color: "#1e40af" },
-    draft:         { background: C.slate100, color: C.slate500 },
+    completed: { background: C.greenBg, color: C.greenDark },
+    active: { background: C.blueBg, color: "#1e40af" },
+    "in progress": { background: C.blueBg, color: "#1e40af" },
+    pending: { background: C.amberBg2, color: C.amberDark },
+    paid: { background: C.greenBg, color: C.greenDark },
+    approved: { background: C.blueBg, color: "#1e40af" },
+    draft: { background: C.slate100, color: C.slate500 },
 };
 
 // ── sub-components ────────────────────────────────────────────────────────────
@@ -129,9 +129,9 @@ function StatusPill({ status = "draft" }) {
 
 function SummaryCard({ title, value, icon, iconBg, iconColor, trend, trendLabel, sub }) {
     const trendStyle = {
-        up:      { background: C.greenBg,  color: C.greenDark },
-        down:    { background: C.roseBg,   color: C.rose },
-        warn:    { background: C.amberBg2, color: C.amberDark },
+        up: { background: C.greenBg, color: C.greenDark },
+        down: { background: C.roseBg, color: C.rose },
+        warn: { background: C.amberBg2, color: C.amberDark },
         neutral: { background: C.slate100, color: C.slate500 },
     }[trend] ?? { background: C.slate100, color: C.slate500 };
     const TrendIcon = trend === "up" ? TrendingUp : Minus;
@@ -246,8 +246,8 @@ export default function FinanceDashboardPage() {
         let totalRevenue = 0, totalCost = 0, totalProfit = 0;
         Object.values(financeMap).forEach(({ revenue, total_cost, profit }) => {
             totalRevenue += Number(revenue || 0);
-            totalCost    += Number(total_cost || 0);
-            totalProfit  += Number(profit || 0);
+            totalCost += Number(total_cost || 0);
+            totalProfit += Number(profit || 0);
         });
         const pendingPayroll = payrolls
             .filter((p) => p.status !== "paid")
@@ -272,12 +272,12 @@ export default function FinanceDashboardPage() {
     const marginPct = stats.totalRevenue > 0 ? Math.round((stats.totalProfit / stats.totalRevenue) * 100) : 0;
 
     // ── responsive values derived from isMobile (inside component, safe) ──
-    const heroPadding    = isMobile ? "32px 20px 64px"      : "44px 40px 68px";
-    const heroFontSize   = isMobile ? "28px"                 : "42px";
-    const cardsColumns   = isMobile ? "repeat(2, 1fr)"       : "repeat(4, 1fr)";
-    const cardsPadding   = isMobile ? "0 16px"               : "0 32px";
-    const bodyPadding    = isMobile ? "20px 16px 0"          : "28px 32px 0";
-    const metaGap        = isMobile ? "12px"                 : "28px";
+    const heroPadding = isMobile ? "32px 20px 64px" : "44px 40px 68px";
+    const heroFontSize = isMobile ? "28px" : "42px";
+    const cardsColumns = isMobile ? "repeat(2, 1fr)" : "repeat(4, 1fr)";
+    const cardsPadding = isMobile ? "0 16px" : "0 32px";
+    const bodyPadding = isMobile ? "20px 16px 0" : "28px 32px 0";
+    const metaGap = isMobile ? "12px" : "28px";
 
     return (
         <Layout>
@@ -305,10 +305,10 @@ export default function FinanceDashboardPage() {
 
                 {/* ── SUMMARY CARDS ── */}
                 <div style={{ display: "grid", gridTemplateColumns: cardsColumns, gap: "16px", padding: cardsPadding, marginTop: "-34px", position: "relative", zIndex: 10 }}>
-                    <SummaryCard title="Total Revenue"   value={stats.totalRevenue}  icon={<DollarSign size={20} />} iconBg={C.blueBg}  iconColor={C.blue}  trend="up"      trendLabel="+12%"   sub="Across all productions" />
-                    <SummaryCard title="Production Cost" value={stats.totalCost}     icon={<Receipt size={20} />}   iconBg={C.amberBg} iconColor={C.amber} trend="neutral" trendLabel="Stable" sub="Crew · Logistics · Gear" />
-                    <SummaryCard title="Total Profit"    value={stats.totalProfit}   icon={<TrendingUp size={20} />} iconBg={C.greenBg} iconColor={C.green} trend="up"      trendLabel="+8%"    sub={`${marginPct}% margin`} />
-                    <SummaryCard title="Pending Payroll" value={stats.pendingPayroll} icon={<Clock size={20} />}   iconBg={C.roseBg}  iconColor={C.rose}  trend="warn"    trendLabel="Pending" sub={`${payrolls.filter(p => p.status !== "paid").length} payroll runs`} />
+                    <SummaryCard title="Total Revenue" value={stats.totalRevenue} icon={<DollarSign size={20} />} iconBg={C.blueBg} iconColor={C.blue} trend="up" trendLabel="+12%" sub="Across all productions" />
+                    <SummaryCard title="Production Cost" value={stats.totalCost} icon={<Receipt size={20} />} iconBg={C.amberBg} iconColor={C.amber} trend="neutral" trendLabel="Stable" sub="Crew · Logistics · Gear" />
+                    <SummaryCard title="Total Profit" value={stats.totalProfit} icon={<TrendingUp size={20} />} iconBg={C.greenBg} iconColor={C.green} trend="up" trendLabel="+8%" sub={`${marginPct}% margin`} />
+                    <SummaryCard title="Pending Payroll" value={stats.pendingPayroll} icon={<Clock size={20} />} iconBg={C.roseBg} iconColor={C.rose} trend="warn" trendLabel="Pending" sub={`${payrolls.filter(p => p.status !== "paid").length} payroll runs`} />
                 </div>
 
                 {/* ── BODY ── */}
@@ -317,7 +317,7 @@ export default function FinanceDashboardPage() {
                     {/* Productions */}
                     <div style={s.panel}>
                         <UtilBar revenue={stats.totalRevenue} cost={stats.totalCost} />
-                        <PanelHeader icon={<Briefcase size={18} />} title="Recent Productions" sub="Production financial overview" href="/dashboard/finance/shoots" />
+                        <PanelHeader icon={<Briefcase size={18} />} title="Recent Productions" sub="Production financial overview" href="/dashboard/finance/expenses" />
                         <div style={{ overflowX: "auto" }}>
                             <table style={{ width: "100%", borderCollapse: "collapse" }}>
                                 <thead>

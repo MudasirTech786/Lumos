@@ -33,9 +33,10 @@ export default function CreateShootPage() {
 
   const [form, setForm] =
     useState({
-
       title: "",
       client_name: "",
+      client_budget: "",
+      client_invoice_amount: "",
       location: "",
       start_datetime: "",
       end_datetime: "",
@@ -336,6 +337,32 @@ export default function CreateShootPage() {
                 setForm({
                   ...form,
                   client_name: value,
+                })
+              }
+            />
+
+            <Input
+              icon={<Building2 size={18} />}
+              label="Client Budget"
+              placeholder="500000"
+              value={form.client_budget}
+              onChange={(value) =>
+                setForm({
+                  ...form,
+                  client_budget: value,
+                })
+              }
+            />
+
+            <Input
+              icon={<Building2 size={18} />}
+              label="Invoice Amount"
+              placeholder="500000"
+              value={form.client_invoice_amount}
+              onChange={(value) =>
+                setForm({
+                  ...form,
+                  client_invoice_amount: value,
                 })
               }
             />
