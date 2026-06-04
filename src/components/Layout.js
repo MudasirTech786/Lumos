@@ -535,14 +535,14 @@ export default function Layout({ children }) {
                     <button
                       onClick={() => {
                         // ✅ CHECK IF SUPER ADMIN
-                        // if (user?.name === "Super Admin") {
-                        //   toast.error("Super Admin profile cannot be edited");
-                        //   return;
-                        // }
+                        if (user?.name === "Super Admin") {
+                          toast.error("Super Admin profile cannot be edited");
+                          return;
+                        }
                         setEditOpen(true);
                         setProfileOpen(false);
                       }}
-                      // disabled={user?.name === "Super Admin"}
+                      disabled={user?.name === "Super Admin"}
                       className={`
       group
       w-full
