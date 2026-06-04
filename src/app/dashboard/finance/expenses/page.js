@@ -8,7 +8,7 @@ import toast from "react-hot-toast";
 import {
     Plus, Pencil, Trash2, Receipt, Search,
     X, Filter, ArrowLeft, TrendingUp, Layers,
-    Camera, ChevronRight,
+    Camera, ChevronRight, ArrowRight,
 } from "lucide-react";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
