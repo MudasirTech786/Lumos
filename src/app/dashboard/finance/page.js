@@ -8,205 +8,37 @@ import toast from "react-hot-toast";
 import {
     DollarSign, TrendingUp, Receipt, Clock,
     Briefcase, Users, ArrowUpRight, Landmark,
-    Calendar, CheckCircle2, Minus, ArrowRight, ArrowLeft,
+    Calendar, CheckCircle2, ArrowRight, BarChart3,
 } from "lucide-react";
 
-const fmt = (n) => Number(n || 0).toLocaleString("en-PK");
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+const fmt = (n) => `Rs ${Number(n || 0).toLocaleString("en-PK")}`;
+const pct = (a, b) => (b > 0 ? Math.round((a / b) * 100) : 0);
 
-const C = {
-    blue: "#1d4ed8", blueDark: "#1251b5", blueBg: "#eff6ff", blueBg2: "#dbeafe",
-    green: "#059669", greenBg: "#d1fae5", greenDark: "#065f46",
-    amber: "#b45309", amberBg: "#fef3c7", amberBg2: "#fef9c3", amberDark: "#854d0e",
-    rose: "#be123c", roseBg: "#ffe4e6", red: "#dc2626",
-    slate50: "#f8fafc", slate100: "#f1f5f9", slate400: "#94a3b8",
-    slate500: "#64748b", slate600: "#475569", slate700: "#334155",
-    slate800: "#1e293b", slate900: "#0f172a", white: "#ffffff",
+// ─── Status badge ─────────────────────────────────────────────────────────────
+const STATUS_CLS = {
+    completed:     "bg-emerald-50 text-emerald-700 border border-emerald-200",
+    active:        "bg-blue-50 text-blue-700 border border-blue-200",
+    "in progress": "bg-blue-50 text-blue-700 border border-blue-200",
+    pending:       "bg-amber-50 text-amber-700 border border-amber-200",
+    paid:          "bg-emerald-50 text-emerald-700 border border-emerald-200",
+    approved:      "bg-blue-50 text-blue-700 border border-blue-200",
+    draft:         "bg-slate-100 text-slate-500 border border-slate-200",
 };
-
-// ── ALL static — no isMobile here ────────────────────────────────────────────
-const s = {
-    root: {
-        background: "#f0f4fa",
-        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-        fontSize: "15px", color: C.slate900, paddingBottom: "48px", minHeight: "100vh",
-    },
-    hero: {
-        background: C.blueDark,
-        padding: "44px 40px 68px", // overridden inline with isMobile
-        position: "relative", overflow: "hidden",
-    },
-    heroCircle1: {
-        position: "absolute", top: "-60px", right: "-60px",
-        width: "320px", height: "320px", borderRadius: "50%",
-        background: "rgba(255,255,255,0.06)", pointerEvents: "none",
-    },
-    heroCircle2: {
-        position: "absolute", bottom: "-100px", left: "35%",
-        width: "420px", height: "420px", borderRadius: "50%",
-        background: "rgba(255,255,255,0.04)", pointerEvents: "none",
-    },
-    heroBadge: {
-        display: "inline-flex", alignItems: "center", gap: "7px",
-        background: "rgba(255,255,255,0.14)", border: "1px solid rgba(255,255,255,0.22)",
-        borderRadius: "100px", padding: "6px 16px", fontSize: "12px", fontWeight: 700,
-        color: "#cfe0ff", letterSpacing: "0.07em", textTransform: "uppercase",
-        marginBottom: "20px", position: "relative", zIndex: 2,
-    },
-    heroH1: {
-        fontSize: "42px", fontWeight: 800, color: C.white,
-        lineHeight: 1.1, marginBottom: "10px", position: "relative", zIndex: 2, letterSpacing: "-1.5px",
-    },
-    heroSub: { color: "rgba(255,255,255,0.6)", fontSize: "15px", position: "relative", zIndex: 2 },
-    heroMetaItem: { display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "rgba(255,255,255,0.65)" },
-    card: {
-        background: C.white, borderRadius: "18px", padding: "24px",
-        boxShadow: "0 8px 28px rgba(15,23,42,0.10), 0 1px 4px rgba(15,23,42,0.06)",
-        border: "1px solid rgba(15,23,42,0.04)", transition: "transform .2s, box-shadow .2s",
-    },
-    cardTop: { display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "18px" },
-    cardIconBase: { width: "44px", height: "44px", borderRadius: "12px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 },
-    cardLabel: { fontSize: "11px", fontWeight: 700, color: C.slate400, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "7px" },
-    cardValue: { fontSize: "30px", fontWeight: 800, color: C.slate900, lineHeight: 1, letterSpacing: "-1px" },
-    cardSub: { fontSize: "12px", color: C.slate400, marginTop: "8px" },
-    trendBase: { display: "flex", alignItems: "center", gap: "4px", fontSize: "11px", fontWeight: 700, padding: "4px 10px", borderRadius: "100px", whiteSpace: "nowrap" },
-    panel: {
-        background: C.white, borderRadius: "18px", border: "1px solid rgba(15,23,42,0.06)",
-        boxShadow: "0 2px 16px rgba(15,23,42,0.06)", overflow: "hidden", marginBottom: "20px",
-    },
-    panelHead: {
-        padding: "20px 24px", borderBottom: `1px solid ${C.slate50}`,
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-    },
-    panelTitleWrap: { display: "flex", alignItems: "center", gap: "12px" },
-    panelIcon: {
-        width: "38px", height: "38px", borderRadius: "10px",
-        background: C.blueBg, color: C.blue, display: "flex", alignItems: "center", justifyContent: "center",
-    },
-    panelTitle: { fontSize: "16px", fontWeight: 700, color: C.slate900 },
-    panelSub: { fontSize: "12px", color: C.slate400, marginTop: "2px" },
-    viewBtn: {
-        display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "13px",
-        fontWeight: 600, color: C.blue, background: C.blueBg, border: "none",
-        padding: "7px 16px", borderRadius: "10px", cursor: "pointer", textDecoration: "none",
-    },
-    utilBar: { padding: "18px 24px", borderBottom: `1px solid ${C.slate50}` },
-    utilLabels: { display: "flex", justifyContent: "space-between", fontSize: "13px", marginBottom: "8px", flexWrap: "wrap", gap: "4px" },
-    utilTrack: { height: "8px", background: C.slate100, borderRadius: "100px", overflow: "hidden" },
-    utilFill: { height: "100%", borderRadius: "100px", background: C.blue },
-    utilNote: { fontSize: "11px", color: C.slate400, marginTop: "6px" },
-    thead: { background: C.slate50, borderBottom: `1.5px solid ${C.slate100}` },
-    th: { padding: "11px 20px", fontSize: "11px", fontWeight: 700, color: C.slate400, textTransform: "uppercase", letterSpacing: "0.07em", textAlign: "left" },
-    td: { padding: "15px 20px", fontSize: "14px", color: C.slate800, borderBottom: `1px solid ${C.slate50}` },
-    tdTitle: { fontWeight: 700, fontSize: "14px", color: C.slate900 },
-    tdSub: { fontSize: "12px", color: C.slate400, marginTop: "2px" },
-    tdNum: { fontWeight: 700, fontSize: "14px", fontVariantNumeric: "tabular-nums" },
-    tdPos: { color: C.green, fontWeight: 700 },
-    tdNeg: { color: C.red, fontWeight: 700 },
-    pillBase: { display: "inline-block", padding: "4px 11px", borderRadius: "100px", fontSize: "11px", fontWeight: 700, letterSpacing: "0.03em" },
-    actionLink: {
-        display: "inline-flex", alignItems: "center", gap: "5px", fontSize: "13px",
-        fontWeight: 600, color: C.blue, padding: "5px 11px", borderRadius: "8px", textDecoration: "none",
-    },
-    refCode: { background: C.slate100, color: C.slate700, fontFamily: "monospace", fontSize: "12px", padding: "4px 10px", borderRadius: "6px" },
-};
-
-const pillStyles = {
-    completed: { background: C.greenBg, color: C.greenDark },
-    active: { background: C.blueBg, color: "#1e40af" },
-    "in progress": { background: C.blueBg, color: "#1e40af" },
-    pending: { background: C.amberBg2, color: C.amberDark },
-    paid: { background: C.greenBg, color: C.greenDark },
-    approved: { background: C.blueBg, color: "#1e40af" },
-    draft: { background: C.slate100, color: C.slate500 },
-};
-
-// ── sub-components ────────────────────────────────────────────────────────────
 
 function StatusPill({ status = "draft" }) {
-    const extra = pillStyles[status.toLowerCase()] ?? pillStyles.draft;
-    return <span style={{ ...s.pillBase, ...extra }}>{status}</span>;
-}
-
-function SummaryCard({ title, value, icon, iconBg, iconColor, trend, trendLabel, sub }) {
-    const trendStyle = {
-        up: { background: C.greenBg, color: C.greenDark },
-        down: { background: C.roseBg, color: C.rose },
-        warn: { background: C.amberBg2, color: C.amberDark },
-        neutral: { background: C.slate100, color: C.slate500 },
-    }[trend] ?? { background: C.slate100, color: C.slate500 };
-    const TrendIcon = trend === "up" ? TrendingUp : Minus;
+    const cls = STATUS_CLS[status.toLowerCase()] ?? STATUS_CLS.draft;
     return (
-        <div style={s.card}>
-            <div style={s.cardTop}>
-                <div style={{ ...s.cardIconBase, background: iconBg, color: iconColor }}>{icon}</div>
-                <div style={{ ...s.trendBase, ...trendStyle }}>
-                    <TrendIcon size={11} />
-                    {trendLabel}
-                </div>
-            </div>
-            <div style={s.cardLabel}>{title}</div>
-            <div style={s.cardValue}>Rs {fmt(value)}</div>
-            {sub && <div style={s.cardSub}>{sub}</div>}
-        </div>
+        <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold capitalize tracking-wide ${cls}`}>
+            {status}
+        </span>
     );
 }
-
-function PanelHeader({ icon, title, sub, href }) {
-    return (
-        <div style={s.panelHead}>
-            <div style={s.panelTitleWrap}>
-                <div style={s.panelIcon}>{icon}</div>
-                <div>
-                    <div style={s.panelTitle}>{title}</div>
-                    <div style={s.panelSub}>{sub}</div>
-                </div>
-            </div>
-            {href && (
-                <Link href={href} style={s.viewBtn}>
-                    View All <ArrowRight size={13} />
-                </Link>
-            )}
-        </div>
-    );
-}
-
-function Th({ children }) { return <th style={s.th}>{children}</th>; }
-function Td({ children, style: extra = {} }) { return <td style={{ ...s.td, ...extra }}>{children}</td>; }
-
-function UtilBar({ revenue, cost }) {
-    const pct = revenue > 0 ? Math.min(100, Math.round((cost / revenue) * 100)) : 0;
-    return (
-        <div style={s.utilBar}>
-            <div style={s.utilLabels}>
-                <span style={{ fontWeight: 600, color: C.slate900, fontSize: "14px" }}>Cost utilization of Revenue</span>
-                <span style={{ color: C.slate400 }}>Rs {fmt(cost)} of Rs {fmt(revenue)}</span>
-            </div>
-            <div style={s.utilTrack}>
-                <div style={{ ...s.utilFill, width: `${pct}%` }} />
-            </div>
-            <div style={s.utilNote}>{pct}% cost ratio · {100 - pct}% gross margin</div>
-        </div>
-    );
-}
-
-function useIsMobile() {
-    const [mobile, setMobile] = useState(false);
-    useEffect(() => {
-        const check = () => setMobile(window.innerWidth < 768);
-        check();
-        window.addEventListener("resize", check);
-        return () => window.removeEventListener("resize", check);
-    }, []);
-    return mobile;
-}
-
-// ── page ──────────────────────────────────────────────────────────────────────
 
 export default function FinanceDashboardPage() {
-    const isMobile = useIsMobile();
-    const [loading, setLoading] = useState(true);
-    const [shoots, setShoots] = useState([]);
-    const [payrolls, setPayrolls] = useState([]);
+    const [loading,    setLoading]    = useState(true);
+    const [shoots,     setShoots]     = useState([]);
+    const [payrolls,   setPayrolls]   = useState([]);
     const [financeMap, setFinanceMap] = useState({});
 
     const fetchDashboard = async () => {
@@ -216,15 +48,16 @@ export default function FinanceDashboardPage() {
                 api.get("/shoots"),
                 api.get("/payrolls"),
             ]);
-            const shootsData = shootsRes.data || [];
+            const shootsData  = shootsRes.data || [];
             const payrollData = payrollsRes.data?.data || [];
+
             const financeResults = await Promise.all(
                 shootsData.map(async (shoot) => {
                     try {
                         const res = await api.get(`/shoots/${shoot.id}/finance`);
                         return { shootId: shoot.id, finance: res.data };
                     } catch {
-                        return { shootId: shoot.id, finance: { crew_cost: 0, logistics_cost: 0, inventory_cost: 0, repair_cost: 0, expense_cost: 0, total_cost: 0, revenue: 0, profit: 0 } };
+                        return { shootId: shoot.id, finance: { total_cost: 0, revenue: 0, profit: 0 } };
                     }
                 })
             );
@@ -245,9 +78,9 @@ export default function FinanceDashboardPage() {
     const stats = useMemo(() => {
         let totalRevenue = 0, totalCost = 0, totalProfit = 0;
         Object.values(financeMap).forEach(({ revenue, total_cost, profit }) => {
-            totalRevenue += Number(revenue || 0);
-            totalCost += Number(total_cost || 0);
-            totalProfit += Number(profit || 0);
+            totalRevenue += Number(revenue    || 0);
+            totalCost    += Number(total_cost || 0);
+            totalProfit  += Number(profit     || 0);
         });
         const pendingPayroll = payrolls
             .filter((p) => p.status !== "paid")
@@ -255,100 +88,198 @@ export default function FinanceDashboardPage() {
         return { totalRevenue, totalCost, totalProfit, pendingPayroll };
     }, [financeMap, payrolls]);
 
-    if (loading) {
-        return (
-            <Layout>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "160px 0" }}>
-                    <div style={{ textAlign: "center" }}>
-                        <div style={{ width: "40px", height: "40px", border: "4px solid #dbeafe", borderTopColor: C.blue, borderRadius: "50%", animation: "spin 0.75s linear infinite", margin: "0 auto 16px" }} />
-                        <p style={{ color: C.slate400, fontSize: "14px" }}>Loading Finance Dashboard…</p>
+    // ── Loading ──────────────────────────────────────────────────────────────
+    if (loading) return (
+        <Layout>
+            <div className="min-h-screen flex items-center justify-center bg-slate-50">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-900 to-blue-500 flex items-center justify-center shadow-lg animate-pulse">
+                        <Landmark size={24} className="text-white" />
                     </div>
-                    <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+                    <p className="text-slate-500 text-base font-medium">Loading Finance Dashboard…</p>
                 </div>
-            </Layout>
-        );
-    }
+            </div>
+        </Layout>
+    );
 
-    const marginPct = stats.totalRevenue > 0 ? Math.round((stats.totalProfit / stats.totalRevenue) * 100) : 0;
-
-    // ── responsive values derived from isMobile (inside component, safe) ──
-    const heroPadding = isMobile ? "32px 20px 64px" : "44px 40px 68px";
-    const heroFontSize = isMobile ? "28px" : "42px";
-    const cardsColumns = isMobile ? "repeat(2, 1fr)" : "repeat(4, 1fr)";
-    const cardsPadding = isMobile ? "0 16px" : "0 32px";
-    const bodyPadding = isMobile ? "20px 16px 0" : "28px 32px 0";
-    const metaGap = isMobile ? "12px" : "28px";
+    const marginPct  = pct(stats.totalProfit, stats.totalRevenue);
+    const costPct    = pct(stats.totalCost,   stats.totalRevenue);
+    const pendingRuns = payrolls.filter((p) => p.status !== "paid").length;
 
     return (
         <Layout>
-            <div style={s.root}>
+            <div className="min-h-screen bg-slate-50 font-sans">
 
-                {/* ── HERO ── */}
-                <div style={{ ...s.hero, padding: heroPadding }}>
-                    <div style={s.heroCircle1} />
-                    <div style={s.heroCircle2} />
-                    <div style={s.heroBadge}>
-                        <Landmark size={13} /> Finance Overview
-                    </div>
-                    <h1 style={{ ...s.heroH1, fontSize: heroFontSize }}>Production Finance</h1>
-                    <p style={s.heroSub}>Financial overview of productions, payrolls and expenses</p>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: metaGap, marginTop: "22px", position: "relative", zIndex: 2 }}>
-                        {[
-                            { icon: <Calendar size={14} />, label: "June 2026" },
-                            { icon: <CheckCircle2 size={14} />, label: "Live data" },
-                            { icon: <DollarSign size={14} />, label: "PKR (Rs)" },
-                        ].map(({ icon, label }) => (
-                            <div key={label} style={s.heroMetaItem}>{icon} {label}</div>
-                        ))}
+                {/* ── HERO BANNER ─────────────────────────────────────────── */}
+                <div className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-blue-950 to-blue-900 px-8 py-14">
+                    {/* decorative rings */}
+                    <div className="absolute -top-16 -right-16 w-80 h-80 rounded-full border border-white/5 pointer-events-none" />
+                    <div className="absolute -top-6 -right-6 w-48 h-48 rounded-full border border-white/[0.07] pointer-events-none" />
+                    <div className="absolute -bottom-20 left-1/3 w-52 h-52 rounded-full bg-blue-500/10 pointer-events-none" />
+
+                    <div className="relative max-w-6xl mx-auto">
+                        {/* eyebrow */}
+                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/15 text-blue-300 text-base font-bold uppercase tracking-widest mb-5">
+                            <Landmark size={11} />
+                            Finance Overview
+                        </div>
+
+                        <h1 className="text-4xl sm:text-5xl font-extrabold text-white tracking-tight leading-tight">
+                            Production Finance
+                        </h1>
+                        <p className="mt-3 text-blue-300 text-base">
+                            Financial overview of productions, payrolls and expenses
+                        </p>
+
+                        <div className="flex flex-wrap items-center gap-6 mt-5">
+                            {[
+                                { icon: <Calendar size={13} />,      label: "June 2026" },
+                                { icon: <CheckCircle2 size={13} />,  label: "Live data" },
+                                { icon: <DollarSign size={13} />,    label: "PKR (Rs)" },
+                            ].map(({ icon, label }) => (
+                                <div key={label} className="flex items-center gap-1.5 text-blue-300/80 text-sm">
+                                    {icon}
+                                    <span>{label}</span>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 </div>
 
-                {/* ── SUMMARY CARDS ── */}
-                <div style={{ display: "grid", gridTemplateColumns: cardsColumns, gap: "16px", padding: cardsPadding, marginTop: "-34px", position: "relative", zIndex: 10 }}>
-                    <SummaryCard title="Total Revenue" value={stats.totalRevenue} icon={<DollarSign size={20} />} iconBg={C.blueBg} iconColor={C.blue} trend="up" trendLabel="+12%" sub="Across all productions" />
-                    <SummaryCard title="Production Cost" value={stats.totalCost} icon={<Receipt size={20} />} iconBg={C.amberBg} iconColor={C.amber} trend="neutral" trendLabel="Stable" sub="Crew · Logistics · Gear" />
-                    <SummaryCard title="Total Profit" value={stats.totalProfit} icon={<TrendingUp size={20} />} iconBg={C.greenBg} iconColor={C.green} trend="up" trendLabel="+8%" sub={`${marginPct}% margin`} />
-                    <SummaryCard title="Pending Payroll" value={stats.pendingPayroll} icon={<Clock size={20} />} iconBg={C.roseBg} iconColor={C.rose} trend="warn" trendLabel="Pending" sub={`${payrolls.filter(p => p.status !== "paid").length} payroll runs`} />
+                {/* ── KPI CARDS (overlap hero) ─────────────────────────────── */}
+                <div className="max-w-6xl mx-auto px-4 sm:px-6">
+                    <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 -mt-9 relative z-10">
+
+                        <KpiCard
+                            title="Total Revenue"
+                            value={fmt(stats.totalRevenue)}
+                            sub="Across all productions"
+                            icon={<DollarSign size={17} />}
+                            topColor="bg-blue-500"
+                            iconBg="bg-blue-50 text-blue-600"
+                            badge="↑ +12%"
+                            badgeCls="bg-emerald-50 text-emerald-700"
+                        />
+                        <KpiCard
+                            title="Production Cost"
+                            value={fmt(stats.totalCost)}
+                            sub="Crew · Logistics · Gear"
+                            icon={<Receipt size={17} />}
+                            topColor="bg-violet-500"
+                            iconBg="bg-violet-50 text-violet-600"
+                            badge="Stable"
+                            badgeCls="bg-slate-100 text-slate-500"
+                        />
+                        <KpiCard
+                            title="Total Profit"
+                            value={fmt(stats.totalProfit)}
+                            sub={`${marginPct}% margin`}
+                            icon={<TrendingUp size={17} />}
+                            topColor="bg-emerald-500"
+                            iconBg="bg-emerald-50 text-emerald-600"
+                            valueColor={stats.totalProfit >= 0 ? "text-emerald-600" : "text-red-600"}
+                            badge="↑ +8%"
+                            badgeCls="bg-emerald-50 text-emerald-700"
+                        />
+                        <KpiCard
+                            title="Pending Payroll"
+                            value={fmt(stats.pendingPayroll)}
+                            sub={`${pendingRuns} payroll runs`}
+                            icon={<Clock size={17} />}
+                            topColor="bg-rose-500"
+                            iconBg="bg-rose-50 text-rose-600"
+                            badge="Pending"
+                            badgeCls="bg-amber-50 text-amber-700"
+                        />
+
+                    </div>
                 </div>
 
-                {/* ── BODY ── */}
-                <div style={{ padding: bodyPadding }}>
+                {/* ── PAGE BODY ───────────────────────────────────────────── */}
+                <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-6 pb-24">
 
-                    {/* Productions */}
-                    <div style={s.panel}>
-                        <UtilBar revenue={stats.totalRevenue} cost={stats.totalCost} />
-                        <PanelHeader icon={<Briefcase size={18} />} title="Recent Productions" sub="Production financial overview" href="/dashboard/finance/expenses" />
-                        <div style={{ overflowX: "auto" }}>
-                            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                    {/* ── PRODUCTIONS TABLE ───────────────────────────────── */}
+                    <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+
+                        {/* utilisation bar */}
+                        <div className="px-6 py-4 border-b border-slate-100">
+                            <div className="flex items-center justify-between text-sm mb-2 flex-wrap gap-2">
+                                <span className="font-semibold text-slate-800">Cost utilisation of Revenue</span>
+                                <span className="text-slate-400 text-sm">
+                                    {fmt(stats.totalCost)} of {fmt(stats.totalRevenue)}
+                                </span>
+                            </div>
+                            <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                                <div
+                                    className="h-full bg-gradient-to-r from-blue-600 to-blue-400 rounded-full transition-all duration-700"
+                                    style={{ width: `${Math.min(costPct, 100)}%` }}
+                                />
+                            </div>
+                            <p className="text-base text-slate-400 mt-1.5">
+                                {costPct}% cost ratio · {100 - costPct}% gross margin
+                            </p>
+                        </div>
+
+                        {/* panel header */}
+                        <PanelHeader
+                            icon={<Briefcase size={15} />}
+                            title="Recent Productions"
+                            sub="Production financial overview"
+                            href="/dashboard/finance/expenses"
+                        />
+
+                        <div className="overflow-x-auto">
+                            <table className="w-full">
                                 <thead>
-                                    <tr style={s.thead}>
-                                        <Th>Production</Th>
-                                        <Th>Client</Th>
-                                        <Th>Revenue</Th>
-                                        <Th>Cost</Th>
-                                        <Th>Profit</Th>
-                                        <Th>Status</Th>
-                                        <Th>Action</Th>
+                                    <tr className="bg-slate-50 border-b border-slate-100">
+                                        {["Production","Client","Revenue","Cost","Profit","Status","Action"].map(h => (
+                                            <th key={h} className="px-5 py-3 text-left text-sm font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">
+                                                {h}
+                                            </th>
+                                        ))}
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {shoots.length === 0 ? (
-                                        <tr><td colSpan={7} style={{ padding: "48px 20px", textAlign: "center", color: C.slate400, fontSize: "14px" }}>No productions found.</td></tr>
+                                        <tr>
+                                            <td colSpan={7} className="py-14 text-center text-slate-400 text-base">
+                                                No productions found.
+                                            </td>
+                                        </tr>
                                     ) : shoots.map((shoot) => {
-                                        const f = financeMap[shoot.id] || {};
+                                        const f      = financeMap[shoot.id] || {};
                                         const profit = Number(f.profit || 0);
                                         return (
-                                            <tr key={shoot.id}
-                                                onMouseEnter={e => Array.from(e.currentTarget.cells).forEach(c => c.style.background = "#fafbff")}
-                                                onMouseLeave={e => Array.from(e.currentTarget.cells).forEach(c => c.style.background = "")}
-                                            >
-                                                <Td><div style={s.tdTitle}>{shoot.title}</div><div style={s.tdSub}>{shoot.location}</div></Td>
-                                                <Td style={{ color: C.slate600 }}>{shoot.client_name || "—"}</Td>
-                                                <Td style={s.tdNum}>Rs {fmt(f.revenue)}</Td>
-                                                <Td style={s.tdNum}>Rs {fmt(f.total_cost)}</Td>
-                                                <Td><span style={profit >= 0 ? s.tdPos : s.tdNeg}>{profit < 0 ? "−" : ""}Rs {fmt(Math.abs(profit))}</span></Td>
-                                                <Td><StatusPill status={shoot.status} /></Td>
-                                                <Td><Link href={`/dashboard/finance/shoots/${shoot.id}`} style={s.actionLink}>View report <ArrowUpRight size={13} /></Link></Td>
+                                            <tr key={shoot.id} className="border-b border-slate-100 hover:bg-blue-50/40 transition-colors">
+                                                <td className="px-5 py-3.5">
+                                                    <p className="text-base font-bold text-slate-900">{shoot.title}</p>
+                                                    <p className="text-sm text-slate-400 mt-0.5">{shoot.location}</p>
+                                                </td>
+                                                <td className="px-5 py-3.5 text-base text-slate-600">
+                                                    {shoot.client_name || "—"}
+                                                </td>
+                                                <td className="px-5 py-3.5 text-base font-bold text-slate-900 tabular-nums">
+                                                    {fmt(f.revenue)}
+                                                </td>
+                                                <td className="px-5 py-3.5 text-base font-bold text-slate-900 tabular-nums">
+                                                    {fmt(f.total_cost)}
+                                                </td>
+                                                <td className="px-5 py-3.5 text-base font-bold tabular-nums">
+                                                    <span className={profit >= 0 ? "text-emerald-600" : "text-red-600"}>
+                                                        {profit < 0 ? "−" : ""}Rs {Number(Math.abs(profit)).toLocaleString("en-PK")}
+                                                    </span>
+                                                </td>
+                                                <td className="px-5 py-3.5">
+                                                    <StatusPill status={shoot.status} />
+                                                </td>
+                                                <td className="px-5 py-3.5">
+                                                    <Link
+                                                        href={`/dashboard/finance/shoots/${shoot.id}`}
+                                                        className="inline-flex items-center gap-1.5 text-sm font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors"
+                                                    >
+                                                        View report <ArrowUpRight size={12} />
+                                                    </Link>
+                                                </td>
                                             </tr>
                                         );
                                     })}
@@ -357,33 +288,58 @@ export default function FinanceDashboardPage() {
                         </div>
                     </div>
 
-                    {/* Payroll */}
-                    <div style={s.panel}>
-                        <PanelHeader icon={<Users size={18} />} title="Recent Payroll Runs" sub="Payroll processing history" href="/dashboard/finance/payrolls" />
-                        <div style={{ overflowX: "auto" }}>
-                            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                    {/* ── PAYROLL TABLE ────────────────────────────────────── */}
+                    <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+
+                        <PanelHeader
+                            icon={<Users size={15} />}
+                            title="Recent Payroll Runs"
+                            sub="Payroll processing history"
+                            href="/dashboard/finance/payrolls"
+                        />
+
+                        <div className="overflow-x-auto">
+                            <table className="w-full">
                                 <thead>
-                                    <tr style={s.thead}>
-                                        <Th>Reference</Th>
-                                        <Th>Type</Th>
-                                        <Th>Net Amount</Th>
-                                        <Th>Status</Th>
-                                        <Th>Action</Th>
+                                    <tr className="bg-slate-50 border-b border-slate-100">
+                                        {["Reference","Type","Net Amount","Status","Action"].map(h => (
+                                            <th key={h} className="px-5 py-3 text-left text-sm font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">
+                                                {h}
+                                            </th>
+                                        ))}
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {payrolls.length === 0 ? (
-                                        <tr><td colSpan={5} style={{ padding: "48px 20px", textAlign: "center", color: C.slate400, fontSize: "14px" }}>No payroll runs found.</td></tr>
+                                        <tr>
+                                            <td colSpan={5} className="py-14 text-center text-slate-400 text-base">
+                                                No payroll runs found.
+                                            </td>
+                                        </tr>
                                     ) : payrolls.map((payroll) => (
-                                        <tr key={payroll.id}
-                                            onMouseEnter={e => Array.from(e.currentTarget.cells).forEach(c => c.style.background = "#fafbff")}
-                                            onMouseLeave={e => Array.from(e.currentTarget.cells).forEach(c => c.style.background = "")}
-                                        >
-                                            <Td><span style={s.refCode}>{payroll.reference || `PAY-${payroll.id}`}</span></Td>
-                                            <Td style={{ color: C.slate600, textTransform: "capitalize" }}>{payroll.type || "—"}</Td>
-                                            <Td style={s.tdNum}>Rs {fmt(payroll.net_amount)}</Td>
-                                            <Td><StatusPill status={payroll.status} /></Td>
-                                            <Td><Link href={`/dashboard/finance/payrolls/${payroll.id}`} style={s.actionLink}>Open <ArrowUpRight size={13} /></Link></Td>
+                                        <tr key={payroll.id} className="border-b border-slate-100 hover:bg-blue-50/40 transition-colors">
+                                            <td className="px-5 py-3.5">
+                                                <span className="bg-slate-100 text-slate-700 font-mono text-sm px-2.5 py-1 rounded-md">
+                                                    {payroll.reference || `PAY-${payroll.id}`}
+                                                </span>
+                                            </td>
+                                            <td className="px-5 py-3.5 text-base text-slate-600 capitalize">
+                                                {payroll.type || "—"}
+                                            </td>
+                                            <td className="px-5 py-3.5 text-base font-bold text-slate-900 tabular-nums">
+                                                {fmt(payroll.net_amount)}
+                                            </td>
+                                            <td className="px-5 py-3.5">
+                                                <StatusPill status={payroll.status} />
+                                            </td>
+                                            <td className="px-5 py-3.5">
+                                                <Link
+                                                    href={`/dashboard/finance/payrolls/${payroll.id}`}
+                                                    className="inline-flex items-center gap-1.5 text-sm font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors"
+                                                >
+                                                    Open <ArrowUpRight size={12} />
+                                                </Link>
+                                            </td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -391,8 +347,64 @@ export default function FinanceDashboardPage() {
                         </div>
                     </div>
 
+                    {/* ── FOOTER ───────────────────────────────────────────── */}
+                    <div className="text-center text-slate-400 text-sm pt-4 flex items-center justify-center gap-2">
+                        <BarChart3 size={12} />
+                        Finance Dashboard · Live data as of{" "}
+                        {new Date().toLocaleDateString("en-PK", { day: "numeric", month: "long", year: "numeric" })}
+                    </div>
+
                 </div>
             </div>
         </Layout>
+    );
+}
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+function KpiCard({ title, value, sub, icon, topColor, iconBg, badge, badgeCls, valueColor = "text-slate-900" }) {
+    return (
+        <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+            <div className={`h-1 w-full ${topColor}`} />
+            <div className="p-5">
+                <div className="flex items-start justify-between mb-3">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${iconBg}`}>
+                        {icon}
+                    </div>
+                    <span className={`text-sm font-bold px-2.5 py-1 rounded-full ${badgeCls}`}>
+                        {badge}
+                    </span>
+                </div>
+                <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">{title}</p>
+                <p className={`text-2xl sm:text-3xl font-extrabold mt-1.5 tracking-tight leading-tight ${valueColor}`}>
+                    {value}
+                </p>
+                <p className="text-base text-slate-400 mt-1.5">{sub}</p>
+            </div>
+        </div>
+    );
+}
+
+function PanelHeader({ icon, title, sub, href }) {
+    return (
+        <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0">
+                    {icon}
+                </div>
+                <div>
+                    <h2 className="text-lg font-bold text-slate-900">{title}</h2>
+                    {sub && <p className="text-base text-slate-400 mt-0.5">{sub}</p>}
+                </div>
+            </div>
+            {href && (
+                <Link
+                    href={href}
+                    className="inline-flex items-center gap-1.5 text-sm font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-xl transition-colors whitespace-nowrap"
+                >
+                    View All <ArrowRight size={13} />
+                </Link>
+            )}
+        </div>
     );
 }

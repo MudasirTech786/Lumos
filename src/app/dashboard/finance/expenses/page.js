@@ -5,177 +5,69 @@ import { useRouter } from "next/navigation";
 import Layout from "@/components/Layout";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
-import { Plus, Pencil, Trash2, Receipt, Search, X, Filter, ArrowLeft, TrendingUp, Layers, Camera } from "lucide-react";
+import {
+    Plus, Pencil, Trash2, Receipt, Search,
+    X, Filter, ArrowLeft, TrendingUp, Layers,
+    Camera, ChevronRight,
+} from "lucide-react";
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 const fmt = (n) => Number(n || 0).toLocaleString("en-PK");
+const fmtDate = (d) =>
+    d ? new Date(d).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" }) : "—";
 
-const C = {
-    blue: "#1d4ed8", blueDark: "#1251b5", blueBg: "#eff6ff", blueBg2: "#dbeafe",
-    green: "#059669", greenBg: "#d1fae5", greenDark: "#065f46",
-    amber: "#b45309", amberBg: "#fef3c7",
-    red: "#dc2626", redBg: "#fee2e2",
-    slate50: "#f8fafc", slate100: "#f1f5f9", slate200: "#e2e8f0",
-    slate400: "#94a3b8", slate500: "#64748b", slate600: "#475569",
-    slate700: "#334155", slate800: "#1e293b", slate900: "#0f172a", white: "#ffffff",
+// ─── Category chip colours ────────────────────────────────────────────────────
+const CAT_CLS = {
+    transport:  "bg-blue-50 text-blue-700 border border-blue-200",
+    food:       "bg-emerald-50 text-emerald-700 border border-emerald-200",
+    equipment:  "bg-amber-50 text-amber-700 border border-amber-200",
+    rental:     "bg-purple-50 text-purple-700 border border-purple-200",
+    misc:       "bg-slate-100 text-slate-600 border border-slate-200",
 };
+const catCls = (cat = "") =>
+    CAT_CLS[cat.toLowerCase()] ?? "bg-blue-50 text-blue-700 border border-blue-200";
 
-const s = {
-    root: {
-        background: "#f0f4fa",
-        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-        fontSize: "15px", color: C.slate900, minHeight: "100vh", paddingBottom: "56px",
-    },
-    // ── page header bar ──
-    header: {
-        background: C.white,
-        borderBottom: `1px solid ${C.slate100}`,
-        boxShadow: "0 1px 6px rgba(15,23,42,0.06)",
-    },
-    headerInner: {
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "0 32px", height: "68px",
-    },
-    headerLeft: { display: "flex", alignItems: "center", gap: "14px" },
-    backBtn: {
-        display: "inline-flex", alignItems: "center", gap: "6px",
-        background: C.slate50, border: `1px solid ${C.slate200}`,
-        borderRadius: "9px", padding: "7px 13px",
-        fontSize: "13px", fontWeight: 600, color: C.slate600,
-        cursor: "pointer",
-    },
-    divider: { width: "1px", height: "28px", background: C.slate200 },
-    pageIconWrap: {
-        width: "38px", height: "38px", borderRadius: "10px",
-        background: C.blueBg, color: C.blue,
-        display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-    },
-    pageTitleGroup: {},
-    pageTitle: { fontSize: "17px", fontWeight: 700, color: C.slate900, lineHeight: 1.2 },
-    pageSub: { fontSize: "12px", color: C.slate400, marginTop: "2px" },
-    addBtn: {
-        display: "inline-flex", alignItems: "center", gap: "7px",
-        background: C.blue, color: C.white, border: "none",
-        borderRadius: "10px", padding: "10px 20px",
-        fontSize: "13px", fontWeight: 700, cursor: "pointer",
-        boxShadow: "0 2px 10px rgba(29,78,216,0.35)",
-        letterSpacing: "0.01em",
-    },
-    // ── stat cards ──
-    statsGrid: {
-        display: "grid", gap: "14px",
-        padding: "22px 32px 0",
-    },
-    statCard: {
-        background: C.white, borderRadius: "14px", padding: "18px 20px",
-        border: `1px solid ${C.slate100}`,
-        boxShadow: "0 2px 8px rgba(15,23,42,0.05)",
-        display: "flex", flexDirection: "column", gap: "2px",
-    },
-    statTop: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px" },
-    statIconWrap: { width: "34px", height: "34px", borderRadius: "9px", display: "flex", alignItems: "center", justifyContent: "center" },
-    statLabel: { fontSize: "11px", fontWeight: 700, color: C.slate400, textTransform: "uppercase", letterSpacing: "0.08em" },
-    statValue: { fontSize: "24px", fontWeight: 800, color: C.slate900, letterSpacing: "-0.5px", lineHeight: 1 },
-    statSub: { fontSize: "11px", color: C.slate400, marginTop: "5px" },
-    // ── filter bar ──
-    filterBar: {
-        margin: "16px 32px 0",
-        background: C.white, borderRadius: "13px",
-        border: `1px solid ${C.slate100}`,
-        padding: "12px 16px",
-        display: "flex", alignItems: "center", gap: "10px",
-        boxShadow: "0 1px 4px rgba(15,23,42,0.04)",
-    },
-    searchWrap: { position: "relative", flex: 1 },
-    searchIcon: { position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: C.slate400, pointerEvents: "none" },
-    searchInput: {
-        width: "100%", paddingLeft: "38px", paddingRight: "14px",
-        paddingTop: "9px", paddingBottom: "9px",
-        border: `1px solid ${C.slate200}`, borderRadius: "9px",
-        fontSize: "13px", color: C.slate900, background: C.slate50,
-        outline: "none", fontFamily: "inherit", boxSizing: "border-box",
-        transition: "border-color .15s",
-    },
-    filterBadge: {
-        display: "inline-flex", alignItems: "center", gap: "5px",
-        fontSize: "12px", fontWeight: 600, color: C.slate500,
-        background: C.slate50, border: `1px solid ${C.slate200}`,
-        borderRadius: "8px", padding: "7px 12px", whiteSpace: "nowrap",
-    },
-    clearBtn: { width: "28px", height: "28px", borderRadius: "7px", border: "none", background: C.slate100, color: C.slate500, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" },
-    // ── table ──
-    tablePanel: {
-        margin: "16px 32px 0",
-        background: C.white, borderRadius: "16px",
-        border: `1px solid ${C.slate100}`,
-        boxShadow: "0 2px 14px rgba(15,23,42,0.06)",
-        overflow: "hidden",
-    },
-    thead: { background: C.slate50, borderBottom: `1.5px solid ${C.slate100}` },
-    th: { padding: "12px 18px", fontSize: "11px", fontWeight: 700, color: C.slate400, textTransform: "uppercase", letterSpacing: "0.07em", textAlign: "left", whiteSpace: "nowrap" },
-    td: { padding: "15px 18px", fontSize: "13px", color: C.slate800, borderBottom: `1px solid ${C.slate50}` },
-    catPill: { display: "inline-block", padding: "3px 10px", borderRadius: "100px", fontSize: "11px", fontWeight: 700 },
-    actionBtn: { width: "30px", height: "30px", borderRadius: "7px", border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" },
-    tableFooter: { padding: "13px 18px", borderTop: `1px solid ${C.slate100}`, display: "flex", justifyContent: "space-between", alignItems: "center", background: C.slate50 },
-    // ── modal ──
-    overlay: { position: "fixed", inset: 0, zIndex: 50, background: "rgba(15,23,42,0.6)", display: "flex", alignItems: "center", justifyContent: "center", padding: "16px" },
-    modal: { background: C.white, borderRadius: "20px", width: "100%", maxWidth: "500px", boxShadow: "0 32px 80px rgba(15,23,42,0.3)", overflow: "hidden" },
-    modalHead: { padding: "20px 24px", borderBottom: `1px solid ${C.slate100}`, display: "flex", alignItems: "center", justifyContent: "space-between" },
-    modalTitle: { fontSize: "17px", fontWeight: 700, color: C.slate900 },
-    modalBody: { padding: "22px 24px", display: "flex", flexDirection: "column", gap: "16px" },
-    modalFoot: { padding: "16px 24px", borderTop: `1px solid ${C.slate100}`, display: "flex", justifyContent: "flex-end", gap: "10px" },
-    label: { fontSize: "11px", fontWeight: 700, color: C.slate600, letterSpacing: "0.05em", textTransform: "uppercase", marginBottom: "6px", display: "block" },
-    input: { width: "100%", border: `1px solid ${C.slate200}`, borderRadius: "10px", padding: "10px 13px", fontSize: "14px", color: C.slate900, background: C.slate50, outline: "none", fontFamily: "inherit", boxSizing: "border-box" },
-    cancelBtn: { padding: "9px 18px", borderRadius: "9px", border: `1px solid ${C.slate200}`, background: C.white, fontSize: "13px", fontWeight: 600, color: C.slate600, cursor: "pointer" },
-    submitBtn: { padding: "9px 22px", borderRadius: "9px", border: "none", background: C.blue, color: C.white, fontSize: "13px", fontWeight: 700, cursor: "pointer" },
-    closeBtn: { width: "30px", height: "30px", borderRadius: "8px", border: "none", background: C.slate100, color: C.slate500, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" },
-};
-
-const catColor = (cat = "") => {
-    const map = {
-        transport:  { background: "#eff6ff", color: "#1e40af" },
-        food:       { background: "#d1fae5", color: "#065f46" },
-        equipment:  { background: "#fef3c7", color: "#854d0e" },
-        rental:     { background: "#fae8ff", color: "#7e22ce" },
-        misc:       { background: "#f1f5f9", color: "#475569" },
-    };
-    return map[cat.toLowerCase()] ?? { background: C.blueBg, color: "#1e40af" };
-};
-
-function useIsMobile() {
-    const [mobile, setMobile] = useState(false);
-    useEffect(() => {
-        const check = () => setMobile(window.innerWidth < 768);
-        check();
-        window.addEventListener("resize", check);
-        return () => window.removeEventListener("resize", check);
-    }, []);
-    return mobile;
-}
-
+// ─── Reusable form field ──────────────────────────────────────────────────────
 function FormField({ label, children }) {
-    return <div><label style={s.label}>{label}</label>{children}</div>;
+    return (
+        <div>
+            <label className="block text-xs font-bold text-slate-600 uppercase tracking-widest mb-1.5">
+                {label}
+            </label>
+            {children}
+        </div>
+    );
 }
+
+const inputCls =
+    "w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 bg-slate-50 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition font-sans";
 
 export default function ShootExpensesPage() {
     const router = useRouter();
-    const isMobile = useIsMobile();
-    const [loading, setLoading] = useState(true);
-    const [expenses, setExpenses] = useState([]);
-    const [shoots, setShoots] = useState([]);
-    const [search, setSearch] = useState("");
-    const [showCreate, setShowCreate] = useState(false);
-    const [showEdit, setShowEdit] = useState(false);
-    const [selectedExpense, setSelectedExpense] = useState(null);
-    const [form, setForm] = useState({ shoot_id: "", category: "", description: "", amount: "" });
+
+    const [loading,         setLoading]         = useState(true);
+    const [expenses,        setExpenses]         = useState([]);
+    const [shoots,          setShoots]           = useState([]);
+    const [search,          setSearch]           = useState("");
+    const [showCreate,      setShowCreate]       = useState(false);
+    const [showEdit,        setShowEdit]         = useState(false);
+    const [selectedExpense, setSelectedExpense]  = useState(null);
+    const [form,            setForm]             = useState({ shoot_id: "", category: "", description: "", amount: "" });
 
     const fetchData = async () => {
         try {
             setLoading(true);
-            const [expensesRes, shootsRes] = await Promise.all([api.get("/shoot-expenses"), api.get("/shoots")]);
+            const [expensesRes, shootsRes] = await Promise.all([
+                api.get("/shoot-expenses"),
+                api.get("/shoots"),
+            ]);
             setExpenses(expensesRes.data?.data || []);
             setShoots(shootsRes.data || []);
-        } catch { toast.error("Failed to load expenses"); }
-        finally { setLoading(false); }
+        } catch {
+            toast.error("Failed to load expenses");
+        } finally {
+            setLoading(false);
+        }
     };
 
     useEffect(() => { fetchData(); }, []);
@@ -221,7 +113,7 @@ export default function ShootExpensesPage() {
             expense.category?.toLowerCase().includes(q) ||
             shoot?.title?.toLowerCase().includes(q) ||
             String(expense.amount).includes(q) ||
-            new Date(expense.created_at).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" }).toLowerCase().includes(q)
+            fmtDate(expense.created_at).toLowerCase().includes(q)
         );
     });
 
@@ -229,213 +121,378 @@ export default function ShootExpensesPage() {
     const uniqueCategories = [...new Set(expenses.map((e) => e.category).filter(Boolean))].length;
     const uniqueShoots     = [...new Set(expenses.map((e) => e.shoot_id))].length;
     const avgAmount        = expenses.length > 0 ? Math.round(totalAmount / expenses.length) : 0;
+    const filteredTotal    = filteredExpenses.reduce((acc, e) => acc + Number(e.amount || 0), 0);
 
-    const sidePadding   = isMobile ? "16px" : "32px";
-    const statsColumns  = isMobile ? "repeat(2,1fr)" : "repeat(4,1fr)";
-    const headerPadding = isMobile ? "0 16px" : "0 32px";
-
-    if (loading) {
-        return (
-            <Layout>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "160px 0" }}>
-                    <div style={{ textAlign: "center" }}>
-                        <div style={{ width: "40px", height: "40px", border: "4px solid #dbeafe", borderTopColor: C.blue, borderRadius: "50%", animation: "spin 0.75s linear infinite", margin: "0 auto 16px" }} />
-                        <p style={{ color: C.slate400, fontSize: "14px" }}>Loading Expenses…</p>
+    // ── Loading ──────────────────────────────────────────────────────────────
+    if (loading) return (
+        <Layout>
+            <div className="min-h-screen flex items-center justify-center bg-slate-50">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-900 to-blue-500 flex items-center justify-center shadow-lg animate-pulse">
+                        <Receipt size={24} className="text-white" />
                     </div>
-                    <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-                </div>
-            </Layout>
-        );
-    }
-
-    const ModalForm = ({ title, onSubmit, onClose, submitLabel }) => (
-        <div style={s.overlay}>
-            <div style={s.modal}>
-                <div style={s.modalHead}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                        <div style={{ ...s.pageIconWrap, width: "32px", height: "32px" }}><Receipt size={15} /></div>
-                        <span style={s.modalTitle}>{title}</span>
-                    </div>
-                    <button style={s.closeBtn} onClick={onClose}><X size={15} /></button>
-                </div>
-                <div style={s.modalBody}>
-                    <FormField label="Shoot">
-                        <select value={form.shoot_id} onChange={(e) => setForm({ ...form, shoot_id: e.target.value })} style={s.input}>
-                            <option value="">Select Shoot</option>
-                            {shoots.map((shoot) => <option key={shoot.id} value={shoot.id}>{shoot.title}</option>)}
-                        </select>
-                    </FormField>
-                    <FormField label="Category">
-                        <input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} style={s.input} placeholder="e.g. Transport, Food, Equipment" />
-                    </FormField>
-                    <FormField label="Description">
-                        <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} style={{ ...s.input, resize: "vertical" }} />
-                    </FormField>
-                    <FormField label="Amount (Rs)">
-                        <input type="number" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} style={s.input} placeholder="0" />
-                    </FormField>
-                </div>
-                <div style={s.modalFoot}>
-                    <button style={s.cancelBtn} onClick={onClose}>Cancel</button>
-                    <button style={s.submitBtn} onClick={onSubmit}>{submitLabel}</button>
+                    <p className="text-slate-500 text-base font-medium">Loading Expenses…</p>
                 </div>
             </div>
-        </div>
+        </Layout>
     );
 
     return (
         <Layout>
-            <div style={s.root}>
+            <div className="min-h-screen bg-slate-50 font-sans pb-20">
 
-                {/* ── HEADER ── */}
-                <div style={s.header}>
-                    <div style={{ ...s.headerInner, padding: headerPadding }}>
-                        <div style={s.headerLeft}>
+                {/* ── HERO BANNER ─────────────────────────────────────────── */}
+                <div className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-blue-950 to-blue-900 px-8 py-14">
+                    <div className="absolute -top-16 -right-16 w-80 h-80 rounded-full border border-white/5 pointer-events-none" />
+                    <div className="absolute -top-6 -right-6 w-48 h-48 rounded-full border border-white/[0.07] pointer-events-none" />
+                    <div className="absolute -bottom-20 left-1/3 w-52 h-52 rounded-full bg-blue-500/10 pointer-events-none" />
 
-                            {/* icon + title */}
-                            <div style={s.pageIconWrap}>
-                                <Receipt size={18} />
+                    <div className="relative max-w-6xl mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+                        <div>
+                            {/* breadcrumb */}
+                            <div className="flex items-center gap-2 text-blue-300/70 text-xs mb-4">
+                                <button
+                                    onClick={() => router.back()}
+                                    className="inline-flex items-center gap-1.5 hover:text-blue-200 transition-colors"
+                                >
+                                    <ArrowLeft size={13} /> Finance
+                                </button>
+                                <ChevronRight size={12} />
+                                <span className="text-blue-200 font-semibold">Shoot Expenses</span>
                             </div>
-                            <div style={s.pageTitleGroup}>
-                                <div style={s.pageTitle}>Shoot Expenses</div>
-                                <div style={s.pageSub}>Manage production expenses and costs</div>
+
+                            {/* eyebrow */}
+                            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/15 text-blue-300 text-xs font-bold uppercase tracking-widest mb-4">
+                                <Receipt size={11} />
+                                Expense Management
                             </div>
 
+                            <h1 className="text-4xl sm:text-5xl font-extrabold text-white tracking-tight leading-tight">
+                                Shoot Expenses
+                            </h1>
+                            <p className="mt-2 text-blue-300 text-base">
+                                Manage and track all production expenses
+                            </p>
                         </div>
 
                         {/* CTA */}
-                        <button style={s.addBtn} onClick={() => setShowCreate(true)}>
+                        <button
+                            onClick={() => setShowCreate(true)}
+                            className="flex-shrink-0 inline-flex items-center gap-2 bg-blue-500 hover:bg-blue-400 text-white font-bold text-sm px-5 py-3 rounded-xl shadow-lg shadow-blue-900/40 transition-colors"
+                        >
                             <Plus size={16} /> Add Expense
                         </button>
                     </div>
                 </div>
 
-                {/* ── STATS ROW ── */}
-                <div style={{ ...s.statsGrid, gridTemplateColumns: statsColumns, padding: `22px ${sidePadding} 0` }}>
-                    {[
-                        { label: "Total Spent",     value: `Rs ${fmt(totalAmount)}`, sub: `${expenses.length} records total`,   icon: <Receipt size={16} />,    iconBg: C.blueBg,   iconColor: C.blue },
-                        { label: "Avg per Expense", value: `Rs ${fmt(avgAmount)}`,   sub: "Per expense record",                 icon: <TrendingUp size={16} />, iconBg: C.greenBg,  iconColor: C.green },
-                        { label: "Categories",      value: uniqueCategories,          sub: "Unique expense types",               icon: <Layers size={16} />,     iconBg: "#fae8ff",  iconColor: "#7e22ce" },
-                        { label: "Productions",     value: uniqueShoots,              sub: "Shoots with expenses",               icon: <Camera size={16} />,     iconBg: C.amberBg,  iconColor: C.amber },
-                    ].map(({ label, value, sub, icon, iconBg, iconColor }) => (
-                        <div key={label} style={s.statCard}>
-                            <div style={s.statTop}>
-                                <div style={{ ...s.statIconWrap, background: iconBg, color: iconColor }}>{icon}</div>
-                            </div>
-                            <div style={s.statLabel}>{label}</div>
-                            <div style={s.statValue}>{value}</div>
-                            <div style={s.statSub}>{sub}</div>
-                        </div>
-                    ))}
-                </div>
+                {/* ── KPI CARDS ───────────────────────────────────────────── */}
+                <div className="max-w-6xl mx-auto px-4 sm:px-6">
+                    <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 -mt-9 relative z-10">
 
-                {/* ── FILTER BAR ── */}
-                <div style={{ ...s.filterBar, margin: `16px ${sidePadding} 0` }}>
-                    <div style={s.searchWrap}>
-                        <span style={s.searchIcon}><Search size={15} /></span>
-                        <input
-                            type="text"
-                            placeholder="Search by description, category, shoot, amount…"
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            style={s.searchInput}
+                        <KpiCard
+                            title="Total Spent"
+                            value={`Rs ${fmt(totalAmount)}`}
+                            sub={`${expenses.length} records total`}
+                            icon={<Receipt size={17} />}
+                            topColor="bg-blue-500"
+                            iconBg="bg-blue-50 text-blue-600"
                         />
+                        <KpiCard
+                            title="Avg per Expense"
+                            value={`Rs ${fmt(avgAmount)}`}
+                            sub="Per expense record"
+                            icon={<TrendingUp size={17} />}
+                            topColor="bg-emerald-500"
+                            iconBg="bg-emerald-50 text-emerald-600"
+                        />
+                        <KpiCard
+                            title="Categories"
+                            value={uniqueCategories}
+                            sub="Unique expense types"
+                            icon={<Layers size={17} />}
+                            topColor="bg-purple-500"
+                            iconBg="bg-purple-50 text-purple-600"
+                        />
+                        <KpiCard
+                            title="Productions"
+                            value={uniqueShoots}
+                            sub="Shoots with expenses"
+                            icon={<Camera size={17} />}
+                            topColor="bg-amber-500"
+                            iconBg="bg-amber-50 text-amber-600"
+                        />
+
                     </div>
-                    <div style={s.filterBadge}>
-                        <Filter size={12} />
-                        {filteredExpenses.length} result{filteredExpenses.length !== 1 ? "s" : ""}
-                    </div>
-                    {search && (
-                        <button onClick={() => setSearch("")} style={s.clearBtn} title="Clear search">
-                            <X size={13} />
-                        </button>
-                    )}
                 </div>
 
-                {/* ── TABLE ── */}
-                <div style={{ ...s.tablePanel, margin: `16px ${sidePadding} 0` }}>
-                    <div style={{ overflowX: "auto" }}>
-                        <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                            <thead>
-                                <tr style={s.thead}>
-                                    <th style={s.th}>#</th>
-                                    <th style={s.th}>Category</th>
-                                    <th style={s.th}>Shoot</th>
-                                    <th style={s.th}>Description</th>
-                                    <th style={s.th}>Amount</th>
-                                    <th style={s.th}>Date</th>
-                                    <th style={s.th}>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {filteredExpenses.length === 0 ? (
-                                    <tr>
-                                        <td colSpan={7} style={{ padding: "56px 20px", textAlign: "center" }}>
-                                            <div style={{ color: C.slate400, fontSize: "14px" }}>
-                                                {search ? `No results for "${search}"` : "No expenses yet. Click Add Expense to get started."}
-                                            </div>
-                                        </td>
+                {/* ── PAGE BODY ───────────────────────────────────────────── */}
+                <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-6 space-y-4">
+
+                    {/* ── FILTER BAR ──────────────────────────────────────── */}
+                    <div className="bg-white border border-slate-200 rounded-2xl shadow-sm px-4 py-3 flex items-center gap-3">
+                        <div className="relative flex-1">
+                            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                            <input
+                                type="text"
+                                placeholder="Search by description, category, shoot, amount…"
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                className="w-full pl-9 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50 text-slate-900 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition"
+                            />
+                        </div>
+                        <div className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-500 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 whitespace-nowrap">
+                            <Filter size={13} />
+                            {filteredExpenses.length} result{filteredExpenses.length !== 1 ? "s" : ""}
+                        </div>
+                        {search && (
+                            <button
+                                onClick={() => setSearch("")}
+                                className="w-8 h-8 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200 transition-colors flex-shrink-0"
+                            >
+                                <X size={14} />
+                            </button>
+                        )}
+                    </div>
+
+                    {/* ── TABLE ───────────────────────────────────────────── */}
+                    <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+
+                        {/* panel header */}
+                        <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-3">
+                                <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0">
+                                    <Receipt size={15} />
+                                </div>
+                                <div>
+                                    <h2 className="text-lg font-bold text-slate-900">Expense Records</h2>
+                                    <p className="text-sm text-slate-400 mt-0.5">All logged production expenses</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setShowCreate(true)}
+                                className="hidden sm:inline-flex items-center gap-2 text-sm font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-xl transition-colors"
+                            >
+                                <Plus size={14} /> Add Expense
+                            </button>
+                        </div>
+
+                        <div className="overflow-x-auto">
+                            <table className="w-full">
+                                <thead>
+                                    <tr className="bg-slate-50 border-b border-slate-100">
+                                        {["#","Category","Shoot","Description","Amount","Date","Actions"].map(h => (
+                                            <th key={h} className="px-5 py-3 text-left text-xs font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">
+                                                {h}
+                                            </th>
+                                        ))}
                                     </tr>
-                                ) : filteredExpenses.map((expense, idx) => {
-                                    const shoot     = shoots.find((s) => s.id === expense.shoot_id);
-                                    const pillStyle = catColor(expense.category);
-                                    return (
-                                        <tr key={expense.id}
-                                            onMouseEnter={e => Array.from(e.currentTarget.cells).forEach(c => c.style.background = "#fafbff")}
-                                            onMouseLeave={e => Array.from(e.currentTarget.cells).forEach(c => c.style.background = "")}
-                                        >
-                                            <td style={{ ...s.td, color: C.slate400, fontSize: "12px", fontWeight: 600, width: "40px" }}>{idx + 1}</td>
-                                            <td style={s.td}>
-                                                <span style={{ ...s.catPill, ...pillStyle }}>{expense.category}</span>
-                                            </td>
-                                            <td style={{ ...s.td, fontWeight: 600, color: C.slate900, whiteSpace: "nowrap" }}>
-                                                {shoot?.title || `Shoot #${expense.shoot_id}`}
-                                            </td>
-                                            <td style={{ ...s.td, color: C.slate600, maxWidth: "220px" }}>
-                                                <div style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                                                    {expense.description || "—"}
-                                                </div>
-                                            </td>
-                                            <td style={{ ...s.td, fontWeight: 700, color: C.slate900, whiteSpace: "nowrap" }}>
-                                                Rs {fmt(expense.amount)}
-                                            </td>
-                                            <td style={{ ...s.td, color: C.slate500, fontSize: "12px", whiteSpace: "nowrap" }}>
-                                                {new Date(expense.created_at).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" })}
-                                            </td>
-                                            <td style={s.td}>
-                                                <div style={{ display: "flex", gap: "6px" }}>
-                                                    <button onClick={() => openEdit(expense)} style={{ ...s.actionBtn, background: C.amberBg, color: C.amber }} title="Edit">
-                                                        <Pencil size={14} />
-                                                    </button>
-                                                    <button onClick={() => deleteExpense(expense.id)} style={{ ...s.actionBtn, background: C.redBg, color: C.red }} title="Delete">
-                                                        <Trash2 size={14} />
-                                                    </button>
-                                                </div>
+                                </thead>
+                                <tbody>
+                                    {filteredExpenses.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={7} className="py-16 text-center text-slate-400 text-base">
+                                                {search
+                                                    ? `No results for "${search}"`
+                                                    : "No expenses yet. Click Add Expense to get started."}
                                             </td>
                                         </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
+                                    ) : filteredExpenses.map((expense, idx) => {
+                                        const shoot = shoots.find((s) => s.id === expense.shoot_id);
+                                        return (
+                                            <tr key={expense.id} className="border-b border-slate-100 hover:bg-blue-50/40 transition-colors">
+                                                <td className="px-5 py-3.5 text-sm font-semibold text-slate-400 w-10">
+                                                    {idx + 1}
+                                                </td>
+                                                <td className="px-5 py-3.5">
+                                                    <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold capitalize tracking-wide ${catCls(expense.category)}`}>
+                                                        {expense.category}
+                                                    </span>
+                                                </td>
+                                                <td className="px-5 py-3.5 text-base font-bold text-slate-900 whitespace-nowrap">
+                                                    {shoot?.title || `Shoot #${expense.shoot_id}`}
+                                                </td>
+                                                <td className="px-5 py-3.5 text-base text-slate-600 max-w-[220px]">
+                                                    <div className="truncate">{expense.description || "—"}</div>
+                                                </td>
+                                                <td className="px-5 py-3.5 text-base font-bold text-slate-900 whitespace-nowrap">
+                                                    Rs {fmt(expense.amount)}
+                                                </td>
+                                                <td className="px-5 py-3.5 text-sm text-slate-400 whitespace-nowrap">
+                                                    {fmtDate(expense.created_at)}
+                                                </td>
+                                                <td className="px-5 py-3.5">
+                                                    <div className="flex items-center gap-2">
+                                                        <button
+                                                            onClick={() => openEdit(expense)}
+                                                            className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 hover:bg-amber-100 flex items-center justify-center transition-colors"
+                                                            title="Edit"
+                                                        >
+                                                            <Pencil size={14} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => deleteExpense(expense.id)}
+                                                            className="w-8 h-8 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 flex items-center justify-center transition-colors"
+                                                            title="Delete"
+                                                        >
+                                                            <Trash2 size={14} />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {/* table footer */}
+                        {filteredExpenses.length > 0 && (
+                            <div className="px-5 py-3.5 border-t border-slate-100 bg-slate-50 flex items-center justify-between flex-wrap gap-3">
+                                <span className="text-sm text-slate-400">
+                                    Showing {filteredExpenses.length} of {expenses.length} expenses
+                                </span>
+                                <span className="text-base font-bold text-slate-700">
+                                    Filtered total: Rs {fmt(filteredTotal)}
+                                </span>
+                            </div>
+                        )}
                     </div>
 
-                    {filteredExpenses.length > 0 && (
-                        <div style={s.tableFooter}>
-                            <span style={{ fontSize: "12px", color: C.slate400 }}>
-                                Showing {filteredExpenses.length} of {expenses.length} expenses
-                            </span>
-                            <span style={{ fontSize: "13px", fontWeight: 700, color: C.slate700 }}>
-                                Filtered total: Rs {fmt(filteredExpenses.reduce((acc, e) => acc + Number(e.amount || 0), 0))}
-                            </span>
+                    {/* ── FOOTER ───────────────────────────────────────────── */}
+                    <div className="text-center text-slate-400 text-sm pt-4 flex items-center justify-center gap-2">
+                        <Receipt size={12} />
+                        Shoot Expenses · {expenses.length} records
+                    </div>
+
+                </div>
+            </div>
+
+            {/* ── MODALS ──────────────────────────────────────────────────── */}
+            {showCreate && (
+                <ExpenseModal
+                    title="Add Expense"
+                    submitLabel="Create Expense"
+                    form={form}
+                    setForm={setForm}
+                    shoots={shoots}
+                    onSubmit={createExpense}
+                    onClose={() => { setShowCreate(false); resetForm(); }}
+                />
+            )}
+            {showEdit && (
+                <ExpenseModal
+                    title="Edit Expense"
+                    submitLabel="Update Expense"
+                    form={form}
+                    setForm={setForm}
+                    shoots={shoots}
+                    onSubmit={updateExpense}
+                    onClose={() => setShowEdit(false)}
+                />
+            )}
+        </Layout>
+    );
+}
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+function KpiCard({ title, value, sub, icon, topColor, iconBg }) {
+    return (
+        <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+            <div className={`h-1 w-full ${topColor}`} />
+            <div className="p-5">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${iconBg}`}>
+                    {icon}
+                </div>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{title}</p>
+                <p className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1.5 tracking-tight leading-tight">
+                    {value}
+                </p>
+                <p className="text-sm text-slate-400 mt-1.5">{sub}</p>
+            </div>
+        </div>
+    );
+}
+
+function ExpenseModal({ title, submitLabel, form, setForm, shoots, onSubmit, onClose }) {
+    return (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
+
+                {/* header */}
+                <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                            <Receipt size={15} />
                         </div>
-                    )}
+                        <h2 className="text-lg font-bold text-slate-900">{title}</h2>
+                    </div>
+                    <button
+                        onClick={onClose}
+                        className="w-8 h-8 rounded-lg bg-slate-100 text-slate-500 hover:bg-slate-200 flex items-center justify-center transition-colors"
+                    >
+                        <X size={15} />
+                    </button>
+                </div>
+
+                {/* body */}
+                <div className="px-6 py-5 flex flex-col gap-4">
+                    <FormField label="Shoot">
+                        <select
+                            value={form.shoot_id}
+                            onChange={(e) => setForm({ ...form, shoot_id: e.target.value })}
+                            className={inputCls}
+                        >
+                            <option value="">Select Shoot</option>
+                            {shoots.map((shoot) => (
+                                <option key={shoot.id} value={shoot.id}>{shoot.title}</option>
+                            ))}
+                        </select>
+                    </FormField>
+                    <FormField label="Category">
+                        <input
+                            value={form.category}
+                            onChange={(e) => setForm({ ...form, category: e.target.value })}
+                            className={inputCls}
+                            placeholder="e.g. Transport, Food, Equipment"
+                        />
+                    </FormField>
+                    <FormField label="Description">
+                        <textarea
+                            value={form.description}
+                            onChange={(e) => setForm({ ...form, description: e.target.value })}
+                            rows={3}
+                            className={`${inputCls} resize-y`}
+                        />
+                    </FormField>
+                    <FormField label="Amount (Rs)">
+                        <input
+                            type="number"
+                            value={form.amount}
+                            onChange={(e) => setForm({ ...form, amount: e.target.value })}
+                            className={inputCls}
+                            placeholder="0"
+                        />
+                    </FormField>
+                </div>
+
+                {/* footer */}
+                <div className="px-6 py-4 border-t border-slate-100 flex justify-end gap-3">
+                    <button
+                        onClick={onClose}
+                        className="px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        onClick={onSubmit}
+                        className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold transition-colors shadow-sm shadow-blue-200"
+                    >
+                        {submitLabel}
+                    </button>
                 </div>
 
             </div>
-
-            {showCreate && <ModalForm title="Add Expense"  onSubmit={createExpense}  onClose={() => { setShowCreate(false); resetForm(); }} submitLabel="Create Expense" />}
-            {showEdit   && <ModalForm title="Edit Expense" onSubmit={updateExpense}  onClose={() => setShowEdit(false)}                     submitLabel="Update Expense" />}
-
-        </Layout>
+        </div>
     );
 }
