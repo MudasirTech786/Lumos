@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+export const dynamic = "force-dynamic";
+
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Layout from "@/components/Layout";
 import api from "@/lib/api";
@@ -14,7 +16,7 @@ import {
     Save,
 } from "lucide-react";
 
-export default function CreateProductionInvoicePage() {
+function CreateProductionInvoiceContent() {
 
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -24,7 +26,7 @@ export default function CreateProductionInvoicePage() {
     const [loading, setLoading] = useState(false);
 
     const [form, setForm] = useState({
-        shoot_id: shootId || "",
+        shoot_id: "",
         title: "",
         issue_date: new Date().toISOString().split("T")[0],
         due_date: "",
@@ -32,6 +34,15 @@ export default function CreateProductionInvoicePage() {
         discount_amount: 0,
         notes: "",
     });
+
+    useEffect(() => {
+        if (shootId) {
+            setForm((prev) => ({
+                ...prev,
+                shoot_id: shootId,
+            }));
+        }
+    }, [shootId]);
 
     const [items, setItems] = useState([
         {
@@ -71,16 +82,12 @@ export default function CreateProductionInvoicePage() {
     ]);
 
     const updateItem = (index, field, value) => {
-
         const updated = [...items];
-
         updated[index][field] = value;
-
         setItems(updated);
     };
 
     const addItem = () => {
-
         setItems([
             ...items,
             {
@@ -92,7 +99,6 @@ export default function CreateProductionInvoicePage() {
     };
 
     const removeItem = (index) => {
-
         if (items.length === 1) return;
 
         setItems(
@@ -101,7 +107,6 @@ export default function CreateProductionInvoicePage() {
     };
 
     const handleSubmit = async () => {
-
         try {
 
             setLoading(true);
@@ -141,8 +146,6 @@ export default function CreateProductionInvoicePage() {
 
                 <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
 
-                    {/* Header */}
-
                     <div className="flex items-center justify-between">
 
                         <div>
@@ -160,7 +163,7 @@ export default function CreateProductionInvoicePage() {
                             </h1>
 
                             <p className="text-slate-500 mt-2">
-                                Create invoice for shoot #{shootId}
+                                Create invoice for shoot #{shootId || "-"}
                             </p>
 
                         </div>
@@ -179,15 +182,16 @@ export default function CreateProductionInvoicePage() {
                                 text-white
                                 rounded-2xl
                                 font-bold
+                                disabled:opacity-50
                             "
                         >
                             <Save size={16} />
-                            Create Invoice
+                            {loading
+                                ? "Creating..."
+                                : "Create Invoice"}
                         </button>
 
                     </div>
-
-                    {/* Invoice Details */}
 
                     <div className="bg-white rounded-3xl border border-slate-200 p-8">
 
@@ -280,8 +284,6 @@ export default function CreateProductionInvoicePage() {
 
                     </div>
 
-                    {/* Items */}
-
                     <div className="bg-white rounded-3xl border border-slate-200 p-8">
 
                         <div className="flex justify-between items-center mb-6">
@@ -319,12 +321,9 @@ export default function CreateProductionInvoicePage() {
                                 >
 
                                     <div className="md:col-span-5">
-
                                         <input
                                             placeholder="Description"
-                                            value={
-                                                item.description
-                                            }
+                                            value={item.description}
                                             onChange={(e) =>
                                                 updateItem(
                                                     index,
@@ -334,11 +333,9 @@ export default function CreateProductionInvoicePage() {
                                             }
                                             className="w-full border border-slate-200 rounded-xl px-4 py-3"
                                         />
-
                                     </div>
 
                                     <div className="md:col-span-2">
-
                                         <input
                                             type="number"
                                             value={item.quantity}
@@ -351,16 +348,12 @@ export default function CreateProductionInvoicePage() {
                                             }
                                             className="w-full border border-slate-200 rounded-xl px-4 py-3"
                                         />
-
                                     </div>
 
                                     <div className="md:col-span-3">
-
                                         <input
                                             type="number"
-                                            value={
-                                                item.unit_price
-                                            }
+                                            value={item.unit_price}
                                             onChange={(e) =>
                                                 updateItem(
                                                     index,
@@ -370,15 +363,17 @@ export default function CreateProductionInvoicePage() {
                                             }
                                             className="w-full border border-slate-200 rounded-xl px-4 py-3"
                                         />
-
                                     </div>
 
                                     <div className="md:col-span-1 flex items-center font-black">
-                                        Rs {(item.quantity * item.unit_price).toLocaleString()}
+                                        Rs{" "}
+                                        {(
+                                            Number(item.quantity || 0) *
+                                            Number(item.unit_price || 0)
+                                        ).toLocaleString()}
                                     </div>
 
                                     <div className="md:col-span-1 flex items-center justify-center">
-
                                         <button
                                             onClick={() =>
                                                 removeItem(index)
@@ -387,7 +382,6 @@ export default function CreateProductionInvoicePage() {
                                         >
                                             <Trash2 size={18} />
                                         </button>
-
                                     </div>
 
                                 </div>
@@ -398,8 +392,6 @@ export default function CreateProductionInvoicePage() {
 
                     </div>
 
-                    {/* Summary */}
-
                     <div className="bg-white rounded-3xl border border-slate-200 p-8">
 
                         <h2 className="text-xl font-bold mb-6">
@@ -409,7 +401,6 @@ export default function CreateProductionInvoicePage() {
                         <div className="grid md:grid-cols-2 gap-6">
 
                             <div>
-
                                 <label className="block mb-2 text-sm font-semibold">
                                     Tax %
                                 </label>
@@ -426,20 +417,16 @@ export default function CreateProductionInvoicePage() {
                                     }
                                     className="w-full border border-slate-200 rounded-xl px-4 py-3"
                                 />
-
                             </div>
 
                             <div>
-
                                 <label className="block mb-2 text-sm font-semibold">
                                     Discount
                                 </label>
 
                                 <input
                                     type="number"
-                                    value={
-                                        form.discount_amount
-                                    }
+                                    value={form.discount_amount}
                                     onChange={(e) =>
                                         setForm({
                                             ...form,
@@ -449,7 +436,6 @@ export default function CreateProductionInvoicePage() {
                                     }
                                     className="w-full border border-slate-200 rounded-xl px-4 py-3"
                                 />
-
                             </div>
 
                         </div>
@@ -494,7 +480,16 @@ export default function CreateProductionInvoicePage() {
                     </div>
 
                 </div>
+
             </div>
         </Layout>
+    );
+}
+
+export default function CreateProductionInvoicePage() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <CreateProductionInvoiceContent />
+        </Suspense>
     );
 }
