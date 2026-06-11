@@ -48,3 +48,17 @@ body {
     margin: 5mm;
   }
 }
+
+#reader {
+  background: white !important;
+  border-radius: 16px;
+  padding: 16px;
+}
+
+#reader * {
+  color: black !important;
+}
+
+#reader video {
+  border-radius: 12px;
+}
