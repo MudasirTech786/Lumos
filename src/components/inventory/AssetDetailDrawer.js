@@ -4,7 +4,13 @@ import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 
 import AssetTimeline from "./AssetTimeline";
+import AllocateAssetModal from "./AllocateAssetModal";
+import ReturnAssetDialog from "./ReturnAssetDialog";
+const [showAllocate, setShowAllocate] =
+  useState(false);
 
+const [showReturn, setShowReturn] =
+  useState(false);
 import {
   getAsset,
   updateAssetStatus,
@@ -149,6 +155,39 @@ export default function AssetDetailDrawer({
             </div>
 
             <div>
+              <div>
+
+                <h3 className="font-semibold mb-3">
+                  Asset Actions
+                </h3>
+
+                <div className="flex gap-2">
+
+                  {asset.status === "available" && (
+                    <button
+                      onClick={() =>
+                        setShowAllocate(true)
+                      }
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg"
+                    >
+                      Allocate To Shoot
+                    </button>
+                  )}
+
+                  {asset.status === "in_use" && (
+                    <button
+                      onClick={() =>
+                        setShowReturn(true)
+                      }
+                      className="px-4 py-2 bg-green-600 text-white rounded-lg"
+                    >
+                      Return Asset
+                    </button>
+                  )}
+
+                </div>
+
+              </div>
 
               <h3 className="font-semibold mb-3">
                 Status Actions
@@ -181,6 +220,38 @@ export default function AssetDetailDrawer({
 
             <div>
 
+              <div>
+
+                <h3 className="font-semibold mb-3">
+                  Assignment
+                </h3>
+
+                {asset.active_allocation ? (
+
+                  <div className="border rounded-lg p-4">
+
+                    <div className="font-medium">
+                      {asset.active_allocation.shoot?.title}
+                    </div>
+
+                    <div className="text-sm text-gray-500 mt-1">
+                      Allocated:
+                      {" "}
+                      {asset.active_allocation.allocated_at}
+                    </div>
+
+                  </div>
+
+                ) : (
+
+                  <div className="border rounded-lg p-4 text-gray-500">
+                    Not allocated to any shoot
+                  </div>
+
+                )}
+
+              </div>
+
               <h3 className="font-semibold mb-3">
                 Timeline
               </h3>
@@ -198,7 +269,29 @@ export default function AssetDetailDrawer({
         )}
 
       </div>
+      <AllocateAssetModal
+        open={showAllocate}
+        asset={asset}
+        onClose={() =>
+          setShowAllocate(false)
+        }
+        onSuccess={() => {
+          setShowAllocate(false);
+          loadAsset();
+        }}
+      />
 
+      <ReturnAssetDialog
+        open={showReturn}
+        asset={asset}
+        onClose={() =>
+          setShowReturn(false)
+        }
+        onSuccess={() => {
+          setShowReturn(false);
+          loadAsset();
+        }}
+      />
     </div>
   );
 }

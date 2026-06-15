@@ -12,25 +12,24 @@ import {
     Printer, Tag, Hash, ChevronRight,
     CircleDot, ArrowUpRight,
 } from "lucide-react";
-
 /* ─── STATUS CONFIG ─────────────────────────── */
 const STATUS = {
-    available:    { label: "Available",    icon: CheckCircle2,   card: "bg-emerald-50 text-emerald-700 border-emerald-200", dot: "bg-emerald-500" },
-    in_use:       { label: "In Use",       icon: Package,        card: "bg-blue-50    text-blue-700    border-blue-200",    dot: "bg-blue-500"    },
-    returned:     { label: "Returned",     icon: RefreshCw,      card: "bg-slate-100  text-slate-600   border-slate-200",   dot: "bg-slate-400"   },
-    damaged:      { label: "Damaged",      icon: AlertTriangle,  card: "bg-rose-50    text-rose-700    border-rose-200",    dot: "bg-rose-500"    },
-    under_repair: { label: "Under Repair", icon: Wrench,         card: "bg-amber-50   text-amber-700   border-amber-200",   dot: "bg-amber-500"   },
-    written_off:  { label: "Written Off",  icon: X,              card: "bg-red-100    text-red-800     border-red-200",     dot: "bg-red-700"     },
+    available: { label: "Available", icon: CheckCircle2, card: "bg-emerald-50 text-emerald-700 border-emerald-200", dot: "bg-emerald-500" },
+    in_use: { label: "In Use", icon: Package, card: "bg-blue-50    text-blue-700    border-blue-200", dot: "bg-blue-500" },
+    returned: { label: "Returned", icon: RefreshCw, card: "bg-slate-100  text-slate-600   border-slate-200", dot: "bg-slate-400" },
+    damaged: { label: "Damaged", icon: AlertTriangle, card: "bg-rose-50    text-rose-700    border-rose-200", dot: "bg-rose-500" },
+    under_repair: { label: "Under Repair", icon: Wrench, card: "bg-amber-50   text-amber-700   border-amber-200", dot: "bg-amber-500" },
+    written_off: { label: "Written Off", icon: X, card: "bg-red-100    text-red-800     border-red-200", dot: "bg-red-700" },
 };
 
 const getStatus = (s) => STATUS[s] ?? { label: s, icon: CircleDot, card: "bg-slate-100 text-slate-600 border-slate-200", dot: "bg-slate-400" };
 
 /* ─── STAT CARD ─────────────────────────────── */
 const STAT_COLORS = {
-    available:    "bg-emerald-50 border-emerald-100 text-emerald-700",
-    in_use:       "bg-blue-50    border-blue-100    text-blue-700",
+    available: "bg-emerald-50 border-emerald-100 text-emerald-700",
+    in_use: "bg-blue-50    border-blue-100    text-blue-700",
     under_repair: "bg-amber-50   border-amber-100   text-amber-700",
-    damaged:      "bg-rose-50    border-rose-50     text-rose-700",
+    damaged: "bg-rose-50    border-rose-50     text-rose-700",
 };
 
 function StatCard({ label, value, status }) {
@@ -96,11 +95,22 @@ function ActionBtn({ status, current, onClick }) {
    MAIN PAGE
 ═══════════════════════════════════════════════ */
 export default function InventoryAssetsPage() {
-    const [assets,       setAssets]       = useState([]);
-    const [loading,      setLoading]      = useState(true);
-    const [search,       setSearch]       = useState("");
+    const [assets, setAssets] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [search, setSearch] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
     const [selectedAsset, setSelectedAsset] = useState(null);
+    const [showAllocate,
+        setShowAllocate] =
+        useState(false);
+
+    const [shoots,
+        setShoots] =
+        useState([]);
+
+    const [selectedShoot,
+        setSelectedShoot] =
+        useState("");
 
     const fetchAssets = async () => {
         try {
@@ -114,7 +124,30 @@ export default function InventoryAssetsPage() {
         }
     };
 
-    useEffect(() => { fetchAssets(); }, []);
+    const loadAssetDetails = async (id) => {
+    try {
+        const res = await api.get(
+            `/inventory/inventory-assets/${id}`
+        );
+
+        setSelectedAsset(
+            res.data.data
+        );
+
+    } catch {
+        toast.error(
+            "Failed to load asset details"
+        );
+    }
+};
+
+    useEffect(() => {
+
+        fetchAssets();
+
+        loadShoots();
+
+    }, []);
 
     const updateStatus = async (assetId, status) => {
         try {
@@ -124,6 +157,83 @@ export default function InventoryAssetsPage() {
             if (selectedAsset) setSelectedAsset(p => ({ ...p, status }));
         } catch {
             toast.error("Failed to update status");
+        }
+    };
+
+    const loadShoots = async () => {
+
+        const res =
+            await api.get("/shoots");
+
+        console.log(res.data);
+
+        setShoots(res.data || []);
+    };
+
+    const allocateAsset = async () => {
+        console.log(selectedAsset);
+        try {
+
+            await api.post(
+                `/inventory-assets/${selectedAsset.id}/allocate`,
+                {
+                    shoot_id:
+                        selectedShoot,
+                }
+            );
+
+            toast.success(
+                "Asset allocated"
+            );
+
+            setShowAllocate(false);
+
+            await fetchAssets();
+
+await loadAssetDetails(
+    selectedAsset.id
+);
+
+        } catch (error) {
+
+            console.log(error);
+
+            console.log(
+                error.response?.data
+            );
+
+            toast.error(
+                error.response?.data?.message ||
+                "Allocation failed"
+            );
+        }
+    };
+
+    const returnAsset = async (
+        assetId
+    ) => {
+
+        try {
+
+            await api.post(
+                `/inventory-assets/${assetId}/return`
+            );
+
+            toast.success(
+                "Asset returned"
+            );
+
+            await fetchAssets();
+
+await loadAssetDetails(
+    selectedAsset.id
+);
+
+        } catch {
+
+            toast.error(
+                "Return failed"
+            );
         }
     };
 
@@ -139,6 +249,7 @@ export default function InventoryAssetsPage() {
         return r;
     }, [assets, search, statusFilter]);
 
+    console.log(shoots);
     /* ── RENDER ── */
     return (
         <Layout>
@@ -181,10 +292,10 @@ export default function InventoryAssetsPage() {
 
                     {/* ── STAT CARDS ── */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                        <StatCard label="Available"    value={assets.filter(a => a.status === "available").length}    status="available" />
-                        <StatCard label="In Use"        value={assets.filter(a => a.status === "in_use").length}        status="in_use" />
-                        <StatCard label="Under Repair"  value={assets.filter(a => a.status === "under_repair").length}  status="under_repair" />
-                        <StatCard label="Damaged"       value={assets.filter(a => a.status === "damaged").length}       status="damaged" />
+                        <StatCard label="Available" value={assets.filter(a => a.status === "available").length} status="available" />
+                        <StatCard label="In Use" value={assets.filter(a => a.status === "in_use").length} status="in_use" />
+                        <StatCard label="Under Repair" value={assets.filter(a => a.status === "under_repair").length} status="under_repair" />
+                        <StatCard label="Damaged" value={assets.filter(a => a.status === "damaged").length} status="damaged" />
                     </div>
 
                     {/* ── FILTERS ── */}
@@ -247,7 +358,9 @@ export default function InventoryAssetsPage() {
                                 return (
                                     <div
                                         key={asset.id}
-                                        onClick={() => setSelectedAsset(asset)}
+                                        onClick={() =>
+    loadAssetDetails(asset.id)
+}
                                         className="group cursor-pointer rounded-2xl border border-slate-200 bg-white shadow-sm hover:border-blue-200 hover:shadow-md transition-all overflow-hidden"
                                     >
                                         {/* top accent */}
@@ -359,8 +472,8 @@ export default function InventoryAssetsPage() {
 
                             {/* detail grid */}
                             <div className="grid grid-cols-2 gap-3">
-                                <DetailRow label="Equipment"     value={selectedAsset.item?.name} />
-                                <DetailRow label="Category"      value={selectedAsset.item?.category} />
+                                <DetailRow label="Equipment" value={selectedAsset.item?.name} />
+                                <DetailRow label="Category" value={selectedAsset.item?.category} />
                                 <DetailRow label="Serial Number" value={selectedAsset.serial_number} mono />
                                 {selectedAsset.item?.daily_rental_value && (
                                     <DetailRow label="Daily Rate" value={`Rs ${Number(selectedAsset.item.daily_rental_value).toLocaleString("en-PK")}`} />
@@ -369,12 +482,87 @@ export default function InventoryAssetsPage() {
                             <div>
                                 <DetailRow label="QR UUID" value={selectedAsset.qr_uuid} mono />
                             </div>
+                            {selectedAsset.active_allocation && (
 
+                                <div className="rounded-xl border p-4">
+
+                                    <div className="font-semibold">
+                                        Shoot:
+                                        {" "}
+                                        {selectedAsset.active_allocation.shoot?.title}
+                                    </div>
+
+                                    <div className="text-sm text-gray-500 mt-1">
+                                        Allocated:
+                                        {" "}
+                                        {selectedAsset.active_allocation.allocated_at}
+                                    </div>
+
+                                </div>
+
+                            )}
+                            {/* ASSIGNMENT */}
+
+                            <div>
+
+                                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3">
+                                    Assignment
+                                </p>
+
+                                {selectedAsset.active_allocation ? (
+
+                                    <div className="rounded-xl border border-slate-200 p-4">
+
+                                        <div className="font-semibold">
+                                            {selectedAsset.active_allocation.shoot?.title}
+                                        </div>
+
+                                        <div className="text-sm text-slate-500 mt-1">
+                                            Allocated:
+                                            {" "}
+                                            {selectedAsset.active_allocation.allocated_at}
+                                        </div>
+
+                                        <button
+                                            className="mt-3 px-4 py-2 bg-green-600 text-white rounded-lg"
+                                            onClick={() =>
+                                                returnAsset(
+                                                    selectedAsset.id
+                                                )
+                                            }
+                                        >
+                                            Return Asset
+                                        </button>
+
+                                    </div>
+
+                                ) : (
+
+                                    <div className="rounded-xl border border-slate-200 p-4">
+
+                                        <div className="text-gray-500">
+                                            Not allocated to any shoot
+                                        </div>
+
+                                        <button
+                                            className="mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg"
+                                            onClick={() =>
+                                                setShowAllocate(true)
+                                            }
+                                        >
+                                            Allocate To Shoot
+                                        </button>
+
+                                    </div>
+
+                                )}
+
+                            </div>
                             {/* status actions */}
                             <div>
                                 <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3">Update Status</p>
                                 <div className="grid grid-cols-2 gap-2">
-                                    {["available","in_use","returned","damaged","under_repair","written_off"].map(s => (
+                                    {["available", "in_use", "returned", "damaged", "under_repair", "written_off"].map(s => (
                                         <ActionBtn
                                             key={s}
                                             status={s}
@@ -384,6 +572,7 @@ export default function InventoryAssetsPage() {
                                     ))}
                                 </div>
                             </div>
+
                         </div>
 
                         {/* modal footer */}
@@ -398,6 +587,77 @@ export default function InventoryAssetsPage() {
                     </div>
                 </div>
             )}
+
+            {showAllocate && (
+
+                <div className="fixed inset-0 z-[10000]">
+
+                    <div
+                        className="absolute inset-0 bg-black/50"
+                        onClick={() =>
+                            setShowAllocate(false)
+                        }
+                    />
+
+                    <div className="absolute left-1/2 top-1/2 w-[500px] -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl p-6">
+
+                        <h2 className="font-bold text-lg mb-4">
+                            Allocate Asset
+                        </h2>
+
+                        <select
+                            value={selectedShoot}
+                            onChange={(e) =>
+                                setSelectedShoot(
+                                    e.target.value
+                                )
+                            }
+                            className="w-full border rounded-lg p-3"
+                        >
+                            <option value="">
+                                Select Shoot
+                            </option>
+
+                            {shoots.map(
+                                (shoot) => (
+                                    <option
+                                        key={shoot.id}
+                                        value={shoot.id}
+                                    >
+                                        {shoot.title}
+                                    </option>
+                                )
+                            )}
+                        </select>
+
+                        <div className="flex justify-end gap-2 mt-5">
+
+                            <button
+                                onClick={() =>
+                                    setShowAllocate(false)
+                                }
+                                className="border px-4 py-2 rounded-lg"
+                            >
+                                Cancel
+                            </button>
+
+                            <button
+                                onClick={
+                                    allocateAsset
+                                }
+                                className="bg-blue-600 text-white px-4 py-2 rounded-lg"
+                            >
+                                Allocate
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            )}
         </Layout>
+
     );
 }
