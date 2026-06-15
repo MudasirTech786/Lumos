@@ -2,7 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Html5Qrcode } from "html5-qrcode";
-import { lookupAsset } from "@/services/inventoryAssetService";
+import {
+    lookupAsset,
+    allocateAsset,
+    returnAsset,
+    getShoots,
+} from "@/services/inventoryAssetService";
 import Layout from "@/components/Layout";
 import {
     Camera, FlipHorizontal, ScanLine, FolderOpen,
@@ -67,6 +72,9 @@ export default function ScannerPage() {
 
     const [loading, setLoading] = useState(false);
     const [asset, setAsset] = useState(null);
+    const [shoots, setShoots] = useState([]);
+    const [selectedShoot, setSelectedShoot] = useState("");
+    const [showAllocate, setShowAllocate] = useState(false);
     const [error, setError] = useState("");
     const [scanCount, setScanCount] = useState(0);
 
@@ -165,70 +173,70 @@ export default function ScannerPage() {
     }, [mode, activeCam, asset]);
 
     /* ── file scan ── */
-   const handleFile = async (e) => {
+    const handleFile = async (e) => {
 
-    const file =
-        e.target.files?.[0];
+        const file =
+            e.target.files?.[0];
 
-    if (!file) return;
+        if (!file) return;
 
-    setLoading(true);
-    setError("");
-    setAsset(null);
-
-    try {
-
-        await stopScanner();
-
-        const fileScanner =
-            new Html5Qrcode(
-                "qr-reader-file"
-            );
-
-        const decoded =
-            await fileScanner.scanFile(
-                file,
-                true
-            );
-
-        if (!decoded) {
-            throw new Error(
-                "No QR code found"
-            );
-        }
-
-        setScanCount(
-            c => c + 1
-        );
-
-        await lookupCode(
-            decoded
-        );
-
-    } catch (err) {
-
-        console.error(err);
-
+        setLoading(true);
+        setError("");
         setAsset(null);
 
-        setError(
-            "No QR code found in image."
-        );
+        try {
 
-    } finally {
+            await stopScanner();
 
-        setLoading(false);
+            const fileScanner =
+                new Html5Qrcode(
+                    "qr-reader-file"
+                );
 
-        if (
-            fileInputRef.current
-        ) {
-            fileInputRef.current.value =
-                "";
+            const decoded =
+                await fileScanner.scanFile(
+                    file,
+                    true
+                );
+
+            if (!decoded) {
+                throw new Error(
+                    "No QR code found"
+                );
+            }
+
+            setScanCount(
+                c => c + 1
+            );
+
+            await lookupCode(
+                decoded
+            );
+
+        } catch (err) {
+
+            console.error(err);
+
+            setAsset(null);
+
+            setError(
+                "No QR code found in image."
+            );
+
+        } finally {
+
+            setLoading(false);
+
+            if (
+                fileInputRef.current
+            ) {
+                fileInputRef.current.value =
+                    "";
+            }
+
         }
 
-    }
-
-};
+    };
 
     /* ── lookup ── */
     const lookupCode = async (code) => {
@@ -244,6 +252,8 @@ export default function ScannerPage() {
                 res.data || res
             );
 
+            loadShoots();
+
         } catch (err) {
 
             console.error(err);
@@ -256,6 +266,24 @@ export default function ScannerPage() {
 
         }
 
+    };
+
+    const loadShoots = async () => {
+
+        try {
+
+            const res =
+                await getShoots();
+
+            setShoots(
+                res || []
+            );
+
+        } catch (err) {
+
+            console.error(err);
+
+        }
     };
 
     /* ── switch camera ── */
@@ -275,6 +303,76 @@ export default function ScannerPage() {
         setAsset(null);
         setError("");
 
+    };
+
+    const handleAllocateAsset = async () => {
+
+        try {
+
+            await allocateAsset(
+                asset.id,
+                selectedShoot
+            );
+
+            alert(
+                "Asset allocated successfully"
+            );
+
+            setShowAllocate(false);
+
+            const refreshed =
+                await lookupAsset(
+                    asset.qr_uuid
+                );
+
+            setAsset(
+                refreshed.data || refreshed
+            );
+
+        } catch (error) {
+
+            console.log(error);
+
+            alert(
+                error.response?.data?.message ||
+                "Allocation failed"
+            );
+
+        }
+
+    };
+
+    const handleReturnAsset = async () => {
+
+        try {
+
+            await returnAsset(
+                asset.id
+            );
+
+            alert(
+                "Asset returned successfully"
+            );
+
+            const refreshed =
+                await lookupAsset(
+                    asset.qr_uuid
+                );
+
+            setAsset(
+                refreshed.data || refreshed
+            );
+
+        } catch (error) {
+
+            console.log(error);
+
+            alert(
+                error.response?.data?.message ||
+                "Return failed"
+            );
+
+        }
     };
 
     /* ─────────────── RENDER ─────────────── */
@@ -542,6 +640,52 @@ export default function ScannerPage() {
 
                             {/* footer actions */}
                             <div className="px-6 pb-5 flex gap-3">
+
+                                {asset.active_allocation && (
+
+                                    <div className="mx-6 mb-4 rounded-xl border border-blue-200 bg-blue-50 p-4">
+
+                                        <div className="font-semibold">
+                                            Assigned To:
+                                            {" "}
+                                            {asset.active_allocation.shoot?.title}
+                                        </div>
+
+                                        <div className="text-sm text-blue-700 mt-1">
+                                            Allocated:
+                                            {" "}
+                                            {asset.active_allocation.allocated_at}
+                                        </div>
+
+                                    </div>
+
+                                )}
+
+                                {asset.status === "available" && (
+
+                                    <button
+                                        onClick={() =>
+                                            setShowAllocate(true)
+                                        }
+                                        className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold py-3"
+                                    >
+                                        Allocate To Shoot
+                                    </button>
+
+                                )}
+
+                                {asset.status === "in_use" && (
+
+                                    <button
+                                        onClick={
+                                            handleReturnAsset
+                                        }
+                                        className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-sm font-bold py-3"
+                                    >
+                                        Return Asset
+                                    </button>
+
+                                )}
                                 <button
                                     onClick={reset}
                                     className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-3 transition-colors"
@@ -593,6 +737,76 @@ export default function ScannerPage() {
                     object-fit: cover;
                 }
             `}</style>
+
+            {showAllocate && (
+
+                <div className="fixed inset-0 z-[10000]">
+
+                    <div
+                        className="absolute inset-0 bg-black/50"
+                        onClick={() =>
+                            setShowAllocate(false)
+                        }
+                    />
+
+                    <div className="absolute left-1/2 top-1/2 w-[500px] -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl p-6">
+
+                        <h2 className="font-bold text-lg mb-4">
+                            Allocate Asset
+                        </h2>
+
+                        <select
+                            value={selectedShoot}
+                            onChange={(e) =>
+                                setSelectedShoot(
+                                    e.target.value
+                                )
+                            }
+                            className="w-full border rounded-lg p-3"
+                        >
+                            <option value="">
+                                Select Shoot
+                            </option>
+
+                            {shoots.map(
+                                (shoot) => (
+                                    <option
+                                        key={shoot.id}
+                                        value={shoot.id}
+                                    >
+                                        {shoot.title}
+                                    </option>
+                                )
+                            )}
+                        </select>
+
+                        <div className="flex justify-end gap-2 mt-5">
+
+                            <button
+                                onClick={() =>
+                                    setShowAllocate(false)
+                                }
+                                className="border px-4 py-2 rounded-lg"
+                            >
+                                Cancel
+                            </button>
+
+                            <button
+                                onClick={
+                                    handleAllocateAsset
+                                }
+                                className="bg-blue-600 text-white px-4 py-2 rounded-lg"
+                            >
+                                Allocate
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            )}
         </Layout>
     );
 }
