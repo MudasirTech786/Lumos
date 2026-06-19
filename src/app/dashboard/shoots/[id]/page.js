@@ -29,8 +29,10 @@ import {
   DollarSign,
   TrendingUp,
   Layers,
+  ScanLine,
+  ShieldCheck
 } from "lucide-react";
-
+import { QRCodeSVG } from "qrcode.react";
 const STATUS_OPTIONS = ["planned", "scheduled", "active", "completed", "cancelled"];
 
 const STATUS_CONFIG = {
@@ -242,34 +244,168 @@ export default function ShootDetailsPage() {
             </Panel>
 
             {/* INVENTORY */}
-            <Panel title="Inventory Allocation" count={shoot.inventory_usages?.length} action={<PanelLink href={`/dashboard/shoots/${shoot.id}/inventory`} />}>
-              {!shoot.inventory_usages || shoot.inventory_usages.length === 0 ? (
-                <Empty icon={<Package size={24} />} text="No inventory allocated" />
-              ) : (
-                <div className="divide-y divide-gray-100">
-                  {shoot.inventory_usages.map((usage) => (
-                    <div key={usage.id} className="flex items-center gap-4 py-4 first:pt-0 last:pb-0">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-500">
-                        <Package size={17} />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-base font-semibold text-gray-900 truncate">{usage.item?.name}</p>
-                        <div className="mt-1.5 flex flex-wrap items-center gap-3">
-                          {usage.item?.sku && <span className="flex items-center gap-1.5 text-sm text-gray-400"><Hash size={12} />{usage.item.sku}</span>}
-                          <span className="text-sm text-gray-400">Qty: <span className="font-semibold text-gray-600">{usage.quantity}</span></span>
-                          {usage.returned_quantity > 0 && <span className="text-sm text-gray-400">Returned: <span className="font-semibold text-gray-600">{usage.returned_quantity}</span></span>}
-                          {usage.lost_quantity > 0 && <span className="text-sm text-rose-400">Lost: <span className="font-semibold">{usage.lost_quantity}</span></span>}
-                          {usage.assigned_user?.name && <span className="flex items-center gap-1.5 text-sm text-gray-400"><Users size={12} />{usage.assigned_user.name}</span>}
-                        </div>
-                      </div>
-                      <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-bold capitalize ${INVENTORY_STATUS[usage.status] || "bg-gray-100 text-gray-500"}`}>
-                        {usage.status?.replaceAll("_", " ")}
-                      </span>
-                    </div>
-                  ))}
+           {/* ── INVENTORY ALLOCATION PANEL ──────────────────────────────────────
+    Drop-in replacement for the Panel in ShootDetailsPage.
+    Requires: QRCodeSVG from "qrcode.react", ScanLine from "lucide-react"
+    Add these to your existing imports at the top of ShootDetailsPage.jsx:
+      import { QRCodeSVG } from "qrcode.react";
+      import { ScanLine, ShieldCheck } from "lucide-react";
+─────────────────────────────────────────────────────────────────── */}
+
+<Panel
+  title="Inventory Allocation"
+  count={shoot.inventory_usages?.length}
+  action={<PanelLink href={`/dashboard/shoots/${shoot.id}/inventory`} />}
+>
+  {!shoot.inventory_usages || shoot.inventory_usages.length === 0 ? (
+    <Empty icon={<Package size={24} />} text="No inventory allocated" />
+  ) : (
+    <div className="space-y-3">
+      {shoot.inventory_usages.map((usage) => {
+
+        const hasAsset = !!usage.asset;
+
+        const statusStyle = {
+          reserved:           "bg-amber-50  text-amber-700  border-amber-200",
+          checked_out:        "bg-blue-50   text-blue-700   border-blue-200",
+          partially_returned: "bg-orange-50 text-orange-700 border-orange-200",
+          returned:           "bg-emerald-50 text-emerald-700 border-emerald-200",
+        }[usage.status] ?? "bg-slate-100 text-slate-500 border-slate-200";
+
+        return (
+          <div
+            key={usage.id}
+            className={[
+              "rounded-2xl border overflow-hidden transition-all",
+              hasAsset
+                ? "border-blue-200 bg-gradient-to-br from-blue-50/60 to-indigo-50/40"
+                : "border-slate-100 bg-white",
+            ].join(" ")}
+          >
+            {/* top accent for QR assets */}
+            {hasAsset && (
+              <div className="h-[2px] bg-gradient-to-r from-blue-500 to-indigo-400" />
+            )}
+
+            <div className="p-4">
+              <div className="flex items-start gap-4">
+
+                {/* icon */}
+                <div className={[
+                  "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl",
+                  hasAsset
+                    ? "bg-blue-100 text-blue-600"
+                    : "bg-violet-50 text-violet-500",
+                ].join(" ")}>
+                  {hasAsset
+                    ? <ScanLine size={17} />
+                    : <Package size={17} />
+                  }
                 </div>
-              )}
-            </Panel>
+
+                {/* main content */}
+                <div className="flex-1 min-w-0">
+
+                  {/* item name + status */}
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="text-sm font-bold text-gray-900 truncate leading-tight">
+                      {usage.item?.name}
+                    </p>
+                    <span className={`shrink-0 inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-bold capitalize ${statusStyle}`}>
+                      {usage.status?.replaceAll("_", " ")}
+                    </span>
+                  </div>
+
+                  {/* meta row */}
+                  <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
+                    {usage.item?.sku && (
+                      <span className="flex items-center gap-1 text-xs text-gray-400">
+                        <Hash size={10} /> {usage.item.sku}
+                      </span>
+                    )}
+                    <span className="text-xs text-gray-400">
+                      Qty: <span className="font-semibold text-gray-600">{usage.quantity}</span>
+                    </span>
+                    {usage.returned_quantity > 0 && (
+                      <span className="text-xs text-gray-400">
+                        Returned: <span className="font-semibold text-gray-600">{usage.returned_quantity}</span>
+                      </span>
+                    )}
+                    {usage.lost_quantity > 0 && (
+                      <span className="text-xs text-rose-500 font-semibold">
+                        Lost: {usage.lost_quantity}
+                      </span>
+                    )}
+                    {usage.assigned_user?.name && (
+                      <span className="flex items-center gap-1 text-xs text-gray-400">
+                        <Users size={10} /> {usage.assigned_user.name}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* ── QR ASSET BLOCK ── */}
+                  {hasAsset && (
+                    <div className="mt-3 flex items-center gap-4 rounded-xl border border-blue-200 bg-white px-3 py-2.5">
+
+                      {/* QR code */}
+                      <div className="shrink-0 bg-white border border-slate-100 rounded-lg p-1.5 shadow-sm">
+                        <QRCodeSVG
+                          value={usage.asset.qr_uuid}
+                          size={52}
+                          level="M"
+                          includeMargin={false}
+                        />
+                      </div>
+
+                      {/* asset info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <ShieldCheck size={11} className="text-blue-500 shrink-0" />
+                          <span className="text-[10px] font-black uppercase tracking-widest text-blue-500">
+                            QR Asset
+                          </span>
+                        </div>
+                        <p className="text-sm font-black text-gray-900 font-mono tracking-tight">
+                          {usage.asset.asset_code}
+                        </p>
+                        {usage.asset.serial_number && (
+                          <p className="text-[10px] font-mono text-gray-400 mt-0.5">
+                            SN: {usage.asset.serial_number}
+                          </p>
+                        )}
+                        <p className="text-[9px] font-mono text-gray-300 mt-0.5 truncate">
+                          {usage.asset.qr_uuid}
+                        </p>
+                      </div>
+
+                      {/* asset status badge */}
+                      <div className="shrink-0 text-right">
+                        <span className={[
+                          "inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-bold capitalize",
+                          {
+                            available:    "bg-emerald-50 text-emerald-700 border-emerald-200",
+                            in_use:       "bg-blue-50    text-blue-700    border-blue-200",
+                            returned:     "bg-slate-100  text-slate-600   border-slate-200",
+                            damaged:      "bg-rose-50    text-rose-700    border-rose-200",
+                            under_repair: "bg-amber-50   text-amber-700   border-amber-200",
+                          }[usage.asset.status] ?? "bg-slate-100 text-slate-500 border-slate-200"
+                        ].join(" ")}>
+                          {usage.asset.status?.replaceAll("_", " ") || "—"}
+                        </span>
+                      </div>
+
+                    </div>
+                  )}
+
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  )}
+</Panel>
 
             {/* ── OTHER EXPENSES (redesigned) ── */}
             <Panel

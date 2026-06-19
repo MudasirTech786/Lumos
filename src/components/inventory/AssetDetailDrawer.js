@@ -230,8 +230,22 @@ export default function AssetDetailDrawer({
 
                   <div className="border rounded-lg p-4">
 
-                    <div className="font-medium">
+                    <div className="font-semibold">
                       {asset.active_allocation.shoot?.title}
+                    </div>
+
+                    <div className="text-sm text-gray-500 mt-1">
+
+                      Assigned To:
+
+                      {" "}
+
+                      {
+                        asset.active_allocation
+                          ?.assigned_user
+                          ?.name
+                      }
+
                     </div>
 
                     <div className="text-sm text-gray-500 mt-1">

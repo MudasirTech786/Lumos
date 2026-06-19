@@ -19,6 +19,9 @@ export default function AllocateAssetModal({
   const [notes, setNotes] =
     useState("");
 
+  const [assignedTo, setAssignedTo] =
+    useState("");
+
   useEffect(() => {
 
     if (!open) return;
@@ -35,10 +38,17 @@ export default function AllocateAssetModal({
 
   const allocate = async () => {
 
+    console.log({
+      shoot_id: shootId,
+      assigned_to: assignedTo,
+      notes,
+    });
+
     await api.post(
       `/inventory-assets/${asset.id}/allocate`,
       {
         shoot_id: shootId,
+        assigned_to: assignedTo,
         notes,
       }
     );
@@ -60,7 +70,7 @@ export default function AllocateAssetModal({
       <div className="absolute left-1/2 top-1/2 w-[500px] -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl p-6">
 
         <h2 className="font-bold text-lg mb-4">
-          Allocate Asset
+          Allocate Assetssssss
         </h2>
 
         <select
@@ -84,6 +94,31 @@ export default function AllocateAssetModal({
               {shoot.title}
             </option>
           ))}
+        </select>
+
+        <select
+          value={assignedTo}
+          onChange={(e) =>
+            setAssignedTo(e.target.value)
+          }
+          className="w-full border rounded-lg p-2"
+        >
+
+          <option value="">
+            Select Crew Member
+          </option>
+
+          {users.map((user) => (
+
+            <option
+              key={user.id}
+              value={user.id}
+            >
+              {user.name}
+            </option>
+
+          ))}
+
         </select>
 
         <textarea

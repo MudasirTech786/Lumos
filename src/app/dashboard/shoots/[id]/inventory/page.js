@@ -5,974 +5,599 @@ import { useParams, useRouter } from "next/navigation";
 import Layout from "@/components/Layout";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
+import { QRCodeSVG } from "qrcode.react";
 import {
-  ArrowLeft,
-  Package,
-  Plus,
-  Search,
-  User,
-  CheckCircle2,
-  RotateCcw,
-  Trash2,
-  AlertTriangle,
-  Boxes,
+  ArrowLeft, Package, Plus, Search, User,
+  CheckCircle2, RotateCcw, Trash2, AlertTriangle,
+  Boxes, ScanLine, ShieldCheck, Hash, X,
+  ChevronDown, Layers, RefreshCw, Tag,
 } from "lucide-react";
 
+/* ─── STATUS CONFIG ──────────────────────────────────── */
+const USAGE_STATUS = {
+  reserved:           { label: "Reserved",           cls: "bg-amber-50  text-amber-700  border-amber-200"  },
+  checked_out:        { label: "Checked Out",        cls: "bg-blue-50   text-blue-700   border-blue-200"   },
+  partially_returned: { label: "Partial Return",     cls: "bg-orange-50 text-orange-700 border-orange-200" },
+  returned:           { label: "Returned",           cls: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+};
+const ASSET_STATUS = {
+  available:    "bg-emerald-50 text-emerald-700 border-emerald-200",
+  in_use:       "bg-blue-50    text-blue-700    border-blue-200",
+  returned:     "bg-slate-100  text-slate-600   border-slate-200",
+  damaged:      "bg-rose-50    text-rose-700    border-rose-200",
+  under_repair: "bg-amber-50   text-amber-700   border-amber-200",
+  written_off:  "bg-red-100    text-red-800     border-red-200",
+};
+const getUsageStatus  = (s) => USAGE_STATUS[s]  ?? { label: s, cls: "bg-slate-100 text-slate-500 border-slate-200" };
+const getAssetStatus  = (s) => ASSET_STATUS[s]  ?? "bg-slate-100 text-slate-500 border-slate-200";
+
+/* ─── SHARED PRIMITIVES ─────────────────────────────── */
+const inp = "w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-800 placeholder-slate-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all";
+
+function FieldLabel({ children }) {
+  return <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5">{children}</p>;
+}
+
+function StatusPill({ cfg }) {
+  return (
+    <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-bold capitalize ${cfg.cls}`}>
+      {cfg.label}
+    </span>
+  );
+}
+
+function InfoRow({ icon, label, value, mono, highlight }) {
+  const vc = highlight === "rose"    ? "text-rose-600 font-bold"
+           : highlight === "emerald" ? "text-emerald-600 font-bold"
+           : "text-slate-800 font-semibold";
+  return (
+    <div className="flex items-center gap-3 px-4 py-3">
+      <div className="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-50 text-slate-400 shrink-0">{icon}</div>
+      <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 w-28 shrink-0">{label}</span>
+      <span className={`text-sm flex-1 min-w-0 truncate ${mono ? "font-mono" : ""} ${vc}`}>{value ?? "—"}</span>
+    </div>
+  );
+}
+
+/* ─── OVERLAY MODAL ─────────────────────────────────── */
+function Modal({ title, subtitle, onClose, children, footer }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: "rgba(0,0,0,0.45)", backdropFilter: "blur(4px)" }}
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white shadow-2xl"
+        style={{ boxShadow: "0 32px 64px -12px rgba(0,0,0,0.28)" }}>
+        <div className="h-[3px] bg-gradient-to-r from-blue-500 to-indigo-400 rounded-t-2xl" />
+
+        {/* header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
+              <Package size={15} />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-slate-900">{title}</p>
+              {subtitle && <p className="text-xs text-slate-400 mt-0.5">{subtitle}</p>}
+            </div>
+          </div>
+          <button onClick={onClose}
+            className="w-8 h-8 flex items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 transition-colors">
+            <X size={15} />
+          </button>
+        </div>
+
+        <div className="px-6 py-5 space-y-4">{children}</div>
+
+        {footer && (
+          <div className="px-6 py-4 border-t border-slate-100 bg-slate-50/60 flex justify-end gap-3">
+            {footer}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ─── INVENTORY ITEM CARD ───────────────────────────── */
+function InventoryCard({ item, onCheckout, onDelete, onReturn }) {
+  const statusCfg = getUsageStatus(item.status);
+
+  return (
+    <div className={[
+      "rounded-2xl border overflow-hidden transition-all",
+      item.asset ? "border-blue-200" : "border-slate-200",
+    ].join(" ")}>
+      {/* accent */}
+      <div className={`h-[3px] ${item.asset ? "bg-gradient-to-r from-blue-500 to-indigo-400" : "bg-gradient-to-r from-slate-200 to-slate-300"}`} />
+
+      <div className={`p-5 ${item.asset ? "bg-gradient-to-br from-blue-50/40 to-indigo-50/20" : "bg-white"}`}>
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+
+          {/* LEFT: info */}
+          <div className="flex-1 min-w-0">
+
+            {/* item header */}
+            <div className="flex items-start gap-3 mb-4">
+              <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${item.asset ? "bg-blue-100 text-blue-600" : "bg-violet-50 text-violet-500"}`}>
+                {item.asset ? <ScanLine size={17} /> : <Package size={17} />}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">
+                  {item.asset ? "QR-Tracked Asset" : "Inventory Item"}
+                </p>
+                <h3 className="text-base font-black text-slate-900 leading-tight truncate">{item.item?.name}</h3>
+                {item.item?.category && (
+                  <p className="text-xs text-slate-400 mt-0.5 flex items-center gap-1">
+                    <Tag size={9} /> {item.item.category}
+                  </p>
+                )}
+              </div>
+              <StatusPill cfg={statusCfg} />
+            </div>
+
+            {/* QR asset block */}
+            {item.asset && (
+              <div className="flex items-center gap-4 rounded-xl border border-blue-200 bg-white px-4 py-3 mb-4">
+                <div className="shrink-0 bg-white border border-slate-100 rounded-xl p-1.5 shadow-sm">
+                  <QRCodeSVG value={item.asset.qr_uuid} size={64} level="M" includeMargin={false} />
+                </div>
+                <div className="flex-1 min-w-0 space-y-1">
+                  <div className="flex items-center gap-1.5">
+                    <ShieldCheck size={11} className="text-blue-500 shrink-0" />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-blue-500">QR Asset</span>
+                  </div>
+                  <p className="text-sm font-black text-slate-900 font-mono">{item.asset.asset_code}</p>
+                  {item.asset.serial_number && (
+                    <p className="text-[10px] font-mono text-slate-400">SN: {item.asset.serial_number}</p>
+                  )}
+                  <p className="text-[9px] font-mono text-slate-300 truncate">{item.asset.qr_uuid}</p>
+                  <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-bold capitalize ${getAssetStatus(item.asset.status)}`}>
+                    {item.asset.status?.replaceAll("_", " ") || "—"}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* info rows */}
+            <div className="rounded-xl border border-slate-100 bg-white divide-y divide-slate-50 overflow-hidden">
+              <InfoRow icon={<User size={14} />}          label="Assigned To" value={item.assignedUser?.name || "Not assigned"} />
+              <InfoRow icon={<Boxes size={14} />}         label="Quantity"    value={item.quantity} />
+              <InfoRow icon={<CheckCircle2 size={14} />}  label="Returned"    value={item.returned_quantity} highlight={item.returned_quantity > 0 ? "emerald" : null} />
+              <InfoRow icon={<AlertTriangle size={14} />} label="Lost"        value={item.lost_quantity || 0} highlight={item.lost_quantity > 0 ? "rose" : null} />
+              {item.asset && (
+                <InfoRow icon={<ScanLine size={14} />} label="Asset Code" value={item.asset.asset_code} mono />
+              )}
+            </div>
+          </div>
+
+          {/* RIGHT: actions */}
+          <div className="flex lg:flex-col gap-2 shrink-0">
+            {item.status === "reserved" && (
+              <button onClick={() => onCheckout(item.id)}
+                className="flex-1 lg:flex-none inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-2.5 transition-colors">
+                <Package size={13} /> Check Out
+              </button>
+            )}
+            {(item.status === "checked_out" || item.status === "partially_returned") && (
+              <button onClick={onReturn}
+                className="flex-1 lg:flex-none inline-flex items-center justify-center gap-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold px-4 py-2.5 transition-colors">
+                <RotateCcw size={13} /> Return
+              </button>
+            )}
+            {item.status === "reserved" && (
+              <button onClick={() => onDelete(item.id)}
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-bold px-4 py-2.5 transition-colors">
+                <Trash2 size={13} /> Delete
+              </button>
+            )}
+          </div>
+
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── STAT CARD ─────────────────────────────────────── */
+function StatCard({ label, value, color }) {
+  const colors = {
+    default: "bg-white border-slate-200 text-slate-900",
+    blue:    "bg-blue-50 border-blue-100 text-blue-700",
+    emerald: "bg-emerald-50 border-emerald-100 text-emerald-700",
+    rose:    "bg-rose-50 border-rose-100 text-rose-700",
+  };
+  return (
+    <div className={`rounded-2xl border px-5 py-4 shadow-sm ${colors[color] || colors.default}`}>
+      <p className="text-[10px] font-bold uppercase tracking-widest opacity-60 mb-1">{label}</p>
+      <p className="text-2xl font-black">{value}</p>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════
+   MAIN PAGE
+═══════════════════════════════════════════════════════ */
 export default function ShootInventoryPage() {
   const params = useParams();
   const router = useRouter();
 
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [showForm, setShowForm] = useState(false);
-  const [inventoryList, setInventoryList] = useState([]);
-  const [items, setItems] = useState([]);
-  const [users, setUsers] = useState([]);
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [showReturnModal, setShowReturnModal] = useState(false);
-  const [returnType, setReturnType] = useState("partial");
-  const [selectedUsage, setSelectedUsage] = useState(null);
-
-  const [returnForm, setReturnForm] = useState({
-    returned_quantity: 1,
-    damaged_quantity: 0,
-    lost_quantity: 0,
-    notes: "",
-  });
+  const [loading,          setLoading]          = useState(true);
+  const [saving,           setSaving]           = useState(false);
+  const [showForm,         setShowForm]         = useState(false);
+  const [showReturnModal,  setShowReturnModal]  = useState(false);
+  const [inventoryList,    setInventoryList]    = useState([]);
+  const [items,            setItems]            = useState([]);
+  const [users,            setUsers]            = useState([]);
+  const [search,           setSearch]           = useState("");
+  const [statusFilter,     setStatusFilter]     = useState("all");
+  const [selectedUsage,    setSelectedUsage]    = useState(null);
+  const [returnType,       setReturnType]       = useState("partial");
 
   const [form, setForm] = useState({
-    inventory_item_id: "",
-    assigned_to: "",
-    quantity: 1,
-    notes: "",
+    inventory_item_id: "", assigned_to: "", quantity: 1, notes: "",
+  });
+  const [returnForm, setReturnForm] = useState({
+    returned_quantity: 1, damaged_quantity: 0, lost_quantity: 0, notes: "",
   });
 
-  const selectedItem = items.find((item) => item.id == form.inventory_item_id);
+  const selectedItem = items.find((i) => i.id == form.inventory_item_id);
 
-  /* ========================================================= */
-  /* FETCH                                                      */
-  /* ========================================================= */
-
+  /* ── fetch ── */
   const fetchData = async () => {
     try {
-      const [shootInventoryRes, itemsRes, usersRes] = await Promise.all([
+      const [invRes, itemsRes, usersRes] = await Promise.all([
         api.get(`/shoots/${params.id}/inventory`),
         api.get("/inventory/items"),
         api.get("/users"),
       ]);
-
-      setInventoryList(shootInventoryRes.data.inventory || []);
+      setInventoryList(invRes.data.inventory || []);
       setItems(itemsRes.data?.data || itemsRes.data || []);
-
-      let usersData = [];
-      if (Array.isArray(usersRes?.data?.users?.data)) {
-        usersData = usersRes.data.users.data;
-      } else if (Array.isArray(usersRes?.data?.data)) {
-        usersData = usersRes.data.data;
-      } else if (Array.isArray(usersRes?.data)) {
-        usersData = usersRes.data;
-      }
-      setUsers(usersData);
-    } catch {
-      toast.error("Failed loading inventory");
-    } finally {
-      setLoading(false);
-    }
+      const ud = usersRes?.data?.users?.data || usersRes?.data?.data || usersRes?.data || [];
+      setUsers(Array.isArray(ud) ? ud : []);
+    } catch { toast.error("Failed loading inventory"); }
+    finally   { setLoading(false); }
   };
+  useEffect(() => { fetchData(); }, []);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  /* ========================================================= */
-  /* SAVE                                                       */
-  /* ========================================================= */
-
+  /* ── allocate ── */
   const allocateInventory = async () => {
-    if (!form.inventory_item_id) {
-      toast.error("Select inventory item");
-      return;
-    }
-
+    if (!form.inventory_item_id) { toast.error("Select an inventory item"); return; }
     setSaving(true);
-
     try {
       await api.post(`/shoots/${params.id}/inventory`, form);
       toast.success("Inventory allocated");
-
-      setForm({
-        inventory_item_id: "",
-        assigned_to: "",
-        quantity: 1,
-        notes: "",
-      });
-
+      setForm({ inventory_item_id: "", assigned_to: "", quantity: 1, notes: "" });
       setShowForm(false);
       fetchData();
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Allocation failed");
-    } finally {
-      setSaving(false);
-    }
+    } catch (e) { toast.error(e.response?.data?.message || "Allocation failed"); }
+    finally     { setSaving(false); }
   };
 
-  /* ========================================================= */
-  /* CHECKOUT                                                   */
-  /* ========================================================= */
-
+  /* ── checkout ── */
   const checkoutItem = async (id) => {
-    try {
-      await api.post(`/shoot-inventory/${id}/checkout`);
-      toast.success("Checked out");
-      fetchData();
-    } catch {
-      toast.error("Checkout failed");
-    }
+    try { await api.post(`/shoot-inventory/${id}/checkout`); toast.success("Checked out"); fetchData(); }
+    catch { toast.error("Checkout failed"); }
   };
 
-  /* ========================================================= */
-  /* RETURN                                                     */
-  /* ========================================================= */
-
+  /* ── return ── */
   const processReturn = async () => {
     try {
       await api.post(`/shoot-inventory/${selectedUsage.id}/return`, returnForm);
       toast.success("Return processed");
-      setShowReturnModal(false);
-      setSelectedUsage(null);
-      fetchData();
-    } catch (error) {
-      console.log(error.response?.data);
-      toast.error(error.response?.data?.message || "Return failed");
-    }
+      setShowReturnModal(false); setSelectedUsage(null); fetchData();
+    } catch (e) { toast.error(e.response?.data?.message || "Return failed"); }
   };
 
-  /* ========================================================= */
-  /* DELETE                                                     */
-  /* ========================================================= */
-
+  /* ── delete ── */
   const deleteAllocation = async (id) => {
-    const confirmed = confirm("Delete allocation?");
-    if (!confirmed) return;
-
-    try {
-      await api.delete(`/shoot-inventory/${id}`);
-      toast.success("Allocation deleted");
-      fetchData();
-    } catch {
-      toast.error("Delete failed");
-    }
+    if (!confirm("Delete this allocation?")) return;
+    try { await api.delete(`/shoot-inventory/${id}`); toast.success("Deleted"); fetchData(); }
+    catch { toast.error("Delete failed"); }
   };
 
-  /* ========================================================= */
-  /* FILTER                                                     */
-  /* ========================================================= */
-
-  const filteredInventory = inventoryList.filter((item) => {
-    const matchesSearch =
-      item.item?.name?.toLowerCase().includes(search.toLowerCase()) ||
-      item.assignedUser?.name?.toLowerCase().includes(search.toLowerCase());
-
-    const matchesStatus =
-      statusFilter === "all" ? true : item.status === statusFilter;
-
-    return matchesSearch && matchesStatus;
-  });
-
-  /* ========================================================= */
-  /* STATS                                                      */
-  /* ========================================================= */
-
-  const stats = useMemo(() => {
-    return {
-      total: inventoryList.length,
-      checkedOut: inventoryList.filter((item) => item.status === "checked_out").length,
-      returned: inventoryList.filter((item) => item.status === "returned").length,
-      lost: inventoryList.reduce((sum, item) => sum + (item.lost_quantity || 0), 0),
-    };
-  }, [inventoryList]);
-
-  /* ========================================================= */
-  /* RETURN TYPE HANDLER                                        */
-  /* ========================================================= */
-
+  /* ── return type ── */
   const handleReturnType = (type) => {
     setReturnType(type);
-
-    const outstanding =
-      selectedUsage.quantity -
-      selectedUsage.returned_quantity -
-      (selectedUsage.lost_quantity || 0);
-
-    switch (type) {
-      case "full":
-        setReturnForm({ returned_quantity: outstanding, damaged_quantity: 0, lost_quantity: 0, notes: "" });
-        break;
-      case "partial":
-        setReturnForm({ returned_quantity: 1, damaged_quantity: 0, lost_quantity: 0, notes: "" });
-        break;
-      case "damaged":
-        setReturnForm({ returned_quantity: 1, damaged_quantity: 1, lost_quantity: 0, notes: "" });
-        break;
-      case "lost":
-        setReturnForm({ returned_quantity: 0, damaged_quantity: 0, lost_quantity: 1, notes: "" });
-        break;
-      case "mixed":
-        setReturnForm({ returned_quantity: 1, damaged_quantity: 0, lost_quantity: 0, notes: "" });
-        break;
-    }
+    const out = selectedUsage.quantity - selectedUsage.returned_quantity - (selectedUsage.lost_quantity || 0);
+    const presets = {
+      full:    { returned_quantity: out, damaged_quantity: 0, lost_quantity: 0, notes: "" },
+      partial: { returned_quantity: 1,   damaged_quantity: 0, lost_quantity: 0, notes: "" },
+      damaged: { returned_quantity: 1,   damaged_quantity: 1, lost_quantity: 0, notes: "" },
+      lost:    { returned_quantity: 0,   damaged_quantity: 0, lost_quantity: 1, notes: "" },
+      mixed:   { returned_quantity: 1,   damaged_quantity: 0, lost_quantity: 0, notes: "" },
+    };
+    setReturnForm(presets[type]);
   };
 
-  /* ========================================================= */
-  /* LOADING                                                    */
-  /* ========================================================= */
+  /* ── filter ── */
+  const filtered = inventoryList.filter((item) => {
+    const q = search.toLowerCase();
+    const matchSearch = !q || item.item?.name?.toLowerCase().includes(q) || item.assignedUser?.name?.toLowerCase().includes(q);
+    const matchStatus = statusFilter === "all" || item.status === statusFilter;
+    return matchSearch && matchStatus;
+  });
 
-  if (loading) {
-    return (
-      <Layout>
-        <div className="py-24 text-center text-gray-500">
-          Loading inventory...
+  /* ── stats ── */
+  const stats = useMemo(() => ({
+    total:      inventoryList.length,
+    checkedOut: inventoryList.filter(i => i.status === "checked_out").length,
+    returned:   inventoryList.filter(i => i.status === "returned").length,
+    lost:       inventoryList.reduce((s, i) => s + (i.lost_quantity || 0), 0),
+  }), [inventoryList]);
+
+  /* ── loading ── */
+  if (loading) return (
+    <Layout>
+      <div className="min-h-screen bg-slate-50/70 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <RefreshCw size={22} className="text-slate-300 animate-spin" />
+          <p className="text-sm text-slate-400 font-medium">Loading inventory…</p>
         </div>
-      </Layout>
-    );
-  }
+      </div>
+    </Layout>
+  );
 
   return (
     <Layout>
-      <div className="mx-auto max-w-6xl pb-24">
+      <div className="min-h-screen bg-slate-50/70">
+        <div className="max-w-5xl mx-auto px-5 py-8 space-y-5">
 
-        {/* ========================================================= */}
-        {/* HEADER                                                     */}
-        {/* ========================================================= */}
-
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-          <div>
-            <button
-              onClick={() => router.back()}
-              className="
-                inline-flex items-center gap-2
-                rounded-2xl border border-gray-200
-                bg-white px-4 py-3
-                text-sm font-medium text-gray-700
-                hover:bg-gray-50
-              "
-            >
-              <ArrowLeft size={16} />
-              Back
-            </button>
-
-            <h1 className="mt-6 text-3xl font-bold text-gray-900">
-              Shoot Inventory
-            </h1>
-
-            <p className="mt-2 text-sm text-gray-500">
-              Allocate and track equipment for production
-            </p>
-          </div>
-        </div>
-
-        {/* ========================================================= */}
-        {/* STATS                                                      */}
-        {/* ========================================================= */}
-
-        <div className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-4">
-          <SimpleCard title="Total Allocations" value={stats.total} />
-          <SimpleCard title="Checked Out" value={stats.checkedOut} />
-          <SimpleCard title="Returned" value={stats.returned} />
-          <SimpleCard title="Lost Items" value={stats.lost} />
-        </div>
-
-        {/* ========================================================= */}
-        {/* ALLOCATE INVENTORY BUTTON                                  */}
-        {/* ========================================================= */}
-
-        <div className="mt-6">
-          <button
-            onClick={() => setShowForm(true)}
-            className="
-              w-full flex items-center justify-between
-              rounded-3xl bg-blue-600
-              px-6 py-5 text-left text-white
-              hover:bg-blue-700 transition-all
-            "
-          >
+          {/* ── HEADER ── */}
+          <div className="flex items-start justify-between gap-4">
             <div>
-              <h2 className="text-lg font-semibold">Allocate Inventory</h2>
-              <p className="mt-1 text-sm text-blue-100">
-                Assign equipment to crew
-              </p>
+              <button onClick={() => router.back()}
+                className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-blue-600 hover:text-blue-800 transition-colors mb-3">
+                <ArrowLeft size={13} /> Back
+              </button>
+              <h1 className="text-2xl font-black tracking-tight text-slate-900">Shoot Inventory</h1>
+              <p className="text-sm text-slate-400 mt-0.5">Allocate and track equipment for this production</p>
             </div>
-            <Plus size={22} />
-          </button>
-        </div>
 
-        {/* ========================================================= */}
-        {/* ALLOCATE INVENTORY MODAL                                   */}
-        {/* ========================================================= */}
+            <button onClick={() => setShowForm(true)}
+              className="mt-7 inline-flex items-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold px-5 py-2.5 shadow-sm transition-colors shrink-0">
+              <Plus size={15} /> Allocate
+            </button>
+          </div>
 
-        {showForm && (
-          <div
-            className="
-              fixed inset-0 z-50
-              flex items-center justify-center
-              bg-black/60 backdrop-blur-sm
-              p-4
-            "
-            onClick={(e) => {
-              if (e.target === e.currentTarget) setShowForm(false);
-            }}
-          >
-            <div
-              className="
-                w-full max-w-2xl
-                max-h-[90vh] overflow-y-auto
-                rounded-3xl border border-gray-200
-                bg-white shadow-2xl
-              "
-            >
-              <div className="p-8">
+          {/* ── STATS ── */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <StatCard label="Total"       value={stats.total}      color="default" />
+            <StatCard label="Checked Out" value={stats.checkedOut} color="blue"    />
+            <StatCard label="Returned"    value={stats.returned}   color="emerald" />
+            <StatCard label="Lost"        value={stats.lost}       color="rose"    />
+          </div>
 
-                {/* MODAL HEADER */}
-                <div className="flex items-center justify-between border-b border-gray-200 pb-6">
-                  <div>
-                    <h2 className="text-2xl font-bold text-gray-900">
-                      Allocate Inventory
-                    </h2>
-                    <p className="mt-1 text-sm text-gray-500">
-                      Assign equipment to crew
-                    </p>
-                  </div>
-
-                  <button
-                    onClick={() => setShowForm(false)}
-                    className="
-                      rounded-2xl border border-gray-200
-                      bg-white px-5 py-3
-                      text-sm font-medium text-gray-700
-                      hover:bg-gray-50
-                    "
-                  >
-                    Close
-                  </button>
-                </div>
-
-                {/* FORM FIELDS */}
-                <div className="mt-6 grid grid-cols-1 gap-5 md:grid-cols-2">
-
-                  {/* Inventory Item */}
-                  <div>
-                    <label className="text-sm font-medium text-gray-700">
-                      Inventory Item
-                    </label>
-                    <select
-                      value={form.inventory_item_id}
-                      onChange={(e) =>
-                        setForm({ ...form, inventory_item_id: e.target.value })
-                      }
-                      className="
-                        mt-2 w-full rounded-2xl border border-gray-200
-                        bg-white px-4 py-4 text-sm text-gray-900 outline-none
-                      "
-                    >
-                      <option value="">Select item</option>
-                      {items.map((item) => (
-                        <option key={item.id} value={item.id}>
-                          {item.name}
-                        </option>
-                      ))}
-                    </select>
-
-                    {selectedItem && (
-                      <div className="
-                        mt-3 flex items-center gap-3
-                        rounded-2xl border border-gray-200
-                        bg-gray-50 px-4 py-3
-                      ">
-                        <span
-                          className={`h-3 w-3 rounded-full ${
-                            selectedItem.calculated_available > 0
-                              ? "bg-green-500"
-                              : "bg-red-500"
-                          }`}
-                        />
-                        <span className="text-sm text-gray-700">
-                          {selectedItem.calculated_available} of{" "}
-                          {selectedItem.quantity} available
-                        </span>
-                        <span
-                          className={`ml-auto rounded-full px-3 py-1 text-xs font-semibold ${
-                            selectedItem.calculated_available > 0
-                              ? "bg-green-100 text-green-700"
-                              : "bg-red-100 text-red-700"
-                          }`}
-                        >
-                          {selectedItem.status}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Assigned To */}
-                  <div>
-                    <label className="text-sm font-medium text-gray-700">
-                      Assigned To
-                    </label>
-                    <select
-                      value={form.assigned_to}
-                      onChange={(e) =>
-                        setForm({ ...form, assigned_to: e.target.value })
-                      }
-                      className="
-                        mt-2 w-full rounded-2xl border border-gray-200
-                        bg-white px-4 py-4 text-sm text-gray-900 outline-none
-                      "
-                    >
-                      <option value="">Select user</option>
-                      {users.map((user) => (
-                        <option key={user.id} value={user.id}>
-                          {user.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Quantity */}
-                  <div>
-                    <label className="text-sm font-medium text-gray-700">
-                      Quantity
-                    </label>
-                    <input
-                      type="number"
-                      value={form.quantity}
-                      max={selectedItem?.calculated_available || 1}
-                      onChange={(e) =>
-                        setForm({ ...form, quantity: e.target.value })
-                      }
-                      className="
-                        mt-2 w-full rounded-2xl border border-gray-200
-                        bg-white px-4 py-4 text-sm text-gray-900 outline-none
-                      "
-                    />
-                  </div>
-
-                </div>
-
-                {/* Notes */}
-                <div className="mt-5">
-                  <label className="text-sm font-medium text-gray-700">
-                    Notes
-                  </label>
-                  <textarea
-                    rows={4}
-                    value={form.notes}
-                    onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                    placeholder="Allocation notes..."
-                    className="
-                      mt-2 w-full rounded-2xl border border-gray-200
-                      bg-white px-4 py-4 text-sm text-gray-900
-                      placeholder:text-gray-400 outline-none
-                    "
-                  />
-                </div>
-
-                {/* MODAL ACTIONS */}
-                <div className="mt-8 flex justify-end gap-3">
-                  <button
-                    onClick={() => setShowForm(false)}
-                    className="
-                      rounded-2xl border border-gray-200
-                      bg-white px-6 py-4
-                      text-sm font-medium text-gray-700
-                      hover:bg-gray-50
-                    "
-                  >
-                    Cancel
-                  </button>
-
-                  <button
-                    onClick={allocateInventory}
-                    disabled={saving}
-                    className="
-                      rounded-2xl bg-blue-600
-                      px-6 py-4
-                      text-sm font-semibold text-white
-                      hover:bg-blue-700
-                      disabled:opacity-60
-                    "
-                  >
-                    {saving ? "Allocating..." : "Allocate Inventory"}
-                  </button>
-                </div>
-
-              </div>
+          {/* ── FILTER BAR ── */}
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1">
+              <Search size={13} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" />
+              <input value={search} onChange={e => setSearch(e.target.value)}
+                placeholder="Search by item name or assignee…"
+                className={inp + " pl-10"} />
+            </div>
+            <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}
+              className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 focus:border-blue-400 outline-none transition-all cursor-pointer shadow-sm">
+              <option value="all">All Statuses</option>
+              <option value="reserved">Reserved</option>
+              <option value="checked_out">Checked Out</option>
+              <option value="partially_returned">Partial Return</option>
+              <option value="returned">Returned</option>
+            </select>
+            <div className="flex items-center gap-2 rounded-xl border border-slate-100 bg-white px-4 py-2.5 text-sm text-slate-500 font-medium shadow-sm shrink-0">
+              <Layers size={13} className="text-slate-300" />
+              <span><strong className="text-slate-700">{filtered.length}</strong> item{filtered.length !== 1 ? "s" : ""}</span>
             </div>
           </div>
-        )}
 
-        {/* ========================================================= */}
-        {/* INVENTORY LIST                                             */}
-        {/* ========================================================= */}
-
-        <div className="mt-6">
-          <Card title="Inventory List">
-
-            <div className="flex flex-col gap-4 md:flex-row">
-
-              <div className="relative flex-1">
-                <Search
-                  size={18}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
-                />
-                <input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search inventory..."
-                  className="
-                    w-full rounded-2xl border border-gray-200
-                    bg-white pl-12 pr-4 py-4
-                    text-sm outline-none
-                  "
-                />
+          {/* ── INVENTORY LIST ── */}
+          {filtered.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-slate-200 bg-white py-16 flex flex-col items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-200">
+                <Package size={24} />
               </div>
+              <p className="text-sm font-semibold text-slate-400">No inventory found</p>
+              {search && (
+                <button onClick={() => setSearch("")}
+                  className="text-xs font-bold text-blue-500 hover:text-blue-700 transition-colors">
+                  Clear search
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {filtered.map(item => (
+                <InventoryCard
+                  key={item.id}
+                  item={item}
+                  onCheckout={checkoutItem}
+                  onDelete={deleteAllocation}
+                  onReturn={() => {
+                    setSelectedUsage(item);
+                    const rem = item.quantity - item.returned_quantity - (item.lost_quantity || 0);
+                    setReturnType("partial");
+                    setReturnForm({ returned_quantity: rem > 0 ? 1 : 0, damaged_quantity: 0, lost_quantity: 0, notes: "" });
+                    setShowReturnModal(true);
+                  }}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
 
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="
-                  rounded-2xl border border-gray-200
-                  bg-white px-5 py-4 text-sm outline-none
-                "
-              >
-                <option value="all">All Status</option>
-                <option value="reserved">Reserved</option>
-                <option value="checked_out">Checked Out</option>
-                <option value="partially_returned">Partial Return</option>
-                <option value="returned">Returned</option>
+      {/* ══════════════════════════════════════════════════
+          ALLOCATE MODAL
+      ══════════════════════════════════════════════════ */}
+      {showForm && (
+        <Modal
+          title="Allocate Inventory"
+          subtitle="Assign equipment to crew"
+          onClose={() => setShowForm(false)}
+          footer={
+            <>
+              <button onClick={() => setShowForm(false)}
+                className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors">
+                Cancel
+              </button>
+              <button onClick={allocateInventory} disabled={saving}
+                className="rounded-xl bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 text-sm font-bold disabled:opacity-50 transition-colors">
+                {saving ? "Allocating…" : "Allocate Inventory"}
+              </button>
+            </>
+          }
+        >
+          <div className="grid sm:grid-cols-2 gap-4">
+            {/* item select */}
+            <div className="sm:col-span-2">
+              <FieldLabel>Inventory Item</FieldLabel>
+              <select value={form.inventory_item_id}
+                onChange={e => setForm({ ...form, inventory_item_id: e.target.value })}
+                className={inp + " cursor-pointer"}>
+                <option value="">Select item…</option>
+                {items.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
               </select>
 
-            </div>
-
-            {/* LIST */}
-            <div className="mt-6 space-y-4">
-              {filteredInventory.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-gray-300 py-14 text-center">
-                  <Package size={42} className="mx-auto text-gray-300" />
-                  <h3 className="mt-4 text-lg font-semibold text-gray-900">
-                    No inventory found
-                  </h3>
+              {selectedItem && (
+                <div className="mt-2 flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 px-4 py-2.5">
+                  <span className={`w-2 h-2 rounded-full shrink-0 ${selectedItem.calculated_available > 0 ? "bg-emerald-500" : "bg-rose-500"}`} />
+                  <span className="text-sm text-slate-600 flex-1">
+                    <strong className="text-slate-800">{selectedItem.calculated_available}</strong> of {selectedItem.quantity} available
+                  </span>
+                  <span className={`text-[10px] font-bold rounded-full border px-2 py-0.5 ${selectedItem.calculated_available > 0 ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-rose-50 text-rose-700 border-rose-200"}`}>
+                    {selectedItem.status}
+                  </span>
                 </div>
-              ) : (
-                filteredInventory.map((item) => (
-                  <InventoryCard
-                    key={item.id}
-                    item={item}
-                    onCheckout={checkoutItem}
-                    onDelete={deleteAllocation}
-                    onReturn={() => {
-                      setSelectedUsage(item);
-
-                      const remaining =
-                        item.quantity -
-                        item.returned_quantity -
-                        (item.lost_quantity || 0);
-
-                      setReturnType("partial");
-                      setReturnForm({
-                        returned_quantity: remaining > 0 ? 1 : 0,
-                        damaged_quantity: 0,
-                        lost_quantity: 0,
-                        notes: "",
-                      });
-
-                      setShowReturnModal(true);
-                    }}
-                  />
-                ))
               )}
             </div>
 
-          </Card>
-        </div>
+            {/* assigned to */}
+            <div>
+              <FieldLabel>Assigned To</FieldLabel>
+              <select value={form.assigned_to}
+                onChange={e => setForm({ ...form, assigned_to: e.target.value })}
+                className={inp + " cursor-pointer"}>
+                <option value="">Select user…</option>
+                {users.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+              </select>
+            </div>
 
-      </div>
+            {/* quantity */}
+            <div>
+              <FieldLabel>Quantity</FieldLabel>
+              <input type="number" value={form.quantity}
+                max={selectedItem?.calculated_available || 1}
+                onChange={e => setForm({ ...form, quantity: e.target.value })}
+                className={inp} />
+            </div>
 
-      {/* ========================================================= */}
-      {/* RETURN MODAL                                               */}
-      {/* ========================================================= */}
-
-      {showReturnModal && selectedUsage && (() => {
-        const outstanding =
-          selectedUsage.quantity -
-          selectedUsage.returned_quantity -
-          (selectedUsage.lost_quantity || 0);
-
-        return (
-          <div
-            className="
-              fixed inset-0 z-50
-              flex items-center justify-center
-              bg-black/60 backdrop-blur-sm
-              p-4
-            "
-            onClick={(e) => {
-              if (e.target === e.currentTarget) setShowReturnModal(false);
-            }}
-          >
-            <div
-              className="
-                w-full max-w-2xl
-                max-h-[90vh] overflow-y-auto
-                rounded-3xl border border-gray-200
-                bg-white shadow-2xl
-              "
-            >
-              <div className="p-8">
-
-                {/* MODAL HEADER */}
-                <div className="flex items-center justify-between border-b border-gray-200 pb-6">
-                  <div>
-                    <h2 className="text-2xl font-bold text-gray-900">
-                      Process Return
-                    </h2>
-                    <p className="mt-1 text-sm text-gray-500">
-                      Manage returned inventory
-                    </p>
-                  </div>
-
-                  <button
-                    onClick={() => setShowReturnModal(false)}
-                    className="
-                      rounded-2xl border border-gray-200
-                      bg-white px-5 py-3
-                      text-sm font-medium text-gray-700
-                      hover:bg-gray-50
-                    "
-                  >
-                    Close
-                  </button>
-                </div>
-
-                {/* STATS */}
-                <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
-                  <StatBox label="Allocated" value={selectedUsage.quantity} />
-                  <StatBox label="Returned" value={selectedUsage.returned_quantity} />
-                  <StatBox label="Lost" value={selectedUsage.lost_quantity || 0} />
-                  <StatBox label="Outstanding" value={outstanding} />
-                </div>
-
-                {/* RETURN TYPE */}
-                <div className="mt-8">
-                  <label className="text-sm font-semibold text-gray-700">
-                    Return Type
-                  </label>
-
-                  <div className="mt-3 grid grid-cols-3 gap-3 md:grid-cols-5">
-                    {["full", "partial", "damaged", "lost", "mixed"].map((type) => (
-                      <button
-                        key={type}
-                        onClick={() => handleReturnType(type)}
-                        className={`
-                          rounded-2xl px-4 py-3
-                          text-sm font-semibold capitalize
-                          transition-all
-                          ${returnType === type
-                            ? "bg-blue-600 text-white shadow-lg"
-                            : "border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
-                          }
-                        `}
-                      >
-                        {type}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* INPUTS */}
-                <div className="mt-6 grid grid-cols-1 gap-5 md:grid-cols-2">
-
-                  {returnType !== "lost" && (
-                    <Input
-                      label="Returned Quantity"
-                      value={returnForm.returned_quantity}
-                      onChange={(value) =>
-                        setReturnForm({ ...returnForm, returned_quantity: Number(value) })
-                      }
-                      type="number"
-                    />
-                  )}
-
-                  {(returnType === "damaged" || returnType === "mixed") && (
-                    <Input
-                      label="Damaged Quantity"
-                      value={returnForm.damaged_quantity}
-                      onChange={(value) =>
-                        setReturnForm({ ...returnForm, damaged_quantity: Number(value) })
-                      }
-                      type="number"
-                    />
-                  )}
-
-                  {(returnType === "lost" || returnType === "mixed") && (
-                    <Input
-                      label="Lost Quantity"
-                      value={returnForm.lost_quantity}
-                      onChange={(value) =>
-                        setReturnForm({ ...returnForm, lost_quantity: Number(value) })
-                      }
-                      type="number"
-                    />
-                  )}
-
-                </div>
-
-                {/* NOTES */}
-                <div className="mt-6">
-                  <label className="text-sm font-semibold text-gray-700">
-                    Notes
-                  </label>
-                  <textarea
-                    rows={4}
-                    value={returnForm.notes}
-                    onChange={(e) =>
-                      setReturnForm({ ...returnForm, notes: e.target.value })
-                    }
-                    placeholder="Return notes..."
-                    className="
-                      mt-3 w-full rounded-2xl border border-gray-200
-                      bg-white px-4 py-4 text-sm outline-none
-                    "
-                  />
-                </div>
-
-                {/* MODAL ACTIONS */}
-                <div className="mt-8 flex justify-end gap-3">
-                  <button
-                    onClick={() => setShowReturnModal(false)}
-                    className="
-                      rounded-2xl border border-gray-200
-                      bg-white px-6 py-4
-                      text-sm font-medium text-gray-700
-                      hover:bg-gray-50
-                    "
-                  >
-                    Cancel
-                  </button>
-
-                  <button
-                    onClick={processReturn}
-                    className="
-                      rounded-2xl bg-blue-600
-                      px-6 py-4
-                      text-sm font-semibold text-white
-                      hover:bg-blue-700
-                    "
-                  >
-                    Process Return
-                  </button>
-                </div>
-
-              </div>
+            {/* notes */}
+            <div className="sm:col-span-2">
+              <FieldLabel>Notes (optional)</FieldLabel>
+              <textarea rows={3} value={form.notes}
+                onChange={e => setForm({ ...form, notes: e.target.value })}
+                placeholder="Allocation notes…"
+                className={inp + " resize-none"} />
             </div>
           </div>
+        </Modal>
+      )}
+
+      {/* ══════════════════════════════════════════════════
+          RETURN MODAL
+      ══════════════════════════════════════════════════ */}
+      {showReturnModal && selectedUsage && (() => {
+        const outstanding = selectedUsage.quantity - selectedUsage.returned_quantity - (selectedUsage.lost_quantity || 0);
+        return (
+          <Modal
+            title="Process Return"
+            subtitle={`${selectedUsage.item?.name} · ${outstanding} outstanding`}
+            onClose={() => { setShowReturnModal(false); setSelectedUsage(null); }}
+            footer={
+              <>
+                <button onClick={() => { setShowReturnModal(false); setSelectedUsage(null); }}
+                  className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors">
+                  Cancel
+                </button>
+                <button onClick={processReturn}
+                  className="rounded-xl bg-orange-500 hover:bg-orange-600 text-white px-5 py-2.5 text-sm font-bold transition-colors">
+                  Process Return
+                </button>
+              </>
+            }
+          >
+            {/* stats mini row */}
+            <div className="grid grid-cols-4 gap-2">
+              {[
+                { label: "Allocated",    value: selectedUsage.quantity,           color: "bg-slate-50 border-slate-200 text-slate-700" },
+                { label: "Returned",     value: selectedUsage.returned_quantity,   color: "bg-emerald-50 border-emerald-100 text-emerald-700" },
+                { label: "Lost",         value: selectedUsage.lost_quantity || 0, color: "bg-rose-50 border-rose-100 text-rose-700" },
+                { label: "Outstanding",  value: outstanding,                       color: "bg-blue-50 border-blue-100 text-blue-700" },
+              ].map(s => (
+                <div key={s.label} className={`rounded-xl border px-3 py-2.5 text-center ${s.color}`}>
+                  <p className="text-[10px] font-bold uppercase tracking-widest opacity-60">{s.label}</p>
+                  <p className="text-xl font-black mt-0.5">{s.value}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* return type */}
+            <div>
+              <FieldLabel>Return Type</FieldLabel>
+              <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+                {["full","partial","damaged","lost","mixed"].map(t => (
+                  <button key={t} onClick={() => handleReturnType(t)}
+                    className={`rounded-xl border px-3 py-2.5 text-xs font-bold capitalize transition-all ${
+                      returnType === t
+                        ? "bg-blue-600 text-white border-blue-600 shadow-sm"
+                        : "border-slate-200 bg-white text-slate-600 hover:border-blue-200 hover:text-blue-600"
+                    }`}>
+                    {t}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* qty inputs */}
+            <div className="grid sm:grid-cols-2 gap-4">
+              {returnType !== "lost" && (
+                <div>
+                  <FieldLabel>Returned Quantity</FieldLabel>
+                  <input type="number" value={returnForm.returned_quantity}
+                    onChange={e => setReturnForm({ ...returnForm, returned_quantity: Number(e.target.value) })}
+                    className={inp} />
+                </div>
+              )}
+              {(returnType === "damaged" || returnType === "mixed") && (
+                <div>
+                  <FieldLabel>Damaged Quantity</FieldLabel>
+                  <input type="number" value={returnForm.damaged_quantity}
+                    onChange={e => setReturnForm({ ...returnForm, damaged_quantity: Number(e.target.value) })}
+                    className={inp} />
+                </div>
+              )}
+              {(returnType === "lost" || returnType === "mixed") && (
+                <div>
+                  <FieldLabel>Lost Quantity</FieldLabel>
+                  <input type="number" value={returnForm.lost_quantity}
+                    onChange={e => setReturnForm({ ...returnForm, lost_quantity: Number(e.target.value) })}
+                    className={inp} />
+                </div>
+              )}
+            </div>
+
+            {/* notes */}
+            <div>
+              <FieldLabel>Notes (optional)</FieldLabel>
+              <textarea rows={3} value={returnForm.notes}
+                onChange={e => setReturnForm({ ...returnForm, notes: e.target.value })}
+                placeholder="Return notes…"
+                className={inp + " resize-none"} />
+            </div>
+          </Modal>
         );
       })()}
 
     </Layout>
-  );
-}
-
-/* ========================================================= */
-/* STAT BOX                                                  */
-/* ========================================================= */
-
-function StatBox({ label, value }) {
-  return (
-    <div className="rounded-2xl border border-gray-200 p-4">
-      <p className="text-xs text-gray-500">{label}</p>
-      <h3 className="mt-2 text-xl font-bold text-gray-900">{value}</h3>
-    </div>
-  );
-}
-
-/* ========================================================= */
-/* CARD                                                       */
-/* ========================================================= */
-
-function Card({ title, children }) {
-  return (
-    <div className="rounded-3xl border border-gray-200 bg-white p-6">
-      <h2 className="text-xl font-bold text-gray-900">{title}</h2>
-      <div className="mt-5">{children}</div>
-    </div>
-  );
-}
-
-/* ========================================================= */
-/* SIMPLE CARD                                               */
-/* ========================================================= */
-
-function SimpleCard({ title, value }) {
-  return (
-    <div className="rounded-3xl border border-gray-200 bg-white p-5">
-      <p className="text-sm text-gray-500">{title}</p>
-      <h3 className="mt-3 text-2xl font-bold text-gray-900">{value}</h3>
-    </div>
-  );
-}
-
-/* ========================================================= */
-/* INVENTORY CARD                                            */
-/* ========================================================= */
-
-function InventoryCard({ item, onCheckout, onDelete, onReturn }) {
-  return (
-    <div className="rounded-2xl border border-gray-200 p-5">
-      <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-
-        <div className="flex-1">
-          <h3 className="text-xl font-bold text-gray-900">{item.item?.name}</h3>
-
-          <div className="mt-5 space-y-4">
-            <InfoRow
-              icon={<User size={18} />}
-              label="Assigned To"
-              value={item.assignedUser?.name || "Not assigned"}
-            />
-            <InfoRow
-              icon={<Boxes size={18} />}
-              label="Quantity"
-              value={item.quantity}
-            />
-            <InfoRow
-              icon={<CheckCircle2 size={18} />}
-              label="Returned"
-              value={item.returned_quantity}
-            />
-            <InfoRow
-              icon={<AlertTriangle size={18} />}
-              label="Lost"
-              value={item.lost_quantity}
-            />
-            <InfoRow
-              icon={<Package size={18} />}
-              label="Status"
-              value={item.status?.replaceAll("_", " ")}
-            />
-          </div>
-        </div>
-
-        {/* ACTIONS */}
-        <div className="flex flex-col gap-3">
-
-          {item.status === "reserved" && (
-            <button
-              onClick={() => onCheckout(item.id)}
-              className="rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white"
-            >
-              Check Out
-            </button>
-          )}
-
-          {(item.status === "checked_out" || item.status === "partially_returned") && (
-            <button
-              onClick={onReturn}
-              className="rounded-2xl bg-orange-500 px-5 py-3 text-sm font-semibold text-white"
-            >
-              Return Item
-            </button>
-          )}
-
-          {item.status === "reserved" && (
-            <button
-              onClick={() => onDelete(item.id)}
-              className="
-                inline-flex items-center justify-center gap-2
-                rounded-2xl border border-red-200 bg-red-50
-                px-5 py-3 text-sm font-semibold text-red-600
-              "
-            >
-              <Trash2 size={16} />
-              Delete
-            </button>
-          )}
-
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ========================================================= */
-/* INPUT                                                      */
-/* ========================================================= */
-
-function Input({ label, value, onChange, icon, type = "text", placeholder = "", max }) {
-  return (
-    <div>
-      <label className="text-sm font-medium text-gray-700">{label}</label>
-      <div className="relative mt-2">
-        {icon && (
-          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
-            {icon}
-          </div>
-        )}
-        <input
-          type={type}
-          value={value}
-          max={max}
-          placeholder={placeholder}
-          onChange={(e) => onChange(e.target.value)}
-          className={`
-            w-full rounded-2xl border border-gray-200
-            bg-white ${icon ? "pl-12" : "pl-4"} pr-4 py-4
-            text-sm outline-none
-          `}
-        />
-      </div>
-    </div>
-  );
-}
-
-/* ========================================================= */
-/* SELECT INPUT                                              */
-/* ========================================================= */
-
-function SelectInput({ label, value, onChange, options }) {
-  return (
-    <div>
-      <label className="text-sm font-medium text-gray-700">{label}</label>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="
-          mt-2 w-full rounded-2xl border border-gray-200
-          bg-white px-4 py-4 text-sm outline-none
-        "
-      >
-        <option value="">Select</option>
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
-    </div>
-  );
-}
-
-/* ========================================================= */
-/* INFO ROW                                                  */
-/* ========================================================= */
-
-function InfoRow({ icon, label, value }) {
-  return (
-    <div className="flex items-start gap-3">
-      <div className="mt-0.5 text-gray-400">{icon}</div>
-      <div>
-        <p className="text-xs text-gray-500">{label}</p>
-        <p className="mt-1 text-sm font-medium text-gray-900">{value}</p>
-      </div>
-    </div>
   );
 }
