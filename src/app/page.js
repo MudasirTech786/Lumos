@@ -358,8 +358,8 @@ export default function Dashboard() {
                     </div>
                   ))}
                 </div>
-                <div className="h-60 sm:h-72">
-                  <ResponsiveContainer width="100%" height="100%">
+                <div className="h-[320px] w-full">
+                  <ResponsiveContainer width="100%" height={300}>
                     <AreaChart data={revenueData} margin={{top:4,right:8,left:-20,bottom:0}}>
                       <defs>
                         {[["r","#3b82f6"],["e","#f43f5e"],["p","#10b981"]].map(([id,c])=>(
@@ -411,8 +411,8 @@ export default function Dashboard() {
               </div>
               {/* bar chart */}
               <div className="px-6 py-5">
-                <div className="h-44">
-                  <ResponsiveContainer width="100%" height="100%">
+                <div className="h-[220px] w-full">
+                  <ResponsiveContainer width="100%" height={220}>
                     <BarChart data={assetBar} margin={{top:0,right:0,left:-20,bottom:0}} barSize={18}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false}/>
                       <XAxis dataKey="name" tick={{fontSize:12,fill:"#94a3b8"}} axisLine={false} tickLine={false}/>
