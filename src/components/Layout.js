@@ -233,11 +233,13 @@ export default function Layout({ children }) {
     <div className="flex h-screen overflow-hidden bg-gradient-to-br from-blue-50 via-white to-blue-100">
 
       <div className={`
-  fixed md:static top-0 left-0 z-50 h-full transition-transform duration-300
-  ${open ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
-`}>
+        fixed md:static top-0 left-0 z-50 h-full transition-transform duration-300
+        ${open ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
+      `}>
         <Sidebar open={open} setOpen={setOpen} />
       </div>
+
+      {/* <Sidebar open={open} setOpen={setOpen} /> */}
 
       <div className="flex-1 flex flex-col min-w-0">
 

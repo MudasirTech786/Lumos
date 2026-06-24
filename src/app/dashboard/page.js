@@ -25,6 +25,13 @@ import {
 
 export default function Dashboard() {
 
+  const greeting = (() => {
+    const h = new Date().getHours();
+    if (h < 12) return "Good morning";
+    if (h < 17) return "Good afternoon";
+    return "Good evening";
+  })();
+
   const stats = [
     {
       title: "Active Events",
@@ -138,7 +145,20 @@ export default function Dashboard() {
                   </span>
                 </div>
 
-                <h1 className="mt-7 text-5xl md:text-6xl font-black leading-[1.02] tracking-[-0.05em] text-white max-w-5xl">
+                <div className="mt-5 flex items-center gap-3">
+                  <span className="relative flex h-2.5 w-2.5">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-400 shadow-[0_0_16px_rgba(52,211,153,0.6)]" />
+                  </span>
+                  <p className="text-lg md:text-xl font-light tracking-tight text-white/60">
+                    <span className="bg-gradient-to-r from-emerald-200 via-cyan-100 to-blue-100 bg-clip-text text-transparent font-medium">
+                      {greeting}.
+                    </span>{" "}
+                    <span>Your command center is ready.</span>
+                  </p>
+                </div>
+
+                <h1 className="mt-6 text-5xl md:text-6xl font-black leading-[1.02] tracking-[-0.05em] text-white max-w-5xl">
                   The future control center for workforce, events & intelligent operations.
                 </h1>
 
