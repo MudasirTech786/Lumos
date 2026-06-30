@@ -118,10 +118,29 @@ export default function CrewDetail() {
                         {/* LEFT */}
                         <div className="flex items-start gap-5">
 
+                           
                             {/* AVATAR */}
-                            <div className="w-24 h-24 rounded-3xl bg-black text-white flex items-center justify-center text-3xl font-bold">
-                                {crew.name?.charAt(0)}
-                            </div>
+                            <div className="w-24 h-24 rounded-3xl overflow-hidden bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+  {(crew?.profile_photo_url || crew?.profile_photo) ? (
+    <img
+      src={crew.profile_photo_url || crew.profile_photo}
+      alt={crew.name}
+      className="w-full h-full object-cover"
+      onError={(e) => {
+        e.currentTarget.style.display = "none";
+        e.currentTarget.parentElement.innerHTML = `
+          <div class="w-full h-full flex items-center justify-center text-white text-3xl font-bold">
+            ${crew?.name?.charAt(0)?.toUpperCase() || "?"}
+          </div>
+        `;
+      }}
+    />
+  ) : (
+    <span className="text-white text-3xl font-bold">
+      {crew?.name?.charAt(0)?.toUpperCase()}
+    </span>
+  )}
+</div>
 
                             {/* INFO */}
                             <div>

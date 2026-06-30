@@ -14,6 +14,9 @@ import {
     Sparkles,
     BadgeDollarSign,
     FileText,
+    Upload,
+    X,
+    Camera,
 
 } from "lucide-react";
 
@@ -24,6 +27,11 @@ import api from "@/lib/api";
 import toast from "react-hot-toast";
 
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
+
+const ImageCropModal = dynamic(() => import("@/components/ImageCropModal"), {
+    ssr: false,
+});
 
 export default function CrewPage() {
 
@@ -93,6 +101,10 @@ export default function CrewPage() {
     };
 
     const [form, setForm] = useState(initialForm);
+    const [profilePhotoFile, setProfilePhotoFile] = useState(null);
+    const [profilePhotoPreview, setProfilePhotoPreview] = useState(null);
+    const [cropOpen, setCropOpen] = useState(false);
+    const [cropImageSrc, setCropImageSrc] = useState(null);
 
     // ================= FETCH =================
     useEffect(() => {
@@ -174,14 +186,26 @@ export default function CrewPage() {
 
         try {
 
-            await api.post(
-                "/crew",
-                formatPayload(form)
-            );
+            const payload = formatPayload(form);
+
+            if (profilePhotoFile) {
+                const { profile_photo, ...clean } = payload;
+                const fd = buildFormData(clean);
+                fd.append('profile_photo', profilePhotoFile);
+                await api.post("/crew", fd);
+            } else {
+                await api.post(
+                    "/crew",
+                    payload
+                );
+            }
 
             toast.success("Crew added");
 
+            if (profilePhotoPreview?.startsWith('blob:')) URL.revokeObjectURL(profilePhotoPreview);
             setForm(initialForm);
+            setProfilePhotoFile(null);
+            setProfilePhotoPreview(null);
 
             setOpenModal(false);
 
@@ -203,10 +227,17 @@ export default function CrewPage() {
     // ================= EDIT =================
     const handleEdit = (c) => {
 
+        if (profilePhotoPreview?.startsWith('blob:')) {
+            URL.revokeObjectURL(profilePhotoPreview);
+        }
+
         setForm({
             ...initialForm,
             ...c,
         });
+
+        setProfilePhotoPreview(c?.profile_photo_url || c?.profile_photo || null);
+        setProfilePhotoFile(null);
 
         setEditingId(c.id);
 
@@ -217,14 +248,27 @@ export default function CrewPage() {
 
         try {
 
-            await api.put(
-                `/crew/${editingId}`,
-                formatPayload(form)
-            );
+            const payload = formatPayload(form);
+
+            if (profilePhotoFile) {
+                const { profile_photo, ...clean } = payload;
+                const fd = buildFormData(clean);
+                fd.append('profile_photo', profilePhotoFile);
+                fd.append('_method', 'PUT');
+                await api.post(`/crew/${editingId}`, fd);
+            } else {
+                await api.put(
+                    `/crew/${editingId}`,
+                    payload
+                );
+            }
 
             toast.success("Updated");
 
+            if (profilePhotoPreview?.startsWith('blob:')) URL.revokeObjectURL(profilePhotoPreview);
             setEditModal(false);
+            setProfilePhotoFile(null);
+            setProfilePhotoPreview(null);
 
             fetchCrew();
 
@@ -301,6 +345,22 @@ export default function CrewPage() {
         is_active:
             Boolean(data.is_active),
     });
+
+    const buildFormData = (data) => {
+        const fd = new FormData();
+        for (const [key, value] of Object.entries(data)) {
+            if (Array.isArray(value)) {
+                value.forEach(v => fd.append(`${key}[]`, v));
+            } else if (value === true) {
+                fd.append(key, '1');
+            } else if (value === false) {
+                fd.append(key, '0');
+            } else if (value !== null && value !== undefined) {
+                fd.append(key, value);
+            }
+        }
+        return fd;
+    };
 
     // ================= UI =================
     return (
@@ -652,15 +712,31 @@ export default function CrewPage() {
                                                 {/* NAME */}
                                                 <td className="p-4">
 
-                                                    <div>
+                                                    <div className="flex items-center gap-3">
 
-                                                        <p className="font-semibold text-gray-900">
-                                                            {c.name}
-                                                        </p>
+                                                        <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0 overflow-hidden">
+                                                            {c.profile_photo_url || c.profile_photo ? (
+                                                                <img
+                                                                    src={c.profile_photo_url || c.profile_photo}
+                                                                    alt={c.name}
+                                                                    className="h-full w-full object-cover"
+                                                                />
+                                                            ) : (
+                                                                c.name?.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)
+                                                            )}
+                                                        </div>
 
-                                                        <p className="text-xs text-gray-500 mt-1">
-                                                            {c.designation || "No designation"}
-                                                        </p>
+                                                        <div>
+
+                                                            <p className="font-semibold text-gray-900">
+                                                                {c.name}
+                                                            </p>
+
+                                                            <p className="text-xs text-gray-500 mt-1">
+                                                                {c.designation || "No designation"}
+                                                            </p>
+
+                                                        </div>
 
                                                     </div>
 
@@ -806,15 +882,31 @@ export default function CrewPage() {
                                     {/* TOP */}
                                     <div className="flex items-start justify-between gap-4">
 
-                                        <div>
+                                        <div className="flex items-center gap-3">
 
-                                            <h3 className="font-semibold text-gray-900 text-lg">
-                                                {c.name}
-                                            </h3>
+                                            <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-base flex-shrink-0 overflow-hidden">
+                                                {c.profile_photo_url || c.profile_photo ? (
+                                                    <img
+                                                        src={c.profile_photo_url || c.profile_photo}
+                                                        alt={c.name}
+                                                        className="h-full w-full object-cover"
+                                                    />
+                                                ) : (
+                                                    c.name?.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)
+                                                )}
+                                            </div>
 
-                                            <p className="text-sm text-gray-500 mt-1">
-                                                {c.designation || "No designation"}
-                                            </p>
+                                            <div>
+
+                                                <h3 className="font-semibold text-gray-900 text-lg">
+                                                    {c.name}
+                                                </h3>
+
+                                                <p className="text-sm text-gray-500 mt-1">
+                                                    {c.designation || "No designation"}
+                                                </p>
+
+                                            </div>
 
                                         </div>
 
@@ -933,11 +1025,14 @@ export default function CrewPage() {
 
                             {/* BACKDROP */}
                             <div
-                                onClick={() => {
-                                    setOpenModal(false);
-                                    setEditModal(false);
-                                }}
-                                className="fixed inset-0"
+                                                                onClick={() => {
+                                                                    if (profilePhotoPreview?.startsWith('blob:')) URL.revokeObjectURL(profilePhotoPreview);
+                                                                    setOpenModal(false);
+                                                                    setEditModal(false);
+                                                                    setProfilePhotoFile(null);
+                                                                    setProfilePhotoPreview(null);
+                                                                }}
+                                                                className="fixed inset-0"
                             />
 
                             {/* ===================================================== */}
@@ -1093,6 +1188,9 @@ export default function CrewPage() {
                                                 onClick={() => {
                                                     setOpenModal(false);
                                                     setEditModal(false);
+                                                    setProfilePhotoFile(null);
+                                                    if (profilePhotoPreview?.startsWith('blob:')) URL.revokeObjectURL(profilePhotoPreview);
+                                                    setProfilePhotoPreview(null);
                                                 }}
                                                 className="
                 flex
@@ -1253,17 +1351,81 @@ export default function CrewPage() {
                                                     }
                                                 />
 
-                                                <Input
-                                                    label="Profile Photo URL"
-                                                    placeholder="https://..."
-                                                    value={form.profile_photo || ""}
-                                                    onChange={(e) =>
-                                                        setForm({
-                                                            ...form,
-                                                            profile_photo: e.target.value,
-                                                        })
-                                                    }
-                                                />
+                                                <div className="space-y-2">
+                                                    <div className="relative">
+                                                        <div className="pointer-events-none absolute left-4 top-3 z-10 text-[10px] font-bold uppercase tracking-[0.16em] text-blue-500">
+                                                            Profile Photo
+                                                        </div>
+                                                        {profilePhotoPreview ? (
+                                                            <div className="h-[72px] w-full rounded-[24px] border border-blue-100 bg-white/80 overflow-hidden flex items-center gap-3 px-4 pb-3 pt-7">
+                                                                <img
+                                                                    src={profilePhotoPreview}
+                                                                    alt="Preview"
+                                                                    className="h-10 w-10 rounded-lg object-cover flex-shrink-0"
+                                                                />
+                                                                <span className="text-sm text-slate-500 truncate flex-1">
+                                                                    {profilePhotoFile
+                                                                        ? "Photo uploaded"
+                                                                        : "Current photo"}
+                                                                </span>
+                                                                <div className="flex gap-1 flex-shrink-0">
+                                                                    <label className="cursor-pointer p-1.5 rounded-lg hover:bg-blue-50 text-blue-500 transition">
+                                                                        <Camera size={16} />
+                                                                        <input
+                                                                            type="file"
+                                                                            accept=".jpg,.jpeg,.png,.webp"
+                                                                            className="hidden"
+                                                                            onChange={(e) => {
+                                                                                const file = e.target.files?.[0];
+                                                                                if (file) {
+                                                                                    setCropImageSrc(URL.createObjectURL(file));
+                                                                                    setCropOpen(true);
+                                                                                }
+                                                                                e.target.value = null;
+                                                                            }}
+                                                                        />
+                                                                    </label>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => {
+                                                                            if (profilePhotoPreview?.startsWith('blob:')) {
+                                                                                URL.revokeObjectURL(profilePhotoPreview);
+                                                                            }
+                                                                            setProfilePhotoFile(null);
+                                                                            setProfilePhotoPreview(null);
+                                                                            setForm({ ...form, profile_photo: "" });
+                                                                        }}
+                                                                        className="p-1.5 rounded-lg hover:bg-red-50 text-red-500 transition"
+                                                                    >
+                                                                        <X size={16} />
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        ) : (
+                                                            <label className="cursor-pointer">
+                                                                <div className="h-[72px] w-full rounded-[24px] border border-dashed border-blue-200 bg-blue-50/30 hover:bg-blue-50/60 transition flex items-center justify-center gap-2 pb-3 pt-7">
+                                                                    <Upload size={16} className="text-blue-500" />
+                                                                    <span className="text-sm text-blue-600 font-medium">
+                                                                        Upload photo
+                                                                    </span>
+                                                                </div>
+                                                                <input
+                                                                    type="file"
+                                                                    accept=".jpg,.jpeg,.png,.webp"
+                                                                    className="hidden"
+                                                                    onChange={(e) => {
+                                                                        const file = e.target.files?.[0];
+                                                                        if (file) {
+                                                                            setCropImageSrc(URL.createObjectURL(file));
+                                                                            setCropOpen(true);
+                                                                        }
+                                                                        e.target.value = null;
+                                                                    }}
+                                                                />
+                                                            </label>
+                                                        )}
+                                                    </div>
+                                                </div>
 
                                             </div>
 
@@ -1346,6 +1508,9 @@ export default function CrewPage() {
                                                 onClick={() => {
                                                     setOpenModal(false);
                                                     setEditModal(false);
+                                                    setProfilePhotoFile(null);
+                                                    if (profilePhotoPreview?.startsWith('blob:')) URL.revokeObjectURL(profilePhotoPreview);
+                                                    setProfilePhotoPreview(null);
                                                 }}
                                                 className="
                 w-full
@@ -1401,6 +1566,31 @@ export default function CrewPage() {
                         </div>
 
                     )}
+
+                    {/* CROP MODAL */}
+                    <ImageCropModal
+                        open={cropOpen}
+                        imageSrc={cropImageSrc}
+                        onCancel={() => {
+                            if (cropImageSrc) {
+                                URL.revokeObjectURL(cropImageSrc);
+                            }
+                            setCropImageSrc(null);
+                            setCropOpen(false);
+                        }}
+                        onSave={(file) => {
+                            setProfilePhotoFile(file);
+                            if (profilePhotoPreview?.startsWith('blob:')) {
+                                URL.revokeObjectURL(profilePhotoPreview);
+                            }
+                            setProfilePhotoPreview(URL.createObjectURL(file));
+                            if (cropImageSrc) {
+                                URL.revokeObjectURL(cropImageSrc);
+                            }
+                            setCropImageSrc(null);
+                            setCropOpen(false);
+                        }}
+                    />
 
                 </div>
 

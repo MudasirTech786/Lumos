@@ -2,14 +2,15 @@
 
 export const dynamic = "force-dynamic";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Layout from "@/components/Layout";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
 import {
     ArrowLeft, Receipt, Plus, Trash2, Save,
-    ChevronRight, ChevronLeft, Users, Truck,
+    ChevronRight, ChevronLeft, ChevronDown, X,
+    Users, Truck,
     Package, FileText, Calculator, CheckCircle2,
     Clapperboard, Calendar, Hash, Percent,
     Tag, StickyNote, Check,
@@ -131,6 +132,128 @@ function StepPanel({ title, sub, icon, children }) {
     );
 }
 
+// ─── Searchable Production Select ─────────────────────────────────────────────
+function ProductionSelect({ shoots, loading, value, onChange }) {
+    const [isOpen, setIsOpen] = useState(false);
+    const [query, setQuery] = useState("");
+    const [highlightedIndex, setHighlightedIndex] = useState(-1);
+    const containerRef = useRef(null);
+    const inputRef = useRef(null);
+
+    const filtered = useMemo(() => {
+        if (!query) return shoots;
+        const q = query.toLowerCase();
+        return shoots.filter(s =>
+            s.title?.toLowerCase().includes(q) ||
+            s.client_name?.toLowerCase().includes(q) ||
+            s.location?.toLowerCase().includes(q)
+        );
+    }, [shoots, query]);
+
+    const selected = shoots.find(s => s.id === value);
+
+    useEffect(() => {
+        if (!isOpen) {
+            setQuery("");
+            setHighlightedIndex(-1);
+        }
+    }, [isOpen]);
+
+    useEffect(() => {
+        const handle = (e) => {
+            if (containerRef.current && !containerRef.current.contains(e.target)) {
+                setIsOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", handle);
+        return () => document.removeEventListener("mousedown", handle);
+    }, []);
+
+    const handleKeyDown = (e) => {
+        if (!isOpen) return;
+        switch (e.key) {
+            case "ArrowDown":
+                e.preventDefault();
+                setHighlightedIndex(prev => Math.min(prev + 1, filtered.length - 1));
+                break;
+            case "ArrowUp":
+                e.preventDefault();
+                setHighlightedIndex(prev => Math.max(prev - 1, 0));
+                break;
+            case "Enter":
+                e.preventDefault();
+                if (highlightedIndex >= 0 && filtered[highlightedIndex]) {
+                    onChange(filtered[highlightedIndex].id);
+                    setIsOpen(false);
+                }
+                break;
+            case "Escape":
+                e.preventDefault();
+                setIsOpen(false);
+                break;
+        }
+    };
+
+    return (
+        <div ref={containerRef} className="relative">
+            <div className="relative">
+                <Clapperboard size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-500 pointer-events-none" />
+                <input
+                    ref={inputRef}
+                    type="text"
+                    value={isOpen ? query : (selected ? selected.title : "")}
+                    onChange={e => { setQuery(e.target.value); setIsOpen(true); }}
+                    onFocus={() => setIsOpen(true)}
+                    onKeyDown={handleKeyDown}
+                    placeholder="Search productions…"
+                    className="w-full border border-slate-200 rounded-xl pl-10 pr-10 py-3 text-base text-slate-900 bg-white outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition font-sans"
+                />
+                {value && !isOpen ? (
+                    <button
+                        onClick={() => { onChange(null); setQuery(""); }}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                        tabIndex={-1}
+                    >
+                        <X size={15} />
+                    </button>
+                ) : (
+                    <ChevronDown size={15} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                )}
+            </div>
+            {isOpen && (
+                <div className="absolute z-50 mt-2 w-full bg-white border border-slate-200 rounded-xl shadow-xl shadow-slate-200/50 overflow-hidden">
+                    {loading ? (
+                        <div className="flex items-center justify-center gap-2 p-5 text-sm text-slate-400">
+                            <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
+                            Loading productions…
+                        </div>
+                    ) : filtered.length === 0 ? (
+                        <div className="p-5 text-center text-sm text-slate-400">No productions found</div>
+                    ) : (
+                        <ul className="max-h-60 overflow-y-auto py-1" role="listbox">
+                            {filtered.map((s, i) => (
+                                <li
+                                    key={s.id}
+                                    role="option"
+                                    aria-selected={s.id === value}
+                                    onClick={() => { onChange(s.id); setIsOpen(false); }}
+                                    onMouseEnter={() => setHighlightedIndex(i)}
+                                    className={`px-4 py-3 cursor-pointer flex flex-col gap-0.5 transition-colors ${i === highlightedIndex ? "bg-blue-50" : "hover:bg-slate-50"} ${s.id === value ? "bg-blue-50 border-l-2 border-blue-500" : "border-l-2 border-transparent"}`}
+                                >
+                                    <span className="text-sm font-semibold text-slate-900">{s.title}</span>
+                                    <span className="text-xs text-slate-400">
+                                        {[s.client_name, s.location, s.status].filter(Boolean).join(" • ")}
+                                    </span>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </div>
+            )}
+        </div>
+    );
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 function CreateProductionInvoiceContent() {
     const router       = useRouter();
@@ -158,20 +281,36 @@ function CreateProductionInvoiceContent() {
     const [selectedLogistics, setSelectedLogistics] = useState([]);
     const [selectedInventory, setSelectedInventory] = useState([]);
 
+    const [shoots, setShoots] = useState([]);
+    const [shootsLoading, setShootsLoading] = useState(false);
+
+    async function loadShoot(id) {
+        setForm(prev => ({ ...prev, shoot_id: id }));
+        setSelectedCrew([]);
+        setSelectedLogistics([]);
+        setSelectedInventory([]);
+        setSelectedExpenses([]);
+        try {
+            const [sRes, eRes] = await Promise.all([
+                api.get(`/shoots/${id}`),
+                api.get(`/shoots/${id}/expenses`),
+            ]);
+            setShoot(sRes.data);
+            setShootExpenses(eRes.data?.data || []);
+        } catch (e) { console.error(e); }
+    }
+
     useEffect(() => {
-        if (!shootId) return;
-        setForm(prev => ({ ...prev, shoot_id: shootId }));
-        async function load() {
-            try {
-                const [sRes, eRes] = await Promise.all([
-                    api.get(`/shoots/${shootId}`),
-                    api.get(`/shoots/${shootId}/expenses`),
-                ]);
-                setShoot(sRes.data);
-                setShootExpenses(eRes.data?.data || []);
-            } catch (e) { console.error(e); }
-        }
-        load();
+        if (shootId) loadShoot(shootId);
+    }, [shootId]);
+
+    useEffect(() => {
+        if (shootId) return;
+        setShootsLoading(true);
+        api.get("/shoots")
+            .then(res => setShoots(Array.isArray(res.data) ? res.data : res.data?.data || []))
+            .catch(() => toast.error("Failed to load productions"))
+            .finally(() => setShootsLoading(false));
     }, [shootId]);
 
     // ── Totals ────────────────────────────────────────────────────────────────
@@ -342,10 +481,33 @@ function CreateProductionInvoiceContent() {
                                 </div>
                                 <div>
                                     <label className={labelCls}>Production / Shoot</label>
-                                    <div className="flex items-center gap-3 border border-slate-200 rounded-xl px-4 py-3 bg-slate-50">
-                                        <Clapperboard size={15} className="text-blue-500 flex-shrink-0" />
-                                        <span className="text-sm font-semibold text-slate-700">{shoot?.title || "Loading…"}</span>
-                                    </div>
+                                    {shootId ? (
+                                        <div className="flex items-center gap-3">
+                                            <div className="flex-1 flex items-center gap-3 border border-slate-200 rounded-xl px-4 py-3 bg-slate-50">
+                                                <Clapperboard size={15} className="text-blue-500 flex-shrink-0" />
+                                                <span className="text-sm font-semibold text-slate-700">{shoot?.title || "Loading…"}</span>
+                                            </div>
+                                            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-xs font-bold text-blue-700 whitespace-nowrap">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                                                Opened from Production
+                                            </span>
+                                        </div>
+                                    ) : (
+                                        <ProductionSelect
+                                            shoots={shoots}
+                                            loading={shootsLoading}
+                                            value={form.shoot_id}
+                                            onChange={(id) => {
+                                                if (id) {
+                                                    loadShoot(id);
+                                                } else {
+                                                    setForm(prev => ({ ...prev, shoot_id: "" }));
+                                                    setShoot(null);
+                                                    setShootExpenses([]);
+                                                }
+                                            }}
+                                        />
+                                    )}
                                 </div>
                                 <div>
                                     <label className={labelCls}>Issue Date</label>

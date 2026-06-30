@@ -8,155 +8,221 @@ import {
   useCallback,
   useRef,
 } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import PageLoader from "./PageLoader";
 import NavigationProgress from "./NavigationProgress";
 
-/**
- * PageTransitionContext
- *
- * Provides `startLoading()` for manual triggers (e.g. imperative router.push
- * wrappers). Navigation auto-detection is handled by pathname polling.
- */
 const PageTransitionContext = createContext({
   startLoading: () => {},
 });
 
 export const usePageTransition = () => useContext(PageTransitionContext);
 
-/**
- * PageTransitionProvider
- *
- * Mount once in root layout. Wraps children and renders PageLoader.
- *
- * Detection strategy (App Router safe):
- * 1. Patches `window.history.pushState` and `window.history.replaceState`
- *    to catch navigation intent immediately.
- * 2. Polls pathname changes to detect when navigation completes.
- * 3. A 150ms grace delay ensures we don't flash the loader for instant loads.
- * 4. A 600ms minimum display time prevents jarring flicker on fast navigations.
- */
-
-const GRACE_DELAY    = 150;   // ms before showing overlay
-const MIN_SHOW_TIME  = 600;   // ms minimum loader visible time
+const GRACE_DELAY   = 150;
+const MIN_SHOW_TIME = 600;
+const FAILSAFE_MS   = 5_000;
 
 export default function PageTransitionProvider({ children }) {
-  const pathname          = usePathname();
+  const pathname = usePathname();
   const [isLoading, setIsLoading] = useState(false);
 
-  // Refs to manage timing without stale closures
-  const graceTimer        = useRef(null);
-  const minShowTimer      = useRef(null);
-  const pendingHide       = useRef(false);
-  const navigatingRef     = useRef(false);
-  const prevPathname      = useRef(pathname);
-  const showStartTime     = useRef(null);
+  // ── Refs for timing / state management ────────────────────────────────────
+  const graceTimer    = useRef(null);
+  const minShowTimer  = useRef(null);
+  const failsafeTimer = useRef(null);
+  const pendingHide   = useRef(false);
+  const navigatingRef = useRef(false);
+  const prevPathname  = useRef(pathname);
+  const showStartTime = useRef(null);
+  const navIdRef      = useRef(0);
+  const isLoadingRef  = useRef(false);
+  const readyRef      = useRef(false);
 
-  // ── Show the overlay (after grace delay) ─────────────────────────────────
-  const showLoader = useCallback(() => {
-    if (graceTimer.current) return; // already pending
+  // Keep ref in sync
+  useEffect(() => {
+    isLoadingRef.current = isLoading;
+  }, [isLoading]);
 
+  // Mark component ready after first paint
+  useEffect(() => {
+    readyRef.current = true;
+  }, []);
+
+  // ── TEMPORARY: console logs ───────────────────────────────────────────────
+  const log = useCallback((msg, extra) => {
+    if (extra) {
+      console.log(`[PageTransition] ${msg}`, extra);
+    } else {
+      console.log(`[PageTransition] ${msg}`);
+    }
+  }, []);
+
+  // ── Timer / state helpers ─────────────────────────────────────────────────
+  const clearAllTimers = useCallback(() => {
+    if (graceTimer.current)    { clearTimeout(graceTimer.current);    graceTimer.current = null; }
+    if (minShowTimer.current)  { clearTimeout(minShowTimer.current);  minShowTimer.current = null; }
+    if (failsafeTimer.current) { clearTimeout(failsafeTimer.current); failsafeTimer.current = null; }
+  }, []);
+
+  const resetState = useCallback(() => {
+    log("loading finished");
+    clearAllTimers();
+    setIsLoading(false);
+    navigatingRef.current = false;
+    pendingHide.current   = false;
+    showStartTime.current = null;
+  }, [clearAllTimers, log]);
+
+  // ── Start loading (grace delay + min-show + failsafe) ─────────────────────
+  const startLoading = useCallback(() => {
+    if (!readyRef.current) { log("blocked (not ready)"); return; }
+    if (navigatingRef.current) { log("blocked (navigating)"); return; }
+    log("loading started", new Error().stack?.split("\n").slice(2, 5).join(" | "));
+
+    navIdRef.current++;
+    navigatingRef.current = true;
+    const currentNavId = navIdRef.current;
+
+    // Failsafe: force-hide after FAILSAFE_MS no matter what
+    clearTimeout(failsafeTimer.current);
+    failsafeTimer.current = setTimeout(() => {
+      if (navIdRef.current !== currentNavId) return;
+      log("failsafe triggered");
+      resetState();
+    }, FAILSAFE_MS);
+
+    // Grace delay — don't flash the overlay for instant navigations
+    if (graceTimer.current) return;
     graceTimer.current = setTimeout(() => {
+      if (navIdRef.current !== currentNavId) return;
       graceTimer.current = null;
+      log("grace timer fired");
       setIsLoading(true);
       showStartTime.current = Date.now();
       pendingHide.current = false;
 
-      // Guarantee minimum display
+      // Minimum display time
+      const minShowNavId = navIdRef.current;
       minShowTimer.current = setTimeout(() => {
+        if (navIdRef.current !== minShowNavId) return;
         minShowTimer.current = null;
         if (pendingHide.current) {
+          log("loading finished");
           setIsLoading(false);
           navigatingRef.current = false;
           pendingHide.current   = false;
         }
       }, MIN_SHOW_TIME);
     }, GRACE_DELAY);
-  }, []);
+  }, [log, resetState]);
 
-  // ── Hide the overlay ──────────────────────────────────────────────────────
+  // ── Hide loader (called when pathname changes or navigation completes) ────
   const hideLoader = useCallback(() => {
-    // Cancel grace timer if navigation resolved before it fired
+    // Navigation resolved before grace timer fired
     if (graceTimer.current) {
       clearTimeout(graceTimer.current);
       graceTimer.current = null;
       navigatingRef.current = false;
+      log("loading finished");
       return;
     }
 
-    // If minimum show timer still running, defer the hide
+    // Min-show timer still running — defer hide
     if (minShowTimer.current) {
       pendingHide.current = true;
+      navigatingRef.current = false; // allow new navigations to start
       return;
     }
 
     setIsLoading(false);
     navigatingRef.current = false;
     pendingHide.current   = false;
-  }, []);
+    showStartTime.current = null;
+    log("loading finished");
+  }, [log]);
 
-  // ── Exposed manual trigger ────────────────────────────────────────────────
-  const startLoading = useCallback(() => {
-    if (navigatingRef.current) return;
-    navigatingRef.current = true;
-    showLoader();
-  }, [showLoader]);
-
-  // ── Patch history API to detect navigation intent ─────────────────────────
+  // ── Patch history API + popstate (browser Back/Forward) ───────────────────
   useEffect(() => {
     if (typeof window === "undefined") return;
 
     const originalPush    = window.history.pushState.bind(window.history);
     const originalReplace = window.history.replaceState.bind(window.history);
 
-    function onNavigate(args, method) {
-      // Extract target URL from state args
+    const onNavigate = (args, method) => {
       const url = args[2];
       const currentPath = window.location.pathname;
 
-      // Only trigger for actual page changes (not hash changes or same path)
       if (url && typeof url === "string") {
         try {
           const target = new URL(url, window.location.origin);
           if (target.pathname !== currentPath) {
+            log("navigation detected");
             startLoading();
           }
         } catch {
-          // relative URL
           if (url !== currentPath && !url.startsWith("#")) {
+            log("navigation detected");
             startLoading();
           }
         }
       }
       return method(...args);
-    }
+    };
 
     window.history.pushState    = (...args) => onNavigate(args, originalPush);
     window.history.replaceState = (...args) => onNavigate(args, originalReplace);
 
+    const handlePopState = () => {
+      log("navigation detected");
+      startLoading();
+    };
+    window.addEventListener("popstate", handlePopState);
+
     return () => {
       window.history.pushState    = originalPush;
       window.history.replaceState = originalReplace;
+      window.removeEventListener("popstate", handlePopState);
     };
-  }, [startLoading]);
+  }, [startLoading, log]);
 
   // ── Detect navigation completion via pathname change ─────────────────────
   useEffect(() => {
     if (pathname !== prevPathname.current) {
+      log("pathname changed");
       prevPathname.current = pathname;
-      if (navigatingRef.current || graceTimer.current) {
+
+      if (navigatingRef.current || graceTimer.current || isLoading) {
         hideLoader();
+        log("page rendered");
       }
+
+      // Navigation succeeded — clear failsafe
+      clearTimeout(failsafeTimer.current);
+      failsafeTimer.current = null;
     }
-  }, [pathname, hideLoader]);
+  }, [pathname, hideLoader, isLoading, log]);
+
+  // ── Global error recovery (API errors / React rendering errors) ──────────
+  useEffect(() => {
+    const handler = () => {
+      if (isLoadingRef.current || navigatingRef.current) {
+        resetState();
+      }
+    };
+    window.addEventListener("error", handler);
+    window.addEventListener("unhandledrejection", handler);
+    return () => {
+      window.removeEventListener("error", handler);
+      window.removeEventListener("unhandledrejection", handler);
+    };
+  }, [resetState]);
 
   // ── Cleanup on unmount ────────────────────────────────────────────────────
   useEffect(() => {
     return () => {
-      if (graceTimer.current)   clearTimeout(graceTimer.current);
-      if (minShowTimer.current) clearTimeout(minShowTimer.current);
+      clearAllTimers();
     };
-  }, []);
+  }, [clearAllTimers]);
 
   return (
     <PageTransitionContext.Provider value={{ startLoading }}>
