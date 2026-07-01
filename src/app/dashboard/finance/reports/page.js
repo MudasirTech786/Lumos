@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Layout from "@/components/Layout";
 import api from "@/lib/api";
-import toast from "react-hot-toast";
+import progressToast from "@/lib/progressToast";
 
 import {
   DollarSign,
@@ -38,11 +38,8 @@ export default function FinanceReportsPage() {
         );
 
       } catch {
-
-        toast.error(
-          "Failed to load reports"
-        );
-
+          const id = progressToast.loading({ title: "Error", message: "" });
+          progressToast.error(id, { title: "Error", message: "Failed to load reports" });
       } finally {
 
         setLoading(false);

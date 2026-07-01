@@ -26,9 +26,11 @@ import { useEffect, useState } from "react";
 
 import api from "@/lib/api";
 
-import toast from "react-hot-toast";
+import progressToast from "@/lib/progressToast";
+import { useConfirm } from "@/context/ConfirmContext";
 
 import { useRouter } from "next/navigation";
+import StatsCard from "@/components/ui/StatsCard";
 
 export default function EmployeesPage() {
 
@@ -49,6 +51,8 @@ export default function EmployeesPage() {
     const [editingId, setEditingId] = useState(null);
 
     const [loadingId, setLoadingId] = useState(null);
+
+    const confirmDialog = useConfirm();
 
     const initialForm = {
 
@@ -106,9 +110,8 @@ export default function EmployeesPage() {
 
             console.log(err.response?.data);
 
-            toast.error(
-                "Failed to load employees"
-            );
+            const id = progressToast.loading({ title: "Error", message: "" });
+            progressToast.error(id, { title: "Fetch Error", message: "Failed to load employees" });
 
         } finally {
 
@@ -145,16 +148,27 @@ export default function EmployeesPage() {
     // CREATE
     const handleSubmit = async () => {
 
+        const pToastId = progressToast.loading({
+            title: "Creating Employee",
+            message: "Saving employee information...",
+        });
+
         try {
+
+            progressToast.update(pToastId, {
+                progress: 60,
+                message: "Saving employee information...",
+            });
 
             const res = await api.post(
                 "/employees",
                 formatPayload(form)
             );
 
-            toast.success(
-                `Employee ${res.data.employee.employee_code} created`
-            );
+            progressToast.success(pToastId, {
+                title: "Employee Created",
+                message: `Employee ${res.data.employee.employee_code} has been created.`,
+            });
 
             fetchEmployees();
 
@@ -164,10 +178,10 @@ export default function EmployeesPage() {
 
             console.log(err.response?.data);
 
-            toast.error(
-                err.response?.data?.message ||
-                "Failed to create employee"
-            );
+            progressToast.error(pToastId, {
+                title: "Creation Failed",
+                message: err.response?.data?.message || "Failed to create employee",
+            });
         }
     };
 
@@ -192,16 +206,27 @@ export default function EmployeesPage() {
     // UPDATE
     const handleUpdate = async () => {
 
+        const pToastId = progressToast.loading({
+            title: "Updating Employee",
+            message: "Saving changes...",
+        });
+
         try {
+
+            progressToast.update(pToastId, {
+                progress: 60,
+                message: "Saving changes...",
+            });
 
             const res = await api.put(
                 `/employees/${editingId}`,
                 formatPayload(form)
             );
 
-            toast.success(
-                `Employee ${res.data.employee.employee_code} updated`
-            );
+            progressToast.success(pToastId, {
+                title: "Employee Updated",
+                message: `Employee ${res.data.employee.employee_code} has been updated.`,
+            });
 
             fetchEmployees();
 
@@ -211,45 +236,33 @@ export default function EmployeesPage() {
 
             console.log(err.response?.data);
 
-            toast.error(
-                err.response?.data?.message ||
-                "Update failed"
-            );
+            progressToast.error(pToastId, {
+                title: "Update Failed",
+                message: err.response?.data?.message || "Update failed",
+            });
         }
     };
 
     // DELETE
     const handleDelete = async (id) => {
 
-        if (!confirm("Delete this employee?"))
-            return;
-
-        try {
-
-            setLoadingId(id);
-
-            await api.delete(
+        const ok = await confirmDialog({
+            variant: "danger",
+            title: "Delete Employee",
+            description: "This action cannot be undone.",
+            confirmText: "Delete",
+            confirmAction: () => api.delete(
                 `/employees/${id}`
-            );
+            ),
+        });
 
-            setEmployees((prev) =>
-                prev.filter(
-                    (e) => e.id !== id
-                )
-            );
+        if (!ok) return;
 
-            toast.success("Deleted");
-
-        } catch (err) {
-
-            console.log(err.response?.data);
-
-            toast.error("Delete failed");
-
-        } finally {
-
-            setLoadingId(null);
-        }
+        setEmployees((prev) =>
+            prev.filter(
+                (e) => e.id !== id
+            )
+        );
     };
 
     // CLOSE MODAL
@@ -341,8 +354,7 @@ export default function EmployeesPage() {
   ">
 
                                 Manage internal workforce, payroll operations,
-                                departments and employee administration
-                                across the production ecosystem.
+                                departments and employee administration.
 
                             </p>
 
@@ -361,112 +373,52 @@ export default function EmployeesPage() {
                     </div>
 
                     {/* ===================================================== */}
-                    {/* EMPLOYEE STATS */}
+                    {/* KPI STATS */}
                     {/* ===================================================== */}
 
-                    <div className="
-  relative
-  overflow-hidden
-  rounded-[36px]
-  border
-  border-blue-200/20
-  bg-gradient-to-br
-  from-[#071120]
-  via-[#0f3ba8]
-  to-[#2563eb]
-  p-6
-  shadow-[0_25px_120px_rgba(37,99,235,0.25)]
-">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
 
-                        {/* BACKGROUND LIGHT */}
+                        <StatsCard
+                            icon={<Users size={20} />}
+                            iconBg="bg-blue-100"
+                            iconColor="text-blue-600"
+                            accentColor="bg-blue-500"
+                            value={employees.length}
+                            label="Total Employees"
+                            chip={{ text: "Live", bg: "bg-green-100", color: "text-green-700" }}
+                            index={0}
+                        />
 
-                        <div className="
-    absolute
-    inset-0
-    bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.14),transparent_22%),radial-gradient(circle_at_bottom_left,rgba(125,211,252,0.10),transparent_30%)]
-  " />
+                        <StatsCard
+                            icon={<Briefcase size={20} />}
+                            iconBg="bg-green-100"
+                            iconColor="text-green-600"
+                            accentColor="bg-green-500"
+                            value={activeEmployees}
+                            label="Active Employees"
+                            index={1}
+                        />
 
-                        {/* GRID */}
+                        <StatsCard
+                            icon={<BadgeDollarSign size={20} />}
+                            iconBg="bg-amber-100"
+                            iconColor="text-amber-600"
+                            accentColor="bg-amber-500"
+                            value={totalPayroll}
+                            label="Monthly Payroll"
+                            chip={{ text: "This Month", bg: "bg-amber-100", color: "text-amber-700" }}
+                            index={2}
+                        />
 
-                        <div className="
-    absolute
-    inset-0
-    opacity-[0.05]
-    [background-image:linear-gradient(to_right,#fff_1px,transparent_1px),linear-gradient(to_bottom,#fff_1px,transparent_1px)]
-    [background-size:42px_42px]
-  " />
-
-                        {/* GLOW */}
-
-                        <div className="
-    absolute
-    top-[-120px]
-    right-[-100px]
-    h-[320px]
-    w-[320px]
-    rounded-full
-    bg-cyan-300/20
-    blur-[120px]
-  " />
-
-                        <div className="
-    absolute
-    bottom-[-140px]
-    left-[-100px]
-    h-[280px]
-    w-[280px]
-    rounded-full
-    bg-blue-500/20
-    blur-[120px]
-  " />
-
-                        {/* CONTENT */}
-
-                        <div className="
-    relative
-    z-10
-  ">
-
-                            <div className="
-      grid
-      grid-cols-2
-      gap-5
-      xl:grid-cols-4
-    ">
-
-                                <AdminMetricCard
-                                    icon={<Users size={18} />}
-                                    title="Total Employees"
-                                    value={employees.length}
-                                />
-
-                                <AdminMetricCard
-                                    icon={<Briefcase size={18} />}
-                                    title="Active"
-                                    value={activeEmployees}
-                                />
-
-                                <AdminMetricCard
-                                    icon={<BadgeDollarSign size={18} />}
-                                    title="Monthly Payroll"
-                                    value={totalPayroll}
-                                />
-
-                                <AdminMetricCard
-                                    icon={<Users size={18} />}
-                                    title="Departments"
-                                    value={[
-                                        ...new Set(
-                                            employees.map(
-                                                (e) => e.department
-                                            )
-                                        ),
-                                    ].length}
-                                />
-
-                            </div>
-
-                        </div>
+                        <StatsCard
+                            icon={<Building2 size={20} />}
+                            iconBg="bg-purple-100"
+                            iconColor="text-purple-600"
+                            accentColor="bg-purple-500"
+                            value={[...new Set(employees.map((e) => e.department))].length}
+                            label="Departments"
+                            index={3}
+                        />
 
                     </div>
 
@@ -1632,40 +1584,6 @@ export default function EmployeesPage() {
     );
 }
 
-function StatCard({
-    icon,
-    title,
-    value,
-}) {
-
-    return (
-
-        <div className="bg-white rounded-3xl border border-blue-100 p-5 shadow-sm">
-
-            <div className="flex items-center justify-between">
-
-                <div>
-
-                    <p className="text-sm text-gray-500">
-                        {title}
-                    </p>
-
-                    <h3 className="text-2xl font-bold text-gray-900 mt-2">
-                        {value}
-                    </h3>
-
-                </div>
-
-                <div className="w-12 h-12 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center">
-                    {icon}
-                </div>
-
-            </div>
-
-        </div>
-    );
-}
-
 function Input({
     label,
     value,
@@ -1736,101 +1654,3 @@ function Input({
     );
 }
 
-function AdminMetricCard({
-    title,
-    value,
-    icon,
-}) {
-
-    return (
-
-        <div className="
-      relative
-      overflow-hidden
-      rounded-[28px]
-      border
-      border-white/10
-      bg-white/10
-      p-5
-      backdrop-blur-2xl
-      shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]
-      transition-all
-      duration-300
-      hover:translate-y-[-2px]
-      hover:bg-white/[0.12]
-    ">
-
-            {/* GLOW */}
-
-            <div className="
-        absolute
-        right-[-30px]
-        top-[-30px]
-        h-28
-        w-28
-        rounded-full
-        bg-cyan-300/10
-        blur-3xl
-      " />
-
-            {/* CONTENT */}
-
-            <div className="
-        relative
-        z-10
-        flex
-        items-start
-        justify-between
-      ">
-
-                <div>
-
-                    <p className="
-            text-[11px]
-            font-semibold
-            uppercase
-            tracking-[0.22em]
-            text-blue-100/70
-          ">
-
-                        {title}
-
-                    </p>
-
-                    <h3 className="
-            mt-4
-            text-4xl
-            font-black
-            tracking-[-0.05em]
-            text-white
-          ">
-
-                        {value}
-
-                    </h3>
-
-                </div>
-
-                <div className="
-          flex
-          h-12
-          w-12
-          items-center
-          justify-center
-          rounded-2xl
-          border
-          border-white/10
-          bg-white/10
-          text-cyan-200
-          backdrop-blur-xl
-        ">
-
-                    {icon}
-
-                </div>
-
-            </div>
-
-        </div>
-    );
-}

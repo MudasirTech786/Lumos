@@ -10,7 +10,7 @@ import { useParams } from "next/navigation";
 
 import api from "@/lib/api";
 
-import toast from "react-hot-toast";
+import progressToast from "@/lib/progressToast";
 
 import {
     Briefcase,
@@ -114,10 +114,8 @@ export default function EditShootPage() {
             });
 
         } catch {
-
-            toast.error(
-                "Failed to load production"
-            );
+            const id = progressToast.loading({ title: "Error", message: "" });
+            progressToast.error(id, { title: "Error", message: "Failed to load production" });
 
             router.push(
                 "/dashboard/shoots"
@@ -136,15 +134,14 @@ export default function EditShootPage() {
 
 
             if (!form.title) {
-
-                toast.error(
-                    "Production title is required"
-                );
-
+                const id = progressToast.loading({ title: "Error", message: "" });
+                progressToast.error(id, { title: "Error", message: "Production title is required" });
                 return;
             }
 
             setLoading(true);
+
+            const pToastId = progressToast.loading({ title: "Updating...", message: "Updating production..." });
 
             try {
 
@@ -153,9 +150,7 @@ export default function EditShootPage() {
                     form
                 );
 
-                toast.success(
-                    "Production updated successfully"
-                );
+                progressToast.success(pToastId, { title: "Updated", message: "Production updated successfully" });
 
                 router.push(
                     "/dashboard/shoots"
@@ -163,9 +158,7 @@ export default function EditShootPage() {
 
             } catch {
 
-                toast.error(
-                    "Failed to update production"
-                );
+                progressToast.error(pToastId, { title: "Error", message: "Failed to update production" });
 
             } finally {
 

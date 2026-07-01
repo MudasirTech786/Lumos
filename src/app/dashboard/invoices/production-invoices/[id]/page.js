@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 
 import Layout from "@/components/Layout";
 import api from "@/lib/api";
-import toast from "react-hot-toast";
+import progressToast from "@/lib/progressToast";
 
 import {
     ArrowLeft,
@@ -56,9 +56,8 @@ export default function ProductionInvoiceDetailPage() {
 
             console.error(error);
 
-            toast.error(
-                "Failed to load invoice"
-            );
+            const id = progressToast.loading({ title: "Error", message: "" });
+            progressToast.error(id, { title: "Error", message: "Failed to load invoice" });
 
         } finally {
 
@@ -74,6 +73,8 @@ export default function ProductionInvoiceDetailPage() {
 
     async function recordPayment() {
 
+        const pToastId = progressToast.loading({ title: "Recording Payment", message: "Processing..." });
+
         try {
 
             await api.post(
@@ -81,9 +82,10 @@ export default function ProductionInvoiceDetailPage() {
                 paymentForm
             );
 
-            toast.success(
-                "Payment recorded successfully"
-            );
+            progressToast.success(pToastId, {
+                title: "Payment Recorded",
+                message: "Payment recorded successfully",
+            });
 
             setPaymentForm({
                 payment_date:
@@ -105,10 +107,11 @@ export default function ProductionInvoiceDetailPage() {
 
         } catch (error) {
 
-            toast.error(
-                error?.response?.data?.message ||
-                "Failed to record payment"
-            );
+            progressToast.error(pToastId, {
+                title: "Error",
+                message: error?.response?.data?.message ||
+                "Failed to record payment",
+            });
         }
     }
 

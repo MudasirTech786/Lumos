@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Layout from "@/components/Layout";
 import api from "@/lib/api";
-import toast from "react-hot-toast";
+import progressToast from "@/lib/progressToast";
 import Link from "next/link";
 
 import {
@@ -95,7 +95,8 @@ export default function ShootDetailsPage() {
       const res = await api.get(`/shoots/${params.id}`);
       setShoot(res.data);
     } catch {
-      toast.error("Failed to load shoot");
+      const id = progressToast.loading({ title: "Error", message: "" });
+      progressToast.error(id, { title: "Error", message: "Failed to load shoot" });
     } finally {
       setLoading(false);
     }
@@ -104,19 +105,21 @@ export default function ShootDetailsPage() {
   useEffect(() => { if (params.id) fetchShoot(); }, [params.id]);
 
   const updateStatus = async (status) => {
+    setStatusLoading(true);
+    const pToastId = progressToast.loading({ title: "Updating...", message: "Updating status..." });
     try {
-      setStatusLoading(true);
       await api.patch(`/shoots/${shoot.id}/status`, { status });
       setShoot((prev) => ({ ...prev, status }));
-      toast.success("Status updated");
+      progressToast.success(pToastId, { title: "Updated", message: "Status updated" });
     } catch {
-      toast.error("Failed to update status");
+      progressToast.error(pToastId, { title: "Error", message: "Failed to update status" });
     } finally {
       setStatusLoading(false);
     }
   };
 
   const createExpense = async () => {
+    const pToastId = progressToast.loading({ title: "Adding...", message: "Adding expense..." });
     try {
       await api.post("/shoot-expenses", {
         shoot_id: shoot.id,
@@ -124,13 +127,13 @@ export default function ShootDetailsPage() {
         description: expenseForm.description,
         amount: expenseForm.amount,
       });
-      toast.success("Expense added");
+      progressToast.success(pToastId, { title: "Added", message: "Expense added" });
       setShowExpenseModal(false);
       setExpenseForm({ category: "", description: "", amount: "" });
       await fetchShoot();
     } catch (error) {
       console.error(error);
-      toast.error(error?.response?.data?.message || "Failed to add expense");
+      progressToast.error(pToastId, { title: "Error", message: error?.response?.data?.message || "Failed to add expense" });
     }
   };
 

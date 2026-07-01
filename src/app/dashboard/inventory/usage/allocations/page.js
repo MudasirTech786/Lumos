@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import Layout from "@/components/Layout";
 import api from "@/lib/api";
 
-import toast from "react-hot-toast";
+import progressToast from "@/lib/progressToast";
 
 import {
   Film,
@@ -92,11 +92,8 @@ setUsages(usagesData);
 
       console.log(error);
 
-      toast.error(
-        error.response?.data
-          ?.message ||
-          "Failed to load allocations"
-      );
+      const pToastId = progressToast.loading({ title: "Error", message: error.response?.data?.message || "Failed to load allocations" });
+      progressToast.error(pToastId, { title: "Error", message: error.response?.data?.message || "Failed to load allocations" });
 
     } finally {
 

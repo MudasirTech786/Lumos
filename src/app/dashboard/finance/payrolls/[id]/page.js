@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Layout from "@/components/Layout";
 import { useParams, useRouter } from "next/navigation";
 import api from "@/lib/api";
-import toast from "react-hot-toast";
+import progressToast from "@/lib/progressToast";
 import {
     Wallet, DollarSign, TrendingUp, Receipt,
     ArrowLeft, ChevronRight, CheckCircle2,
@@ -65,7 +65,8 @@ export default function PayrollDetailPage() {
             setPayroll(payrollRes.data);
             setItems(itemsRes.data || []);
         } catch {
-            toast.error("Failed to load payroll");
+            const id = progressToast.loading({ title: "Error", message: "" });
+            progressToast.error(id, { title: "Error", message: "Failed to load payroll" });
         } finally {
             setLoading(false);
         }
@@ -74,28 +75,30 @@ export default function PayrollDetailPage() {
     useEffect(() => { if (payrollId) fetchPayroll(); }, [payrollId]);
 
     const approvePayroll = async () => {
+        const pToastId = progressToast.loading({ title: "Approving...", message: "Approving payroll..." });
         try {
             setActioning(true);
             await api.post(`/payrolls/${payrollId}/approve`);
-            toast.success("Payroll approved successfully");
+            progressToast.success(pToastId, { title: "Approved", message: "Payroll approved successfully" });
             setConfirming(null);
             fetchPayroll();
         } catch {
-            toast.error("Approval failed");
+            progressToast.error(pToastId, { title: "Error", message: "Approval failed" });
         } finally {
             setActioning(false);
         }
     };
 
     const markPaid = async () => {
+        const pToastId = progressToast.loading({ title: "Processing...", message: "Marking payroll as paid..." });
         try {
             setActioning(true);
             await api.post(`/payrolls/${payrollId}/mark-paid`);
-            toast.success("Payroll marked as paid");
+            progressToast.success(pToastId, { title: "Paid", message: "Payroll marked as paid" });
             setConfirming(null);
             fetchPayroll();
         } catch {
-            toast.error("Operation failed");
+            progressToast.error(pToastId, { title: "Error", message: "Operation failed" });
         } finally {
             setActioning(false);
         }

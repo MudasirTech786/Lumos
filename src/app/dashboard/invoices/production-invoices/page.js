@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 
 import Layout from "@/components/Layout";
 import api from "@/lib/api";
-import toast from "react-hot-toast";
+import progressToast from "@/lib/progressToast";
 
 import {
     Plus,
@@ -39,9 +39,8 @@ export default function ProductionInvoicesPage() {
 
         } catch (error) {
 
-            toast.error(
-                "Failed to load invoices"
-            );
+            const id = progressToast.loading({ title: "Error", message: "" });
+            progressToast.error(id, { title: "Error", message: "Failed to load invoices" });
 
         } finally {
 

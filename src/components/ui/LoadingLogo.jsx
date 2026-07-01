@@ -294,7 +294,7 @@ function paint(ctx, W, H, elapsed, sparkles, reduced, geo) {
 }
 
 // ── Component ────────────────────────────────────────────────────────────────
-export default function LoadingLogo() {
+export default function LoadingLogo({ size = 612 } = {}) {
   const containerRef  = useRef(null);
   const canvasRef     = useRef(null);
   const rafRef        = useRef(null);
@@ -374,7 +374,7 @@ export default function LoadingLogo() {
     <motion.div
       ref={containerRef}
       className="relative select-none"
-      style={{ width: 612, maxWidth: "90vw" }}
+      style={{ width: size, maxWidth: "90vw" }}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.35, ease: "easeOut" }}

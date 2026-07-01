@@ -4,7 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Layout from "@/components/Layout";
 import api from "@/lib/api";
-import toast from "react-hot-toast";
+import progressToast from "@/lib/progressToast";
+import { useConfirm } from "@/context/ConfirmContext";
 import { QRCodeSVG } from "qrcode.react";
 import {
   ArrowLeft, Package, Plus, Search, User,
@@ -243,6 +244,8 @@ export default function ShootInventoryPage() {
 
   const selectedItem = items.find((i) => i.id == form.inventory_item_id);
 
+  const confirmDialog = useConfirm();
+
   /* ── fetch ── */
   const fetchData = async () => {
     try {
@@ -255,45 +258,57 @@ export default function ShootInventoryPage() {
       setItems(itemsRes.data?.data || itemsRes.data || []);
       const ud = usersRes?.data?.users?.data || usersRes?.data?.data || usersRes?.data || [];
       setUsers(Array.isArray(ud) ? ud : []);
-    } catch { toast.error("Failed loading inventory"); }
+    } catch {
+      const id = progressToast.loading({ title: "Error", message: "" });
+      progressToast.error(id, { title: "Error", message: "Failed loading inventory" });
+    }
     finally   { setLoading(false); }
   };
   useEffect(() => { fetchData(); }, []);
 
   /* ── allocate ── */
   const allocateInventory = async () => {
-    if (!form.inventory_item_id) { toast.error("Select an inventory item"); return; }
+    if (!form.inventory_item_id) { const id = progressToast.loading({ title: "Error", message: "" }); progressToast.error(id, { title: "Error", message: "Select an inventory item" }); return; }
     setSaving(true);
+    const pToastId = progressToast.loading({ title: "Allocating...", message: "Allocating inventory..." });
     try {
       await api.post(`/shoots/${params.id}/inventory`, form);
-      toast.success("Inventory allocated");
+      progressToast.success(pToastId, { title: "Allocated", message: "Inventory allocated" });
       setForm({ inventory_item_id: "", assigned_to: "", quantity: 1, notes: "" });
       setShowForm(false);
       fetchData();
-    } catch (e) { toast.error(e.response?.data?.message || "Allocation failed"); }
+    } catch (e) { progressToast.error(pToastId, { title: "Error", message: e.response?.data?.message || "Allocation failed" }); }
     finally     { setSaving(false); }
   };
 
   /* ── checkout ── */
   const checkoutItem = async (id) => {
-    try { await api.post(`/shoot-inventory/${id}/checkout`); toast.success("Checked out"); fetchData(); }
-    catch { toast.error("Checkout failed"); }
+    const pToastId = progressToast.loading({ title: "Checking out...", message: "Processing checkout..." });
+    try { await api.post(`/shoot-inventory/${id}/checkout`); progressToast.success(pToastId, { title: "Checked Out", message: "Checked out" }); fetchData(); }
+    catch { progressToast.error(pToastId, { title: "Error", message: "Checkout failed" }); }
   };
 
   /* ── return ── */
   const processReturn = async () => {
+    const pToastId = progressToast.loading({ title: "Processing...", message: "Processing return..." });
     try {
       await api.post(`/shoot-inventory/${selectedUsage.id}/return`, returnForm);
-      toast.success("Return processed");
+      progressToast.success(pToastId, { title: "Returned", message: "Return processed" });
       setShowReturnModal(false); setSelectedUsage(null); fetchData();
-    } catch (e) { toast.error(e.response?.data?.message || "Return failed"); }
+    } catch (e) { progressToast.error(pToastId, { title: "Error", message: e.response?.data?.message || "Return failed" }); }
   };
 
   /* ── delete ── */
   const deleteAllocation = async (id) => {
-    if (!confirm("Delete this allocation?")) return;
-    try { await api.delete(`/shoot-inventory/${id}`); toast.success("Deleted"); fetchData(); }
-    catch { toast.error("Delete failed"); }
+    const ok = await confirmDialog({
+      variant: "danger",
+      title: "Delete Allocation",
+      description: "This action cannot be undone.",
+      confirmText: "Delete",
+      confirmAction: () => api.delete(`/shoot-inventory/${id}`),
+    });
+    if (!ok) return;
+    fetchData();
   };
 
   /* ── return type ── */

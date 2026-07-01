@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Layout from "@/components/Layout";
 import api from "@/lib/api";
 import Link from "next/link";
-import toast from "react-hot-toast";
+import progressToast from "@/lib/progressToast";
 import {
     Wallet, Users, Briefcase, ArrowUpRight,
     X, Calendar, TrendingUp, Clock, CheckCircle2,
@@ -50,7 +50,8 @@ export default function PayrollRunsPage() {
             const res = await api.get("/payrolls");
             setPayrolls(res.data?.data || []);
         } catch {
-            toast.error("Failed to load payrolls");
+            const id = progressToast.loading({ title: "Error", message: "" });
+            progressToast.error(id, { title: "Error", message: "Failed to load payrolls" });
         } finally {
             setLoading(false);
         }
@@ -59,19 +60,21 @@ export default function PayrollRunsPage() {
     useEffect(() => { fetchPayrolls(); }, []);
 
     const generateCrewPayroll = async () => {
+        const pToastId = progressToast.loading({ title: "Generating...", message: "Generating crew payroll..." });
         try {
             await api.post("/payrolls/generate-crew", crewForm);
-            toast.success("Crew payroll generated");
+            progressToast.success(pToastId, { title: "Generated", message: "Crew payroll generated successfully" });
             setShowCrewModal(false); fetchPayrolls();
-        } catch { toast.error("Failed to generate payroll"); }
+        } catch { progressToast.error(pToastId, { title: "Error", message: "Failed to generate payroll" }); }
     };
 
     const generateEmployeePayroll = async () => {
+        const pToastId = progressToast.loading({ title: "Generating...", message: "Generating employee payroll..." });
         try {
             await api.post("/payrolls/generate-employee", employeeForm);
-            toast.success("Employee payroll generated");
+            progressToast.success(pToastId, { title: "Generated", message: "Employee payroll generated successfully" });
             setShowEmployeeModal(false); fetchPayrolls();
-        } catch { toast.error("Failed to generate payroll"); }
+        } catch { progressToast.error(pToastId, { title: "Error", message: "Failed to generate payroll" }); }
     };
 
     // ── Derived stats ────────────────────────────────────────────────────────

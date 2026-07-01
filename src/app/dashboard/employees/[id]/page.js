@@ -23,7 +23,7 @@ import { useParams, useRouter } from "next/navigation";
 
 import api from "@/lib/api";
 
-import toast from "react-hot-toast";
+import progressToast from "@/lib/progressToast";
 
 export default function EmployeeDetail() {
 
@@ -59,9 +59,8 @@ export default function EmployeeDetail() {
 
       console.log(err.response?.data);
 
-      toast.error(
-        "Failed to load employee"
-      );
+      const id = progressToast.loading({ title: "Error", message: "" });
+      progressToast.error(id, { title: "Error", message: "Failed to load employee" });
 
     } finally {
 

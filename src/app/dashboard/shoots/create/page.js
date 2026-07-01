@@ -8,7 +8,7 @@ import Layout from "@/components/Layout";
 
 import api from "@/lib/api";
 
-import toast from "react-hot-toast";
+import progressToast from "@/lib/progressToast";
 
 import {
   Briefcase,
@@ -53,15 +53,14 @@ export default function CreateShootPage() {
   const createShoot = async () => {
 
     if (!form.title) {
-
-      toast.error(
-        "Production title is required"
-      );
-
+      const id = progressToast.loading({ title: "Error", message: "" });
+      progressToast.error(id, { title: "Error", message: "Production title is required" });
       return;
     }
 
     setLoading(true);
+
+    const pToastId = progressToast.loading({ title: "Creating...", message: "Creating production..." });
 
     try {
 
@@ -70,9 +69,7 @@ export default function CreateShootPage() {
         form
       );
 
-      toast.success(
-        "Production created successfully"
-      );
+      progressToast.success(pToastId, { title: "Created", message: "Production created successfully" });
 
       router.push(
         "/dashboard/shoots"
@@ -80,9 +77,7 @@ export default function CreateShootPage() {
 
     } catch {
 
-      toast.error(
-        "Failed to create production"
-      );
+      progressToast.error(pToastId, { title: "Error", message: "Failed to create production" });
 
     } finally {
 

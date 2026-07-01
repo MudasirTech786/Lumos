@@ -6,7 +6,7 @@ import Layout from "@/components/Layout";
 
 import api from "@/lib/api";
 
-import toast from "react-hot-toast";
+import progressToast from "@/lib/progressToast";
 
 import {
   ArrowDownLeft,
@@ -49,9 +49,8 @@ export default function InventoryMovementsPage() {
 
       console.log(error);
 
-      toast.error(
-        "Failed to load movements"
-      );
+      const id = progressToast.loading({ title: "Error", message: "" });
+      progressToast.error(id, { title: "Error", message: "Failed to load movements" });
 
     } finally {
 

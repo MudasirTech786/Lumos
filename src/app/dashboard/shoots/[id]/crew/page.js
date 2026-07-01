@@ -8,7 +8,8 @@ import Layout from "@/components/Layout";
 
 import api from "@/lib/api";
 
-import toast from "react-hot-toast";
+import progressToast from "@/lib/progressToast";
+import { useConfirm } from "@/context/ConfirmContext";
 
 import {
   ArrowLeft,
@@ -45,6 +46,8 @@ export default function ShootCrewPage() {
 
   const [selectedCrew, setSelectedCrew] =
     useState([]);
+
+  const confirmDialog = useConfirm();
 
   const [search, setSearch] =
     useState("");
@@ -121,11 +124,8 @@ export default function ShootCrewPage() {
       );
 
     } catch {
-
-      toast.error(
-        "Failed to load crew"
-      );
-
+      const id = progressToast.loading({ title: "Error", message: "" });
+      progressToast.error(id, { title: "Error", message: "Failed to load crew" });
     } finally {
 
       setLoading(false);
@@ -215,18 +215,15 @@ export default function ShootCrewPage() {
 
   const assignCrew = async () => {
 
-    if (
-      selectedCrew.length === 0
-    ) {
-
-      toast.error(
-        "Select crew members"
-      );
-
+    if (selectedCrew.length === 0) {
+      const id = progressToast.loading({ title: "Error", message: "" });
+      progressToast.error(id, { title: "Error", message: "Select crew members" });
       return;
     }
 
     setSaving(true);
+
+    const pToastId = progressToast.loading({ title: "Assigning...", message: "Assigning crew..." });
 
     try {
 
@@ -240,9 +237,7 @@ export default function ShootCrewPage() {
         }
       );
 
-      toast.success(
-        "Crew assigned"
-      );
+      progressToast.success(pToastId, { title: "Assigned", message: "Crew assigned" });
 
       setSelectedCrew([]);
 
@@ -250,13 +245,7 @@ export default function ShootCrewPage() {
 
     } catch (err) {
 
-      toast.error(
-
-        err?.response?.data
-          ?.message ||
-
-        "Assignment failed"
-      );
+      progressToast.error(pToastId, { title: "Error", message: err?.response?.data?.message || "Assignment failed" });
 
     } finally {
 
@@ -272,32 +261,19 @@ export default function ShootCrewPage() {
     crewId
   ) => {
 
-    const confirmDelete =
-      confirm(
-        "Remove this crew member?"
-      );
-
-    if (!confirmDelete) return;
-
-    try {
-
-      await api.delete(
-
+    const ok = await confirmDialog({
+      variant: "danger",
+      title: "Remove Crew Member",
+      description: "Remove this crew member from the shoot?",
+      confirmText: "Remove",
+      confirmAction: () => api.delete(
         `/shoots/${params.id}/crew/${crewId}`
-      );
+      ),
+    });
 
-      toast.success(
-        "Crew removed"
-      );
+    if (!ok) return;
 
-      fetchData();
-
-    } catch {
-
-      toast.error(
-        "Failed removing crew"
-      );
-    }
+    fetchData();
   };
 
   /* ====================================================== */

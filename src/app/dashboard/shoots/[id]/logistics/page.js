@@ -4,7 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Layout from "@/components/Layout";
 import api from "@/lib/api";
-import toast from "react-hot-toast";
+import progressToast from "@/lib/progressToast";
+import { useConfirm } from "@/context/ConfirmContext";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import {
@@ -43,6 +44,8 @@ export default function ShootLogisticsPage() {
     status: "pending",
   });
 
+  const confirmDialog = useConfirm();
+
   /* ========================================================= */
   /* FETCH                                                      */
   /* ========================================================= */
@@ -52,7 +55,8 @@ export default function ShootLogisticsPage() {
       const res = await api.get(`/shoots/${params.id}`);
       setLogisticsList(res.data.logistics || []);
     } catch {
-      toast.error("Failed to load logistics");
+      const id = progressToast.loading({ title: "Error", message: "" });
+      progressToast.error(id, { title: "Error", message: "Failed to load logistics" });
     } finally {
       setLoading(false);
     }
@@ -68,11 +72,14 @@ export default function ShootLogisticsPage() {
 
   const saveLogistics = async () => {
     if (!form.vehicle) {
-      toast.error("Vehicle is required");
+      const id = progressToast.loading({ title: "Error", message: "" });
+      progressToast.error(id, { title: "Error", message: "Vehicle is required" });
       return;
     }
 
     setSaving(true);
+
+    const pToastId = progressToast.loading({ title: "Saving...", message: "Adding transport..." });
 
     try {
       await api.post(`/shoots/${params.id}/logistics`, {
@@ -80,7 +87,7 @@ export default function ShootLogisticsPage() {
         pickup_time: pickupTime,
       });
 
-      toast.success("Transport added");
+      progressToast.success(pToastId, { title: "Added", message: "Transport added" });
 
       setForm({
         logistics_type: "internal_transport",
@@ -96,7 +103,7 @@ export default function ShootLogisticsPage() {
       setShowForm(false);
       fetchShoot();
     } catch {
-      toast.error("Failed to create transport");
+      progressToast.error(pToastId, { title: "Error", message: "Failed to create transport" });
     } finally {
       setSaving(false);
     }
@@ -107,16 +114,17 @@ export default function ShootLogisticsPage() {
   /* ========================================================= */
 
   const deleteLogistics = async (id) => {
-    const confirmDelete = confirm("Delete this transport?");
-    if (!confirmDelete) return;
+    const ok = await confirmDialog({
+      variant: "danger",
+      title: "Delete Transport",
+      description: "This action cannot be undone.",
+      confirmText: "Delete",
+      confirmAction: () => api.delete(`/logistics/${id}`),
+    });
 
-    try {
-      await api.delete(`/logistics/${id}`);
-      toast.success("Deleted successfully");
-      fetchShoot();
-    } catch {
-      toast.error("Delete failed");
-    }
+    if (!ok) return;
+
+    fetchShoot();
   };
 
   /* ========================================================= */
@@ -124,12 +132,13 @@ export default function ShootLogisticsPage() {
   /* ========================================================= */
 
   const updateStatus = async (id, status) => {
+    const pToastId = progressToast.loading({ title: "Updating...", message: "Updating status..." });
     try {
       await api.patch(`/logistics/${id}/status`, { status });
-      toast.success("Status updated");
+      progressToast.success(pToastId, { title: "Updated", message: "Status updated" });
       fetchShoot();
     } catch {
-      toast.error("Failed updating status");
+      progressToast.error(pToastId, { title: "Error", message: "Failed updating status" });
     }
   };
 

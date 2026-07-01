@@ -5,7 +5,8 @@ import { useEffect, useMemo, useState } from "react";
 import Layout from "@/components/Layout";
 import api from "@/lib/api";
 
-import toast from "react-hot-toast";
+import progressToast from "@/lib/progressToast";
+import { useConfirm } from "@/context/ConfirmContext";
 
 import {
   Plus,
@@ -36,6 +37,8 @@ export default function ActiveUsagePage() {
 
   const [showViewModal, setShowViewModal] =
     useState(false);
+
+  const confirmDialog = useConfirm();
 
   const [showReturnModal, setShowReturnModal] =
     useState(false);
@@ -373,13 +376,8 @@ export default function ActiveUsagePage() {
         error.message
       );
 
-      toast.error(
-
-        error.response?.data
-          ?.message ||
-
-        "Failed to load data"
-      );
+      const pToastId = progressToast.loading({ title: "Error", message: error.response?.data?.message || "Failed to load data" });
+      progressToast.error(pToastId, { title: "Error", message: error.response?.data?.message || "Failed to load data" });
 
     } finally {
 
@@ -426,6 +424,8 @@ export default function ActiveUsagePage() {
 
   const createUsage = async () => {
 
+    const pToastId = progressToast.loading({ title: "Allocating...", message: "Allocating equipment..." });
+
     try {
 
       await api.post(
@@ -433,9 +433,7 @@ export default function ActiveUsagePage() {
         form
       );
 
-      toast.success(
-        "Equipment allocated"
-      );
+      progressToast.success(pToastId, { title: "Allocated", message: "Equipment allocated" });
 
       setShowModal(false);
 
@@ -447,11 +445,7 @@ export default function ActiveUsagePage() {
 
       console.log(error);
 
-      toast.error(
-        error.response?.data
-          ?.message ||
-        "Allocation failed"
-      );
+      progressToast.error(pToastId, { title: "Error", message: error.response?.data?.message || "Allocation failed" });
     }
   };
 
@@ -462,15 +456,15 @@ export default function ActiveUsagePage() {
   const checkoutUsage =
     async (id) => {
 
+      const pToastId = progressToast.loading({ title: "Checking Out...", message: "Checking out equipment..." });
+
       try {
 
         await api.post(
           `/inventory/usage/${id}/checkout`
         );
 
-        toast.success(
-          "Equipment checked out"
-        );
+        progressToast.success(pToastId, { title: "Checked Out", message: "Equipment checked out" });
 
         fetchData();
 
@@ -478,11 +472,7 @@ export default function ActiveUsagePage() {
 
         console.log(error);
 
-        toast.error(
-          error.response?.data
-            ?.message ||
-          "Checkout failed"
-        );
+        progressToast.error(pToastId, { title: "Error", message: error.response?.data?.message || "Checkout failed" });
       }
     };
 
@@ -494,40 +484,19 @@ export default function ActiveUsagePage() {
   const deleteUsage =
     async (id) => {
 
-      const confirmed =
-        window.confirm(
-          "Delete this allocation?"
-        );
-
-      if (!confirmed) {
-
-        return;
-      }
-
-      try {
-
-        await api.delete(
+      const ok = await confirmDialog({
+        variant: "danger",
+        title: "Delete Allocation",
+        description: "This action cannot be undone.",
+        confirmText: "Delete",
+        confirmAction: () => api.delete(
           `/inventory/usage/${id}`
-        );
+        ),
+      });
 
-        toast.success(
-          "Allocation deleted"
-        );
+      if (!ok) return;
 
-        fetchData();
-
-      } catch (error) {
-
-        console.log(error);
-
-        toast.error(
-
-          error.response?.data
-            ?.message ||
-
-          "Delete failed"
-        );
-      }
+      fetchData();
     };
 
   /* ====================================================== */
@@ -536,6 +505,8 @@ export default function ActiveUsagePage() {
 
   const processReturn =
     async () => {
+
+      const pToastId = progressToast.loading({ title: "Returning...", message: "Processing return..." });
 
       try {
 
@@ -547,9 +518,7 @@ export default function ActiveUsagePage() {
 
         );
 
-        toast.success(
-          "Equipment returned"
-        );
+        progressToast.success(pToastId, { title: "Returned", message: "Equipment returned" });
 
         setShowReturnModal(false);
 
@@ -561,13 +530,7 @@ export default function ActiveUsagePage() {
 
         console.log(error);
 
-        toast.error(
-
-          error.response?.data
-            ?.message ||
-
-          "Return failed"
-        );
+        progressToast.error(pToastId, { title: "Error", message: error.response?.data?.message || "Return failed" });
       }
     };
 

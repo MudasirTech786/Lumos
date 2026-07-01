@@ -14,14 +14,15 @@ import {
   XCircle,
   ShieldAlert,
   Sparkles,
-  Plane
 } from "lucide-react";
 
 import { useEffect, useState } from "react";
 
 import api from "@/lib/api";
 
-import toast from "react-hot-toast";
+import progressToast from "@/lib/progressToast";
+import { useConfirm } from "@/context/ConfirmContext";
+import StatsCard from "@/components/ui/StatsCard";
 
 import useAuth from "@/hooks/useAuth";
 
@@ -47,6 +48,8 @@ export default function LeavesPage() {
   };
 
   const [form, setForm] = useState(initialForm);
+
+  const confirmDialog = useConfirm();
 
   // =========================================
   // PERMISSIONS
@@ -170,7 +173,8 @@ export default function LeavesPage() {
 
     } catch {
 
-      toast.error("Failed to load leaves");
+      const id = progressToast.loading({ title: "Error", message: "" });
+      progressToast.error(id, { title: "Fetch Error", message: "Failed to load leaves" });
 
     } finally {
 
@@ -214,7 +218,19 @@ export default function LeavesPage() {
 
   const handleSubmit = async () => {
 
+    const isEdit = !!editingId;
+
+    const pToastId = progressToast.loading({
+      title: isEdit ? "Updating Leave Request" : "Submitting Leave Request",
+      message: isEdit ? "Saving changes..." : "Saving request...",
+    });
+
     try {
+
+      progressToast.update(pToastId, {
+        progress: 50,
+        message: isEdit ? "Saving changes..." : "Saving request...",
+      });
 
       const payload = {
 
@@ -253,21 +269,18 @@ export default function LeavesPage() {
           payload
         );
 
-        toast.success(
-          "Leave updated"
-        );
-
       } else {
 
         await api.post(
           "/leaves",
           payload
         );
-
-        toast.success(
-          "Leave request submitted"
-        );
       }
+
+      progressToast.success(pToastId, {
+        title: isEdit ? "Leave Updated" : "Leave Request Submitted",
+        message: isEdit ? "Leave request has been updated." : "Your leave request has been submitted.",
+      });
 
       setOpenModal(false);
 
@@ -283,10 +296,10 @@ export default function LeavesPage() {
         err?.response?.data
       );
 
-      toast.error(
-        err?.response?.data?.message ||
-        "Failed"
-      );
+      progressToast.error(pToastId, {
+        title: "Operation Failed",
+        message: err?.response?.data?.message || "Failed",
+      });
     }
   };
 
@@ -298,9 +311,8 @@ export default function LeavesPage() {
 
     if (!canEditLeave(leave)) {
 
-      toast.error(
-        "You cannot edit this leave"
-      );
+      const id = progressToast.loading({ title: "Error", message: "" });
+      progressToast.error(id, { title: "Validation Error", message: "You cannot edit this leave" });
 
       return;
     }
@@ -339,36 +351,25 @@ export default function LeavesPage() {
 
     if (!canDeleteLeave(leave)) {
 
-      toast.error(
-        "You cannot delete this leave"
-      );
+      const id = progressToast.loading({ title: "Error", message: "" });
+      progressToast.error(id, { title: "Validation Error", message: "You cannot delete this leave" });
 
       return;
     }
 
-    if (!confirm("Delete leave?"))
-      return;
-
-    try {
-
-      setLoadingId(leave.id);
-
-      await api.delete(
+    const ok = await confirmDialog({
+      variant: "danger",
+      title: "Delete Leave",
+      description: "This action cannot be undone.",
+      confirmText: "Delete",
+      confirmAction: () => api.delete(
         `/leaves/${leave.id}`
-      );
+      ),
+    });
 
-      toast.success("Deleted");
+    if (!ok) return;
 
-      fetchLeaves();
-
-    } catch {
-
-      toast.error("Delete failed");
-
-    } finally {
-
-      setLoadingId(null);
-    }
+    fetchLeaves();
   };
 
   // =========================================
@@ -382,24 +383,38 @@ export default function LeavesPage() {
 
     if (!canApprove) return;
 
+    const label = status === "approved" ? "Approving" : "Rejecting";
+
+    const pToastId = progressToast.loading({
+      title: `${label} Leave`,
+      message: "Updating request...",
+    });
+
     try {
+
+      progressToast.update(pToastId, {
+        progress: 60,
+        message: "Updating request...",
+      });
 
       await api.put(
         `/leaves/${id}`,
         { status }
       );
 
-      toast.success(
-        `Leave ${status}`
-      );
+      progressToast.success(pToastId, {
+        title: `Leave ${status.charAt(0).toUpperCase() + status.slice(1)}`,
+        message: `Leave request has been ${status}.`,
+      });
 
       fetchLeaves();
 
     } catch {
 
-      toast.error(
-        "Failed to update status"
-      );
+      progressToast.error(pToastId, {
+        title: "Operation Failed",
+        message: "Failed to update status",
+      });
     }
   };
 
@@ -555,98 +570,48 @@ export default function LeavesPage() {
 
           </div>
 
-          <div className="
-  relative
-  overflow-hidden
-  rounded-[36px]
-  border
-  border-blue-200/20
-  bg-gradient-to-br
-  from-[#071120]
-  via-[#0f3ba8]
-  to-[#2563eb]
-  p-6
-  shadow-[0_25px_120px_rgba(37,99,235,0.25)]
-">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
 
-            {/* BACKGROUND LIGHT */}
+            <StatsCard
+              icon={<CalendarDays size={20} />}
+              iconBg="bg-blue-100"
+              iconColor="text-blue-600"
+              accentColor="bg-blue-500"
+              value={visibleLeaves.length}
+              label="Total Leave Requests"
+              chip={{ text: "This Month", bg: "bg-blue-100", color: "text-blue-700" }}
+              index={0}
+            />
 
-            <div className="
-    absolute
-    inset-0
-    bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.14),transparent_22%),radial-gradient(circle_at_bottom_left,rgba(125,211,252,0.10),transparent_30%)]
-  " />
+            <StatsCard
+              icon={<CheckCircle2 size={20} />}
+              iconBg="bg-green-100"
+              iconColor="text-green-600"
+              accentColor="bg-green-500"
+              value={approvedLeaves}
+              label="Approved Leaves"
+              index={1}
+            />
 
-            {/* GRID */}
+            <StatsCard
+              icon={<Clock3 size={20} />}
+              iconBg="bg-amber-100"
+              iconColor="text-amber-600"
+              accentColor="bg-amber-500"
+              value={pendingLeaves}
+              label="Pending Requests"
+              index={2}
+            />
 
-            <div className="
-    absolute
-    inset-0
-    opacity-[0.05]
-    [background-image:linear-gradient(to_right,#fff_1px,transparent_1px),linear-gradient(to_bottom,#fff_1px,transparent_1px)]
-    [background-size:42px_42px]
-  " />
-
-            {/* GLOW */}
-
-            <div className="
-    absolute
-    top-[-120px]
-    right-[-100px]
-    h-[320px]
-    w-[320px]
-    rounded-full
-    bg-cyan-300/20
-    blur-[120px]
-  " />
-
-            <div className="
-    absolute
-    bottom-[-140px]
-    left-[-100px]
-    h-[280px]
-    w-[280px]
-    rounded-full
-    bg-blue-500/20
-    blur-[120px]
-  " />
-
-            {/* CONTENT */}
-
-            <div className="
-    relative
-    z-10
-    grid
-    grid-cols-2
-    gap-5
-    xl:grid-cols-4
-  ">
-
-              <AdminMetricCard
-                title="Total Leaves"
-                value={visibleLeaves.length}
-                icon={<CalendarDays size={18} />}
-              />
-
-              <AdminMetricCard
-                title="Approved"
-                value={approvedLeaves}
-                icon={<CheckCircle2 size={18} />}
-              />
-
-              <AdminMetricCard
-                title="Pending"
-                value={pendingLeaves}
-                icon={<Clock3 size={18} />}
-              />
-
-              <AdminMetricCard
-                title="Rejected"
-                value={rejectedLeaves}
-                icon={<XCircle size={18} />}
-              />
-
-            </div>
+            <StatsCard
+              icon={<XCircle size={20} />}
+              iconBg="bg-red-100"
+              iconColor="text-red-600"
+              accentColor="bg-red-500"
+              value={rejectedLeaves}
+              label="Rejected Requests"
+              index={3}
+            />
 
           </div>
 
@@ -1111,44 +1076,6 @@ function StatusBadge({ status }) {
 }
 
 // =========================================
-// STAT CARD
-// =========================================
-
-function StatCard({
-  title,
-  value,
-  icon,
-}) {
-
-  return (
-
-    <div className="bg-white rounded-3xl border border-blue-100 p-5 shadow-sm">
-
-      <div className="flex items-center justify-between">
-
-        <div>
-
-          <p className="text-sm text-gray-500">
-            {title}
-          </p>
-
-          <h3 className="text-2xl font-bold text-gray-900 mt-2">
-            {value}
-          </h3>
-
-        </div>
-
-        <div className="w-12 h-12 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center">
-          {icon}
-        </div>
-
-      </div>
-
-    </div>
-  );
-}
-
-// =========================================
 // INPUT
 // =========================================
 
@@ -1168,95 +1095,3 @@ function Input({
   );
 }
 
-function AdminMetricCard({
-  title,
-  value,
-  icon,
-}) {
-
-  return (
-
-    <div className="
-      relative
-      overflow-hidden
-      rounded-[28px]
-      border
-      border-white/10
-      bg-white/10
-      p-5
-      backdrop-blur-2xl
-    ">
-
-      {/* SOFT GLOW */}
-
-      <div className="
-        absolute
-        top-0
-        right-0
-        h-24
-        w-24
-        rounded-full
-        bg-white/10
-        blur-3xl
-      " />
-
-      <div className="relative z-10">
-
-        <div className="
-          flex
-          items-center
-          justify-between
-        ">
-
-          <div className="
-            flex
-            h-12
-            w-12
-            items-center
-            justify-center
-            rounded-2xl
-            bg-white/10
-            text-white
-          ">
-
-            {icon}
-
-          </div>
-
-          <Plane
-            size={18}
-            className="text-blue-100/40"
-          />
-
-        </div>
-
-        <p className="
-          mt-5
-          text-xs
-          font-semibold
-          uppercase
-          tracking-[0.18em]
-          text-blue-100/70
-        ">
-
-          {title}
-
-        </p>
-
-        <h3 className="
-          mt-2
-          text-4xl
-          font-black
-          tracking-[-0.05em]
-          text-white
-        ">
-
-          {value}
-
-        </h3>
-
-      </div>
-
-    </div>
-  );
-}

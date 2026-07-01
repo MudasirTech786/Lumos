@@ -8,7 +8,7 @@ import { useParams, useRouter } from "next/navigation";
 
 import api from "@/lib/api";
 
-import toast from "react-hot-toast";
+import progressToast from "@/lib/progressToast";
 
 import {
     ArrowLeft,
@@ -53,7 +53,8 @@ export default function CrewDetail() {
 
             console.log(err?.response?.data || err);
 
-            toast.error("Failed to load crew");
+            const id = progressToast.loading({ title: "Error", message: "" });
+            progressToast.error(id, { title: "Error", message: "Failed to load crew" });
 
         } finally {
 

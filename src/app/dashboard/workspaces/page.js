@@ -16,7 +16,8 @@ import { useEffect, useState } from "react";
 
 import api from "@/lib/api";
 
-import toast from "react-hot-toast";
+import progressToast from "@/lib/progressToast";
+import { useConfirm } from "@/context/ConfirmContext";
 
 import useAuth from "@/hooks/useAuth";
 
@@ -36,6 +37,8 @@ export default function Workspaces() {
 
   const [loadingId, setLoadingId] =
     useState(null);
+
+  const confirmDialog = useConfirm();
 
   const tabs = [
     {
@@ -83,9 +86,8 @@ export default function Workspaces() {
 
     } catch {
 
-      toast.error(
-        "Failed to load apps"
-      );
+      const id = progressToast.loading({ title: "Error", message: "Failed to load apps" });
+      progressToast.error(id, { title: "Error", message: "Failed to load apps" });
     }
   };
 
@@ -104,12 +106,13 @@ export default function Workspaces() {
 
     if (!form.name || !form.url) {
 
-      toast.error(
-        "Name & URL required"
-      );
+      const id = progressToast.loading({ title: "Validation", message: "Name & URL required" });
+      progressToast.error(id, { title: "Validation", message: "Name & URL required" });
 
       return;
     }
+
+    const pToastId = progressToast.loading({ title: "Creating...", message: "Adding app..." });
 
     try {
 
@@ -122,9 +125,7 @@ export default function Workspaces() {
         }
       );
 
-      toast.success(
-        "App added successfully"
-      );
+      progressToast.success(pToastId, { title: "Created", message: "App added successfully" });
 
       setForm({
         name: "",
@@ -139,9 +140,7 @@ export default function Workspaces() {
 
     } catch {
 
-      toast.error(
-        "Failed to add app"
-      );
+      progressToast.error(pToastId, { title: "Error", message: "Failed to add app" });
     }
   };
 
@@ -150,40 +149,23 @@ export default function Workspaces() {
 
     if (!app?.id) return;
 
-    const ok = confirm(
-      `Delete "${app.name}"?`
-    );
+    const ok = await confirmDialog({
+      variant: "danger",
+      title: "Delete App",
+      description: `Remove "${app.name}" from workspace?`,
+      confirmText: "Delete",
+      confirmAction: () => api.delete(
+        `/workspace-apps/${app.id}`
+      ),
+    });
 
     if (!ok) return;
 
-    try {
-
-      setLoadingId(app.id);
-
-      await api.delete(
-        `/workspace-apps/${app.id}`
-      );
-
-      setApps((prev) =>
-        prev.filter(
-          (a) => a.id !== app.id
-        )
-      );
-
-      toast.success(
-        "Deleted successfully"
-      );
-
-    } catch {
-
-      toast.error(
-        "Delete failed"
-      );
-
-    } finally {
-
-      setLoadingId(null);
-    }
+    setApps((prev) =>
+      prev.filter(
+        (a) => a.id !== app.id
+      )
+    );
   };
 
   // MOVE
@@ -191,6 +173,8 @@ export default function Workspaces() {
     appId,
     newTab
   ) => {
+
+    const pToastId = progressToast.loading({ title: "Moving...", message: "Moving app..." });
 
     try {
 
@@ -214,15 +198,11 @@ export default function Workspaces() {
         )
       );
 
-      toast.success(
-        "Moved successfully"
-      );
+      progressToast.success(pToastId, { title: "Moved", message: "Moved successfully" });
 
     } catch {
 
-      toast.error(
-        "Failed to move app"
-      );
+      progressToast.error(pToastId, { title: "Error", message: "Failed to move app" });
     }
   };
 

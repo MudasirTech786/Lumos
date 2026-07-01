@@ -5,7 +5,7 @@ import Link from "next/link";
 import { QRCodeSVG } from "qrcode.react";
 import Layout from "@/components/Layout";
 import api from "@/lib/api";
-import toast from "react-hot-toast";
+import progressToast from "@/lib/progressToast";
 import {
     Package, Search, RefreshCw, Wrench, AlertTriangle,
     CheckCircle2, X, ScanLine, Printer, Tag, ChevronRight,
@@ -142,13 +142,13 @@ export default function InventoryAssetsPage() {
 
     const fetchAssets = async () => {
         try { setLoading(true); const r = await api.get("/inventory/inventory-assets"); setAssets(r.data.data || []); }
-        catch { toast.error("Failed to load assets"); }
+        catch { const id = progressToast.loading({ title: "Error", message: "" }); progressToast.error(id, { title: "Error", message: "Failed to load assets" }); }
         finally { setLoading(false); }
     };
 
     const loadAssetDetails = async (id) => {
         try { const r = await api.get(`/inventory/inventory-assets/${id}`); setSelectedAsset(r.data.data); }
-        catch { toast.error("Failed to load asset details"); }
+        catch { const id = progressToast.loading({ title: "Error", message: "" }); progressToast.error(id, { title: "Error", message: "Failed to load asset details" }); }
     };
 
     const loadShoots = async () => {
@@ -162,30 +162,33 @@ export default function InventoryAssetsPage() {
     useEffect(() => { fetchAssets(); loadShoots(); }, []);
 
     const updateStatus = async (assetId, status) => {
+        const pToastId = progressToast.loading({ title: "Updating...", message: "Changing status..." });
         try {
             await api.post(`/inventory/inventory-assets/${assetId}/status`, { status });
-            toast.success("Status updated"); fetchAssets();
+            progressToast.success(pToastId, { title: "Updated", message: "Status updated" }); fetchAssets();
             if (selectedAsset) setSelectedAsset(p => ({ ...p, status }));
-        } catch { toast.error("Failed to update status"); }
+        } catch { progressToast.error(pToastId, { title: "Error", message: "Failed to update status" }); }
     };
 
     const handleAllocate = async () => {
+        const pToastId = progressToast.loading({ title: "Allocating...", message: "Allocating asset..." });
         try {
             setActionLoading(true);
             await api.post(`/inventory-assets/${selectedAsset.id}/allocate`, { shoot_id: selectedShoot, assigned_to: assignedTo });
-            toast.success("Asset allocated"); setShowAllocate(false);
+            progressToast.success(pToastId, { title: "Allocated", message: "Asset allocated" }); setShowAllocate(false);
             await fetchAssets(); await loadAssetDetails(selectedAsset.id);
-        } catch (e) { toast.error(e.response?.data?.message || "Allocation failed"); }
+        } catch (e) { progressToast.error(pToastId, { title: "Error", message: e.response?.data?.message || "Allocation failed" }); }
         finally { setActionLoading(false); }
     };
 
     const handleReturn = async (assetId) => {
+        const pToastId = progressToast.loading({ title: "Returning...", message: "Processing return..." });
         try {
             setActionLoading(true);
             await api.post(`/inventory-assets/${assetId}/return`);
-            toast.success("Asset returned");
+            progressToast.success(pToastId, { title: "Returned", message: "Asset returned" });
             await fetchAssets(); await loadAssetDetails(assetId);
-        } catch { toast.error("Return failed"); }
+        } catch { progressToast.error(pToastId, { title: "Error", message: "Return failed" }); }
         finally { setActionLoading(false); }
     };
 

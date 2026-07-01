@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Layout from "@/components/Layout";
 import api from "@/lib/api";
-import toast from "react-hot-toast";
+import progressToast from "@/lib/progressToast";
+import { useConfirm } from "@/context/ConfirmContext";
 import {
     Plus, Pencil, Trash2, Receipt, Search,
     X, Filter, ArrowLeft, TrendingUp, Layers,
@@ -54,6 +55,8 @@ export default function ShootExpensesPage() {
     const [selectedExpense, setSelectedExpense]  = useState(null);
     const [form,            setForm]             = useState({ shoot_id: "", category: "", description: "", amount: "" });
 
+    const confirmDialog = useConfirm();
+
     const fetchData = async () => {
         try {
             setLoading(true);
@@ -64,7 +67,8 @@ export default function ShootExpensesPage() {
             setExpenses(expensesRes.data?.data || []);
             setShoots(shootsRes.data || []);
         } catch {
-            toast.error("Failed to load expenses");
+            const id = progressToast.loading({ title: "Error", message: "" });
+            progressToast.error(id, { title: "Error", message: "Failed to load expenses" });
         } finally {
             setLoading(false);
         }
@@ -75,11 +79,12 @@ export default function ShootExpensesPage() {
     const resetForm = () => setForm({ shoot_id: "", category: "", description: "", amount: "" });
 
     const createExpense = async () => {
+        const pToastId = progressToast.loading({ title: "Creating...", message: "Saving expense..." });
         try {
             await api.post("/shoot-expenses", form);
-            toast.success("Expense created");
+            progressToast.success(pToastId, { title: "Created", message: "Expense created successfully" });
             setShowCreate(false); resetForm(); fetchData();
-        } catch { toast.error("Failed to create expense"); }
+        } catch { progressToast.error(pToastId, { title: "Error", message: "Failed to create expense" }); }
     };
 
     const openEdit = (expense) => {
@@ -89,19 +94,24 @@ export default function ShootExpensesPage() {
     };
 
     const updateExpense = async () => {
+        const pToastId = progressToast.loading({ title: "Updating...", message: "Saving changes..." });
         try {
             await api.put(`/shoot-expenses/${selectedExpense.id}`, form);
-            toast.success("Expense updated");
+            progressToast.success(pToastId, { title: "Updated", message: "Expense updated successfully" });
             setShowEdit(false); fetchData();
-        } catch { toast.error("Failed to update expense"); }
+        } catch { progressToast.error(pToastId, { title: "Error", message: "Failed to update expense" }); }
     };
 
     const deleteExpense = async (id) => {
-        if (!confirm("Delete this expense?")) return;
-        try {
-            await api.delete(`/shoot-expenses/${id}`);
-            toast.success("Expense deleted"); fetchData();
-        } catch { toast.error("Failed to delete expense"); }
+        const ok = await confirmDialog({
+            variant: "danger",
+            title: "Delete Expense",
+            description: "This action cannot be undone.",
+            confirmText: "Delete",
+            confirmAction: () => api.delete(`/shoot-expenses/${id}`),
+        });
+        if (!ok) return;
+        fetchData();
     };
 
     const q = search.toLowerCase().trim();

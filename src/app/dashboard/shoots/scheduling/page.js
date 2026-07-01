@@ -6,9 +6,9 @@ import Layout from "@/components/Layout";
 
 import api from "@/lib/api";
 
-import Link from "next/link";
+import progressToast from "@/lib/progressToast";
 
-import toast from "react-hot-toast";
+import Link from "next/link";
 
 import {
   CalendarDays,
@@ -55,11 +55,8 @@ export default function SchedulingDashboard() {
       );
 
     } catch {
-
-      toast.error(
-        "Failed to load shoots"
-      );
-
+      const id = progressToast.loading({ title: "Error", message: "" });
+      progressToast.error(id, { title: "Error", message: "Failed to load shoots" });
     } finally {
 
       setLoading(false);

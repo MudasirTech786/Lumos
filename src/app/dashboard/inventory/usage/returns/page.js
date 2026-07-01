@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import Layout from "@/components/Layout";
 import api from "@/lib/api";
 
-import toast from "react-hot-toast";
+import progressToast from "@/lib/progressToast";
 
 import {
   Search,
@@ -121,11 +121,8 @@ export default function ReturnsPage() {
 
       console.log(error);
 
-      toast.error(
-        error.response?.data
-          ?.message ||
-        "Failed to load returns"
-      );
+      const pToastId = progressToast.loading({ title: "Error", message: error.response?.data?.message || "Failed to load returns" });
+      progressToast.error(pToastId, { title: "Error", message: error.response?.data?.message || "Failed to load returns" });
 
     } finally {
 
@@ -207,6 +204,8 @@ export default function ReturnsPage() {
   const processReturn =
     async () => {
 
+      const pToastId = progressToast.loading({ title: "Returning...", message: "Processing return..." });
+
       try {
 
         await api.post(
@@ -214,9 +213,7 @@ export default function ReturnsPage() {
           returnForm
         );
 
-        toast.success(
-          "Equipment returned successfully"
-        );
+        progressToast.success(pToastId, { title: "Returned", message: "Equipment returned successfully" });
 
         setShowModal(false);
 
@@ -226,11 +223,7 @@ export default function ReturnsPage() {
 
         console.log(error);
 
-        toast.error(
-          error.response?.data
-            ?.message ||
-          "Return failed"
-        );
+        progressToast.error(pToastId, { title: "Error", message: error.response?.data?.message || "Return failed" });
       }
     };
 

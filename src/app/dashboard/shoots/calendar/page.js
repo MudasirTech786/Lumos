@@ -9,7 +9,7 @@ import Layout from "@/components/Layout";
 
 import api from "@/lib/api";
 
-import toast from "react-hot-toast";
+import progressToast from "@/lib/progressToast";
 
 import moment from "moment";
 
@@ -168,9 +168,8 @@ export default function ShootCalendarPage() {
 
       console.log(error);
 
-      toast.error(
-        "Failed to load calendar"
-      );
+      const id = progressToast.loading({ title: "Error", message: "" });
+      progressToast.error(id, { title: "Error", message: "Failed to load calendar" });
 
     } finally {
 
@@ -347,6 +346,8 @@ export default function ShootCalendarPage() {
 
     setIsDragging(true);
 
+    const pToastId = progressToast.loading({ title: "Rescheduling...", message: "Updating schedule..." });
+
     try {
 
       /* ========================================================= */
@@ -416,17 +417,13 @@ export default function ShootCalendarPage() {
         }
       );
 
-      toast.success(
-        "Shoot rescheduled"
-      );
+      progressToast.success(pToastId, { title: "Rescheduled", message: "Shoot rescheduled" });
 
     } catch (error) {
 
       console.log(error);
 
-      toast.error(
-        "Failed to reschedule"
-      );
+      progressToast.error(pToastId, { title: "Error", message: "Failed to reschedule" });
 
       fetchShoots();
 

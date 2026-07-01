@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Layout from "@/components/Layout";
 import api from "@/lib/api";
 import Link from "next/link";
-import toast from "react-hot-toast";
+import progressToast from "@/lib/progressToast";
 
 export default function CrewPayrollPage() {
 
@@ -42,11 +42,8 @@ export default function CrewPayrollPage() {
         );
 
       } catch {
-
-        toast.error(
-          "Failed to load payrolls"
-        );
-
+          const id = progressToast.loading({ title: "Error", message: "" });
+          progressToast.error(id, { title: "Error", message: "Failed to load payrolls" });
       } finally {
 
         setLoading(false);
@@ -62,7 +59,7 @@ export default function CrewPayrollPage() {
 
   const generatePayroll =
     async () => {
-
+      const pToastId = progressToast.loading({ title: "Generating...", message: "Generating crew payroll..." });
       try {
 
         await api.post(
@@ -70,18 +67,12 @@ export default function CrewPayrollPage() {
           form
         );
 
-        toast.success(
-          "Crew payroll generated"
-        );
+        progressToast.success(pToastId, { title: "Generated", message: "Crew payroll generated successfully" });
 
         fetchPayrolls();
 
       } catch {
-
-        toast.error(
-          "Generation failed"
-        );
-
+          progressToast.error(pToastId, { title: "Error", message: "Generation failed" });
       }
     };
 

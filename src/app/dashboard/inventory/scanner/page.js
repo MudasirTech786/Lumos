@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Html5Qrcode } from "html5-qrcode";
 import api from "@/lib/api";
+import progressToast from "@/lib/progressToast";
 import { lookupAsset, allocateAsset, returnAsset, getShoots } from "@/services/inventoryAssetService";
 import Layout from "@/components/Layout";
 import {
@@ -143,28 +144,29 @@ export default function ScannerPage() {
     const reset = async () => { await stopScanner(); setAsset(null); setError(""); };
 
     const handleAllocate = async () => {
+        const pToastId = progressToast.loading({ title: "Allocating...", message: "Allocating asset..." });
         try {
             setActionLoading(true);
             await api.post(`/inventory-assets/${asset.id}/allocate`, { shoot_id: selectedShoot, assigned_to: assignedTo });
+            progressToast.success(pToastId, { title: "Allocated", message: "Asset allocated to shoot" });
             setShowAllocate(false);
             const refreshed = await lookupAsset(asset.qr_uuid);
             setAsset(refreshed.data || refreshed);
         } catch (e) {
-            toast.error(
-                e.response?.data?.message ||
-                "Allocation failed"
-            );
+            progressToast.error(pToastId, { title: "Error", message: e.response?.data?.message || "Allocation failed" });
         }
         finally { setActionLoading(false); }
     };
 
     const handleReturn = async () => {
+        const pToastId = progressToast.loading({ title: "Returning...", message: "Processing return..." });
         try {
             setActionLoading(true);
             await returnAsset(asset.id);
+            progressToast.success(pToastId, { title: "Returned", message: "Asset returned" });
             const refreshed = await lookupAsset(asset.qr_uuid);
             setAsset(refreshed.data || refreshed);
-        } catch (e) { alert(e.response?.data?.message || "Return failed"); }
+        } catch (e) { progressToast.error(pToastId, { title: "Error", message: e.response?.data?.message || "Return failed" }); }
         finally { setActionLoading(false); }
     };
 

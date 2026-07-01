@@ -5,7 +5,8 @@ import { useEffect, useMemo, useState } from "react";
 import Layout from "@/components/Layout";
 import api from "@/lib/api";
 import { useRouter } from "next/navigation";
-import toast from "react-hot-toast";
+import progressToast from "@/lib/progressToast";
+import { useConfirm } from "@/context/ConfirmContext";
 
 import {
   Plus,
@@ -41,6 +42,8 @@ export default function InventoryItemsPage() {
 
   const [editingItem, setEditingItem] =
     useState(null);
+
+  const confirmDialog = useConfirm();
 
   const initialForm = {
 
@@ -112,9 +115,8 @@ export default function InventoryItemsPage() {
 
       console.log(error);
 
-      toast.error(
-        "Failed to load inventory"
-      );
+      const id = progressToast.loading({ title: "Error", message: "" });
+      progressToast.error(id, { title: "Error", message: "Failed to load inventory" });
 
     } finally {
 
@@ -158,6 +160,8 @@ export default function InventoryItemsPage() {
 
   const createItem = async () => {
 
+    const pToastId = progressToast.loading({ title: "Creating...", message: "Saving item..." });
+
     try {
 
       await api.post(
@@ -165,9 +169,7 @@ export default function InventoryItemsPage() {
         form
       );
 
-      toast.success(
-        "Item created"
-      );
+      progressToast.success(pToastId, { title: "Created", message: "Item created" });
 
       setShowModal(false);
 
@@ -179,11 +181,7 @@ export default function InventoryItemsPage() {
 
       console.log(error);
 
-      toast.error(
-        error.response?.data
-          ?.message ||
-        "Create failed"
-      );
+      progressToast.error(pToastId, { title: "Error", message: error.response?.data?.message || "Create failed" });
     }
   };
 
@@ -193,6 +191,8 @@ export default function InventoryItemsPage() {
 
   const updateItem = async () => {
 
+    const pToastId = progressToast.loading({ title: "Updating...", message: "Saving changes..." });
+
     try {
 
       await api.put(
@@ -200,9 +200,7 @@ export default function InventoryItemsPage() {
         form
       );
 
-      toast.success(
-        "Item updated"
-      );
+      progressToast.success(pToastId, { title: "Updated", message: "Item updated" });
 
       setEditModal(false);
 
@@ -216,11 +214,7 @@ export default function InventoryItemsPage() {
 
       console.log(error);
 
-      toast.error(
-        error.response?.data
-          ?.message ||
-        "Update failed"
-      );
+      progressToast.error(pToastId, { title: "Error", message: error.response?.data?.message || "Update failed" });
     }
   };
 
@@ -232,34 +226,19 @@ export default function InventoryItemsPage() {
 
   const deleteItem = async (id) => {
 
-    if (
-      !confirm(
-        "Delete this item?"
-      )
-    ) return;
-
-    try {
-
-      await api.delete(
+    const ok = await confirmDialog({
+      variant: "danger",
+      title: "Delete Item",
+      description: "This action cannot be undone.",
+      confirmText: "Delete",
+      confirmAction: () => api.delete(
         `/inventory/items/${id}`
-      );
+      ),
+    });
 
-      toast.success(
-        "Item deleted"
-      );
+    if (!ok) return;
 
-      fetchData();
-
-    } catch (error) {
-
-      console.log(error);
-
-      toast.error(
-        error.response?.data
-          ?.message ||
-        "Delete failed"
-      );
-    }
+    fetchData();
   };
 
   /* ====================================================== */

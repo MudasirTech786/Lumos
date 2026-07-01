@@ -6,7 +6,7 @@ import Layout from "@/components/Layout";
 
 import api from "@/lib/api";
 
-import toast from "react-hot-toast";
+import progressToast from "@/lib/progressToast";
 
 import {
   AlertTriangle,
@@ -97,9 +97,8 @@ export default function DamageReportsPage() {
 
     } catch {
 
-      toast.error(
-        "Failed loading reports"
-      );
+      const pToastId = progressToast.loading({ title: "Error", message: "Failed loading reports" });
+      progressToast.error(pToastId, { title: "Error", message: "Failed loading reports" });
 
     } finally {
 
@@ -123,14 +122,15 @@ export default function DamageReportsPage() {
       !form.inventory_item_id
     ) {
 
-      toast.error(
-        "Select inventory item"
-      );
+      const pToastId = progressToast.loading({ title: "Error", message: "Select inventory item" });
+      progressToast.error(pToastId, { title: "Error", message: "Select inventory item" });
 
       return;
     }
 
     setSaving(true);
+
+    const pToastId = progressToast.loading({ title: "Creating...", message: "Creating damage report..." });
 
     try {
 
@@ -141,9 +141,7 @@ export default function DamageReportsPage() {
         form
       );
 
-      toast.success(
-        "Damage report created"
-      );
+      progressToast.success(pToastId, { title: "Created", message: "Damage report created" });
 
       setForm({
 
@@ -164,9 +162,7 @@ export default function DamageReportsPage() {
 
     } catch {
 
-      toast.error(
-        "Failed creating report"
-      );
+      progressToast.error(pToastId, { title: "Error", message: "Failed creating report" });
 
     } finally {
 
@@ -183,6 +179,8 @@ export default function DamageReportsPage() {
     status
   ) => {
 
+    const pToastId = progressToast.loading({ title: "Updating...", message: "Updating status..." });
+
     try {
 
       await api.patch(
@@ -192,17 +190,13 @@ export default function DamageReportsPage() {
         { status }
       );
 
-      toast.success(
-        "Status updated"
-      );
+      progressToast.success(pToastId, { title: "Updated", message: "Status updated" });
 
       fetchData();
 
     } catch {
 
-      toast.error(
-        "Update failed"
-      );
+      progressToast.error(pToastId, { title: "Error", message: "Update failed" });
     }
   };
 

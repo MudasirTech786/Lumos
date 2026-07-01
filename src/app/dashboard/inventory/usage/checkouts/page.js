@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import Layout from "@/components/Layout";
 import api from "@/lib/api";
 
-import toast from "react-hot-toast";
+import progressToast from "@/lib/progressToast";
 
 import {
   Search,
@@ -112,11 +112,8 @@ export default function CheckoutsPage() {
 
       console.log(error);
 
-      toast.error(
-        error.response?.data
-          ?.message ||
-        "Failed to load checkouts"
-      );
+      const pToastId = progressToast.loading({ title: "Error", message: error.response?.data?.message || "Failed to load checkouts" });
+      progressToast.error(pToastId, { title: "Error", message: error.response?.data?.message || "Failed to load checkouts" });
 
     } finally {
 
@@ -135,15 +132,15 @@ export default function CheckoutsPage() {
   const checkoutUsage =
     async (id) => {
 
+      const pToastId = progressToast.loading({ title: "Checking Out...", message: "Checking out equipment..." });
+
       try {
 
         await api.post(
           `/inventory/usage/${id}/checkout`
         );
 
-        toast.success(
-          "Equipment checked out"
-        );
+        progressToast.success(pToastId, { title: "Checked Out", message: "Equipment checked out" });
 
         fetchData();
 
@@ -151,11 +148,7 @@ export default function CheckoutsPage() {
 
         console.log(error);
 
-        toast.error(
-          error.response?.data
-            ?.message ||
-          "Checkout failed"
-        );
+        progressToast.error(pToastId, { title: "Error", message: error.response?.data?.message || "Checkout failed" });
       }
     };
 

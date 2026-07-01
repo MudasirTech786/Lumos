@@ -6,7 +6,7 @@ import Layout from "@/components/Layout";
 
 import api from "@/lib/api";
 
-import toast from "react-hot-toast";
+import progressToast from "@/lib/progressToast";
 
 import {
   ArchiveX,
@@ -113,9 +113,8 @@ export default function WriteOffsPage() {
 
       console.log(error);
 
-      toast.error(
-        "Failed loading write-offs"
-      );
+      const pToastId = progressToast.loading({ title: "Error", message: "Failed loading write-offs" });
+      progressToast.error(pToastId, { title: "Error", message: "Failed loading write-offs" });
 
     } finally {
 
@@ -139,23 +138,23 @@ export default function WriteOffsPage() {
       !form.inventory_item_id
     ) {
 
-      toast.error(
-        "Select inventory item"
-      );
+      const pToastId = progressToast.loading({ title: "Error", message: "Select inventory item" });
+      progressToast.error(pToastId, { title: "Error", message: "Select inventory item" });
 
       return;
     }
 
     if (!form.reason) {
 
-      toast.error(
-        "Enter reason"
-      );
+      const pToastId = progressToast.loading({ title: "Error", message: "Enter reason" });
+      progressToast.error(pToastId, { title: "Error", message: "Enter reason" });
 
       return;
     }
 
     setSaving(true);
+
+    const pToastId = progressToast.loading({ title: "Creating...", message: "Creating write-off..." });
 
     try {
 
@@ -166,9 +165,7 @@ export default function WriteOffsPage() {
         form
       );
 
-      toast.success(
-        "Write-off completed"
-      );
+      progressToast.success(pToastId, { title: "Completed", message: "Write-off completed" });
 
       setForm({
 
@@ -191,13 +188,7 @@ export default function WriteOffsPage() {
 
       console.log(error);
 
-      toast.error(
-
-        error.response?.data
-          ?.message ||
-
-        "Failed creating write-off"
-      );
+      progressToast.error(pToastId, { title: "Error", message: error.response?.data?.message || "Failed creating write-off" });
 
     } finally {
 

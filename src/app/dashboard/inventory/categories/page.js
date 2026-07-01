@@ -5,7 +5,8 @@ import { useEffect, useState } from "react";
 import Layout from "@/components/Layout";
 import api from "@/lib/api";
 
-import toast from "react-hot-toast";
+import progressToast from "@/lib/progressToast";
+import { useConfirm } from "@/context/ConfirmContext";
 
 import {
   Plus,
@@ -35,6 +36,8 @@ export default function CategoriesPage() {
     description: "",
   });
 
+  const confirmDialog = useConfirm();
+
   const fetchCategories = async () => {
 
     try {
@@ -47,9 +50,8 @@ export default function CategoriesPage() {
 
     } catch {
 
-      toast.error(
-        "Failed to load categories"
-      );
+      const id = progressToast.loading({ title: "Error", message: "" });
+      progressToast.error(id, { title: "Error", message: "Failed to load categories" });
 
     } finally {
 
@@ -64,6 +66,8 @@ export default function CategoriesPage() {
 
   const createCategory = async () => {
 
+    const pToastId = progressToast.loading({ title: "Creating...", message: "Saving category..." });
+
     try {
 
       await api.post(
@@ -71,9 +75,7 @@ export default function CategoriesPage() {
         form
       );
 
-      toast.success(
-        "Category created"
-      );
+      progressToast.success(pToastId, { title: "Created", message: "Category created" });
 
       setShowModal(false);
 
@@ -81,36 +83,26 @@ export default function CategoriesPage() {
 
     } catch {
 
-      toast.error("Create failed");
+      progressToast.error(pToastId, { title: "Error", message: "Create failed" });
 
     }
   };
 
   const deleteCategory = async (id) => {
 
-    if (
-      !confirm(
-        "Delete this category?"
-      )
-    ) return;
-
-    try {
-
-      await api.delete(
+    const ok = await confirmDialog({
+      variant: "danger",
+      title: "Delete Category",
+      description: "This action cannot be undone.",
+      confirmText: "Delete",
+      confirmAction: () => api.delete(
         `/inventory/categories/${id}`
-      );
+      ),
+    });
 
-      toast.success(
-        "Category deleted"
-      );
+    if (!ok) return;
 
-      fetchCategories();
-
-    } catch {
-
-      toast.error("Delete failed");
-
-    }
+    fetchCategories();
   };
 
   const filteredCategories =

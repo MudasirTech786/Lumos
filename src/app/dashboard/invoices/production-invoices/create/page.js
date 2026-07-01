@@ -6,7 +6,7 @@ import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Layout from "@/components/Layout";
 import api from "@/lib/api";
-import toast from "react-hot-toast";
+import progressToast from "@/lib/progressToast";
 import {
     ArrowLeft, Receipt, Plus, Trash2, Save,
     ChevronRight, ChevronLeft, ChevronDown, X,
@@ -309,7 +309,10 @@ function CreateProductionInvoiceContent() {
         setShootsLoading(true);
         api.get("/shoots")
             .then(res => setShoots(Array.isArray(res.data) ? res.data : res.data?.data || []))
-            .catch(() => toast.error("Failed to load productions"))
+            .catch(() => {
+                const id = progressToast.loading({ title: "Error", message: "" });
+                progressToast.error(id, { title: "Error", message: "Failed to load productions" });
+            })
             .finally(() => setShootsLoading(false));
     }, [shootId]);
 
@@ -367,8 +370,19 @@ function CreateProductionInvoiceContent() {
 
     // ── Submit ────────────────────────────────────────────────────────────────
     const handleSubmit = async () => {
+        const pToastId = progressToast.loading({
+            title: "Creating Invoice",
+            message: "Preparing invoice data...",
+        });
+
         try {
             setLoading(true);
+
+            progressToast.update(pToastId, {
+                progress: 30,
+                message: "Building invoice items...",
+            });
+
             const finalItems = [
                 ...items.filter(i => i.description?.trim()),
                 ...(shoot?.crew_members || []).filter(m => selectedCrew.includes(m.id))
@@ -380,11 +394,25 @@ function CreateProductionInvoiceContent() {
                 ...shootExpenses.filter(e => selectedExpenses.includes(e.id))
                     .map(e => ({ description: `[Expense] ${e.category} - ${e.description}`, quantity: 1, unit_price: Number(e.amount) })),
             ];
+
+            progressToast.update(pToastId, {
+                progress: 70,
+                message: "Sending to server...",
+            });
+
             await api.post("/production-invoices", { ...form, items: finalItems });
-            toast.success("Invoice created successfully");
+
+            progressToast.success(pToastId, {
+                title: "Invoice Created",
+                message: "Invoice created successfully.",
+            });
+
             router.back();
         } catch (err) {
-            toast.error(err?.response?.data?.message || "Failed to create invoice");
+            progressToast.error(pToastId, {
+                title: "Invoice Failed",
+                message: err?.response?.data?.message || "Failed to create invoice",
+            });
         } finally {
             setLoading(false);
         }

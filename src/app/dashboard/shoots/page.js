@@ -7,7 +7,8 @@ import api from "@/lib/api";
 
 import Link from "next/link";
 
-import toast from "react-hot-toast";
+import { useConfirm } from "@/context/ConfirmContext";
+import progressToast from "@/lib/progressToast";
 
 import {
   Plus,
@@ -29,6 +30,8 @@ export default function ShootsPage() {
 
   const [activeTab, setActiveTab] = useState("all");
 
+  const confirmDialog = useConfirm();
+
   /* ========================================================= */
   /* FETCH SHOOTS */
   /* ========================================================= */
@@ -43,7 +46,8 @@ export default function ShootsPage() {
           : res.data?.data || []
       );
     } catch {
-      toast.error("Failed to load shoots");
+      const id = progressToast.loading({ title: "Error", message: "" });
+      progressToast.error(id, { title: "Error", message: "Failed to load shoots" });
     } finally {
       setLoading(false);
     }
@@ -58,21 +62,17 @@ export default function ShootsPage() {
   /* ========================================================= */
 
   const deleteShoot = async (id) => {
-    const confirmDelete = confirm(
-      "Delete this shoot?"
-    );
+    const ok = await confirmDialog({
+      variant: "danger",
+      title: "Delete Shoot",
+      description: "This action cannot be undone.",
+      confirmText: "Delete",
+      confirmAction: () => api.delete(`/shoots/${id}`),
+    });
 
-    if (!confirmDelete) return;
+    if (!ok) return;
 
-    try {
-      await api.delete(`/shoots/${id}`);
-
-      toast.success("Shoot deleted");
-
-      fetchShoots();
-    } catch {
-      toast.error("Delete failed");
-    }
+    fetchShoots();
   };
 
   /* ========================================================= */

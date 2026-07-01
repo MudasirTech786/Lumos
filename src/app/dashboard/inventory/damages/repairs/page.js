@@ -6,7 +6,7 @@ import Layout from "@/components/Layout";
 
 import api from "@/lib/api";
 
-import toast from "react-hot-toast";
+import progressToast from "@/lib/progressToast";
 
 import {
   Wrench,
@@ -99,9 +99,8 @@ export default function RepairsPage() {
 
       console.log(error);
 
-      toast.error(
-        "Failed loading repairs"
-      );
+      const pToastId = progressToast.loading({ title: "Error", message: "Failed loading repairs" });
+      progressToast.error(pToastId, { title: "Error", message: "Failed loading repairs" });
 
     } finally {
 
@@ -125,14 +124,15 @@ export default function RepairsPage() {
       !form.damage_report_id
     ) {
 
-      toast.error(
-        "Select damage report"
-      );
+      const pToastId = progressToast.loading({ title: "Error", message: "Select damage report" });
+      progressToast.error(pToastId, { title: "Error", message: "Select damage report" });
 
       return;
     }
 
     setSaving(true);
+
+    const pToastId = progressToast.loading({ title: "Creating...", message: "Creating repair..." });
 
     try {
 
@@ -143,9 +143,7 @@ export default function RepairsPage() {
         form
       );
 
-      toast.success(
-        "Repair created"
-      );
+      progressToast.success(pToastId, { title: "Created", message: "Repair created" });
 
       setForm({
 
@@ -168,13 +166,7 @@ export default function RepairsPage() {
 
       console.log(error);
 
-      toast.error(
-
-        error.response?.data
-          ?.message ||
-
-        "Failed creating repair"
-      );
+      progressToast.error(pToastId, { title: "Error", message: error.response?.data?.message || "Failed creating repair" });
 
     } finally {
 
@@ -191,6 +183,8 @@ export default function RepairsPage() {
     status
   ) => {
 
+    const pToastId = progressToast.loading({ title: "Updating...", message: "Updating repair status..." });
+
     try {
 
       await api.patch(
@@ -200,17 +194,13 @@ export default function RepairsPage() {
         { status }
       );
 
-      toast.success(
-        "Repair updated"
-      );
+      progressToast.success(pToastId, { title: "Updated", message: "Repair updated" });
 
       fetchData();
 
     } catch {
 
-      toast.error(
-        "Status update failed"
-      );
+      progressToast.error(pToastId, { title: "Error", message: "Status update failed" });
     }
   };
 

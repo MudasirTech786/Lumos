@@ -6,7 +6,7 @@ import Layout from "@/components/Layout";
 
 import api from "@/lib/api";
 
-import toast from "react-hot-toast";
+import progressToast from "@/lib/progressToast";
 
 import {
   ShieldCheck,
@@ -101,9 +101,8 @@ export default function InspectionsPage() {
 
       console.log(error);
 
-      toast.error(
-        "Failed loading inspections"
-      );
+      const pToastId = progressToast.loading({ title: "Error", message: "Failed loading inspections" });
+      progressToast.error(pToastId, { title: "Error", message: "Failed loading inspections" });
 
     } finally {
 
@@ -127,14 +126,15 @@ export default function InspectionsPage() {
       !form.inventory_item_id
     ) {
 
-      toast.error(
-        "Select inventory item"
-      );
+      const pToastId = progressToast.loading({ title: "Error", message: "Select inventory item" });
+      progressToast.error(pToastId, { title: "Error", message: "Select inventory item" });
 
       return;
     }
 
     setSaving(true);
+
+    const pToastId = progressToast.loading({ title: "Creating...", message: "Creating inspection..." });
 
     try {
 
@@ -145,9 +145,7 @@ export default function InspectionsPage() {
         form
       );
 
-      toast.success(
-        "Inspection created"
-      );
+      progressToast.success(pToastId, { title: "Created", message: "Inspection created" });
 
       setForm({
 
@@ -172,13 +170,7 @@ export default function InspectionsPage() {
 
       console.log(error);
 
-      toast.error(
-
-        error.response?.data
-          ?.message ||
-
-        "Failed creating inspection"
-      );
+      progressToast.error(pToastId, { title: "Error", message: error.response?.data?.message || "Failed creating inspection" });
 
     } finally {
 

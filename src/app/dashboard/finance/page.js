@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Layout from "@/components/Layout";
 import api from "@/lib/api";
 import Link from "next/link";
-import toast from "react-hot-toast";
+import progressToast from "@/lib/progressToast";
 import {
     DollarSign, TrendingUp, Receipt, Clock,
     Briefcase, Users, ArrowUpRight, Landmark,
@@ -67,7 +67,8 @@ export default function FinanceDashboardPage() {
             setShoots(shootsData);
             setPayrolls(payrollData);
         } catch {
-            toast.error("Failed to load finance dashboard");
+            const id = progressToast.loading({ title: "Error", message: "" });
+            progressToast.error(id, { title: "Error", message: "Failed to load finance dashboard" });
         } finally {
             setLoading(false);
         }

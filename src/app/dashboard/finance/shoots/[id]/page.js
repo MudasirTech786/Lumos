@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Layout from "@/components/Layout";
 import api from "@/lib/api";
-import toast from "react-hot-toast";
+import progressToast from "@/lib/progressToast";
 
 import {
     Film,
@@ -72,7 +72,8 @@ export default function ShootFinanceReportPage() {
 
             setInvoices(invoicesRes.data || []);
         } catch {
-            toast.error("Failed to load report");
+            const id = progressToast.loading({ title: "Error", message: "" });
+            progressToast.error(id, { title: "Error", message: "Failed to load report" });
         } finally {
             setLoading(false);
         }

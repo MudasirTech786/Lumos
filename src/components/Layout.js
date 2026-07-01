@@ -6,7 +6,8 @@ import { Bell, Menu, Camera, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import useAuth from "@/hooks/useAuth";
 import api from "@/lib/api";
-import toast from "react-hot-toast";
+import progressToast from "@/lib/progressToast";
+import { useConfirm } from "@/context/ConfirmContext";
 import Cropper from "react-easy-crop";
 import NizaamoLogo from "@/components/NizaamoLogo";
 import CommandPalette from "@/components/CommandPalette"; // ← NEW
@@ -93,6 +94,7 @@ export default function Layout({ children }) {
 
   const [checkingAuth, setCheckingAuth]   = useState(false);
 
+  const confirmDialog = useConfirm();
   const { user, ready, refreshUser } = useAuth();
   const router = useRouter();
   const dropdownRef       = useRef(null);
@@ -182,7 +184,14 @@ export default function Layout({ children }) {
   }, []);
 
   const handleLogout = async () => {
-    try { await api.post("/logout"); } catch {}
+    const ok = await confirmDialog({
+      variant: "logout",
+      title: "Sign Out?",
+      description: "You're about to end your current session.",
+      confirmText: "Sign Out",
+      confirmAction: () => api.post("/logout"),
+    });
+    if (!ok) return;
     localStorage.removeItem("token");
     document.cookie = "token=; Max-Age=0; path=/";
     window.location.href = "/login";
@@ -214,6 +223,7 @@ export default function Layout({ children }) {
   };
 
   const updateProfile = async () => {
+    const pToastId = progressToast.loading({ title: "Updating...", message: "Saving profile..." });
     try {
       const data = new FormData();
       data.append("name", form.name);
@@ -222,11 +232,11 @@ export default function Layout({ children }) {
       if (form.avatar instanceof File) data.append("avatar", form.avatar);
       await api.post("/profile", data, { headers: { "Content-Type": "multipart/form-data" } });
       await refreshUser();
-      toast.success("Profile updated successfully");
+      progressToast.success(pToastId, { title: "Updated", message: "Profile updated successfully" });
       setEditOpen(false);
       setLocalAvatar(null);
     } catch (err) {
-      toast.error(err?.response?.data?.message || "Failed");
+      progressToast.error(pToastId, { title: "Error", message: err?.response?.data?.message || "Failed" });
     }
   };
 
@@ -379,7 +389,7 @@ export default function Layout({ children }) {
                     <div className="p-2">
                       <button
                         onClick={() => {
-                          if (user?.name === "Super Admin") { toast.error("Super Admin profile cannot be edited"); return; }
+                          if (user?.name === "Super Admin") { const _t = progressToast.loading({ title: "Restricted", message: "Super Admin profile cannot be edited" }); progressToast.error(_t, { title: "Restricted", message: "Super Admin profile cannot be edited" }); return; }
                           setEditOpen(true); setProfileOpen(false);
                         }}
                         disabled={user?.name === "Super Admin"}
@@ -494,7 +504,7 @@ export default function Layout({ children }) {
                     <div className="p-2">
                       <button
                         onClick={() => {
-                          if (user?.name === "Super Admin") { toast.error("Super Admin profile cannot be edited"); return; }
+                          if (user?.name === "Super Admin") { const _t = progressToast.loading({ title: "Restricted", message: "Super Admin profile cannot be edited" }); progressToast.error(_t, { title: "Restricted", message: "Super Admin profile cannot be edited" }); return; }
                           setEditOpen(true); setProfileOpen(false);
                         }}
                         disabled={user?.name === "Super Admin"}
