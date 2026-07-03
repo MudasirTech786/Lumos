@@ -17,6 +17,9 @@ import {
   Package,
 } from "lucide-react";
 
+import usePageLoadingOverlay from "@/hooks/usePageLoadingOverlay";
+import PageLoadingOverlay from "@/components/ui/PageLoadingOverlay";
+
 export default function CheckoutsPage() {
 
   const [usages, setUsages] =
@@ -27,6 +30,8 @@ export default function CheckoutsPage() {
 
   const [search, setSearch] =
     useState("");
+
+  const overlay = usePageLoadingOverlay("Loading Checkouts...");
 
   /* ====================================================== */
   /* FETCH */
@@ -116,6 +121,8 @@ export default function CheckoutsPage() {
       progressToast.error(pToastId, { title: "Error", message: error.response?.data?.message || "Failed to load checkouts" });
 
     } finally {
+
+      overlay.finish();
 
       setLoading(false);
     }
@@ -225,7 +232,7 @@ export default function CheckoutsPage() {
   };
 
   return (
-
+    <>
     <Layout>
 
       <div className="
@@ -564,6 +571,7 @@ export default function CheckoutsPage() {
       </div>
 
     </Layout>
-
+    <PageLoadingOverlay visible={overlay.visible} overlayRect={overlay.overlayRect} text={overlay.text} />
+    </>
   );
 }

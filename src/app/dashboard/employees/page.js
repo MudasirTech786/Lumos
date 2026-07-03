@@ -32,6 +32,9 @@ import { useConfirm } from "@/context/ConfirmContext";
 import { useRouter } from "next/navigation";
 import StatsCard from "@/components/ui/StatsCard";
 
+import usePageLoadingOverlay from "@/hooks/usePageLoadingOverlay";
+import PageLoadingOverlay from "@/components/ui/PageLoadingOverlay";
+
 export default function EmployeesPage() {
 
     const router = useRouter();
@@ -43,6 +46,8 @@ export default function EmployeesPage() {
     const [search, setSearch] = useState("");
 
     const [loading, setLoading] = useState(true);
+
+    const overlay = usePageLoadingOverlay("Loading Employees...");
 
     const [openModal, setOpenModal] = useState(false);
 
@@ -116,6 +121,7 @@ export default function EmployeesPage() {
         } finally {
 
             setLoading(false);
+            overlay.finish();
         }
     };
 
@@ -299,6 +305,7 @@ export default function EmployeesPage() {
     );
 
     return (
+        <>
         <ProtectedPage permission="employees.view">
             <Layout>
 
@@ -1581,6 +1588,8 @@ export default function EmployeesPage() {
 
             </Layout>
         </ProtectedPage>
+        <PageLoadingOverlay visible={overlay.visible} overlayRect={overlay.overlayRect} text={overlay.text} />
+        </>
     );
 }
 

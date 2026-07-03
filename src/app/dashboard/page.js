@@ -1,6 +1,10 @@
 "use client";
 
 import Layout from "@/components/Layout";
+import { useEffect } from "react";
+
+import usePageLoadingOverlay from "@/hooks/usePageLoadingOverlay";
+import PageLoadingOverlay from "@/components/ui/PageLoadingOverlay";
 
 import {
   Sparkles,
@@ -31,6 +35,13 @@ export default function Dashboard() {
     if (h < 17) return "Good afternoon";
     return "Good evening";
   })();
+
+  const overlay = usePageLoadingOverlay("Loading Dashboard...");
+
+  useEffect(() => {
+    const timer = setTimeout(() => overlay.finish(), 800);
+    return () => clearTimeout(timer);
+  }, []);
 
   const stats = [
     {
@@ -106,7 +117,7 @@ export default function Dashboard() {
   ];
 
   return (
-
+    <>
     <Layout>
 
       <div className="relative min-h-screen overflow-hidden rounded-[40px] bg-[#f5f9ff] p-4 md:p-6">
@@ -455,6 +466,8 @@ export default function Dashboard() {
         </div>
       </div>
     </Layout>
+    <PageLoadingOverlay visible={overlay.visible} overlayRect={overlay.overlayRect} text={overlay.text} />
+    </>
   );
 }
 

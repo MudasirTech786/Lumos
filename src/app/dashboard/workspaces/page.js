@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 
 import { useEffect, useState } from "react";
+import usePageLoadingOverlay from "@/hooks/usePageLoadingOverlay";
+import PageLoadingOverlay from "@/components/ui/PageLoadingOverlay";
 
 import api from "@/lib/api";
 
@@ -58,6 +60,8 @@ export default function Workspaces() {
   const [activeTab, setActiveTab] =
     useState("tab1");
 
+  const overlay = usePageLoadingOverlay("Loading Workspaces...");
+
   const [form, setForm] = useState({
     name: "",
     category: "",
@@ -88,6 +92,8 @@ export default function Workspaces() {
 
       const id = progressToast.loading({ title: "Error", message: "Failed to load apps" });
       progressToast.error(id, { title: "Error", message: "Failed to load apps" });
+    } finally {
+      overlay.finish();
     }
   };
 
@@ -207,6 +213,7 @@ export default function Workspaces() {
   };
 
   return (
+    <>
     <ProtectedPage permission="workspaces.view">
       <Layout>
 
@@ -604,6 +611,8 @@ export default function Workspaces() {
 
       </Layout>
     </ProtectedPage>
+    <PageLoadingOverlay visible={overlay.visible} overlayRect={overlay.overlayRect} text={overlay.text} />
+    </>
   );
 }
 

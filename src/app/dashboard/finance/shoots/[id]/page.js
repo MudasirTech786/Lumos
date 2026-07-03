@@ -22,6 +22,8 @@ import {
     ChevronRight,
     BarChart3,
 } from "lucide-react";
+import usePageLoadingOverlay from "@/hooks/usePageLoadingOverlay";
+import PageLoadingOverlay from "@/components/ui/PageLoadingOverlay";
 
 export default function ShootFinanceReportPage() {
     const params = useParams();
@@ -41,6 +43,8 @@ export default function ShootFinanceReportPage() {
     });
     const [selectedDays, setSelectedDays] = useState(null);
     const [activeSection, setActiveSection] = useState("crew");
+
+    const overlay = usePageLoadingOverlay("Loading Production Finance...");
 
     const fetchReport = async () => {
         try {
@@ -75,6 +79,7 @@ export default function ShootFinanceReportPage() {
             const id = progressToast.loading({ title: "Error", message: "" });
             progressToast.error(id, { title: "Error", message: "Failed to load report" });
         } finally {
+            overlay.finish();
             setLoading(false);
         }
     };
@@ -83,20 +88,7 @@ export default function ShootFinanceReportPage() {
         if (shootId) fetchReport();
     }, [shootId]);
 
-    if (loading) {
-        return (
-            <Layout>
-                <div className="min-h-screen flex items-center justify-center bg-slate-50">
-                    <div className="text-center space-y-4">
-                        <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto" />
-                        <p className="text-slate-500 font-medium tracking-wide text-sm uppercase">
-                            Generating Report
-                        </p>
-                    </div>
-                </div>
-            </Layout>
-        );
-    }
+    // ── Loading handled by overlay ──
 
     if (!shoot || !finance) {
         return (
@@ -171,6 +163,7 @@ export default function ShootFinanceReportPage() {
     ];
 
     return (
+        <>
         <Layout>
             <div className="min-h-screen bg-slate-50">
 
@@ -802,6 +795,8 @@ export default function ShootFinanceReportPage() {
                 </div>
             </div>
         </Layout>
+        <PageLoadingOverlay visible={overlay.visible} overlayRect={overlay.overlayRect} text={overlay.text} />
+    </>
     );
 }
 

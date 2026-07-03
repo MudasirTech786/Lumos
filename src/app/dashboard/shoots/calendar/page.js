@@ -31,6 +31,8 @@ import "react-big-calendar/lib/css/react-big-calendar.css";
 
 import
   "react-big-calendar/lib/addons/dragAndDrop/styles.css";
+import usePageLoadingOverlay from "@/hooks/usePageLoadingOverlay";
+import PageLoadingOverlay from "@/components/ui/PageLoadingOverlay";
 
 import "./calendar.css";
 
@@ -67,6 +69,8 @@ export default function ShootCalendarPage() {
   const [isMobile,
     setIsMobile] =
     useState(false);
+
+  const overlay = usePageLoadingOverlay("Loading Calendar...");
 
   /* ========================================================= */
   /* MOBILE DETECTION */
@@ -174,6 +178,7 @@ export default function ShootCalendarPage() {
     } finally {
 
       setLoading(false);
+      overlay.finish();
     }
   };
 
@@ -668,6 +673,7 @@ export default function ShootCalendarPage() {
   };
 
   return (
+    <>
     <Layout>
 
       <div
@@ -920,6 +926,8 @@ export default function ShootCalendarPage() {
       </div>
 
     </Layout>
+    <PageLoadingOverlay visible={overlay.visible} overlayRect={overlay.overlayRect} text={overlay.text} />
+    </>
   );
 }
 

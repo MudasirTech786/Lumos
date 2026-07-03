@@ -18,6 +18,9 @@ import {
     Briefcase,
 } from "lucide-react";
 
+import usePageLoadingOverlay from "@/hooks/usePageLoadingOverlay";
+import PageLoadingOverlay from "@/components/ui/PageLoadingOverlay";
+
 export default function CrewDetail() {
 
     const { id } = useParams();
@@ -27,6 +30,8 @@ export default function CrewDetail() {
     const [crew, setCrew] = useState(null);
 
     const [loading, setLoading] = useState(true);
+
+    const overlay = usePageLoadingOverlay("Loading Crew Member...");
 
     useEffect(() => {
 
@@ -59,6 +64,7 @@ export default function CrewDetail() {
         } finally {
 
             setLoading(false);
+            overlay.finish();
         }
     };
 
@@ -97,7 +103,7 @@ export default function CrewDetail() {
         totalAllowance;
 
     return (
-
+        <>
         <Layout>
 
             <div className="space-y-6">
@@ -420,6 +426,8 @@ export default function CrewDetail() {
             </div>
 
         </Layout>
+        <PageLoadingOverlay visible={overlay.visible} overlayRect={overlay.overlayRect} text={overlay.text} />
+        </>
     );
 }
 

@@ -15,6 +15,8 @@ import {
     Clapperboard, Calendar, Hash, Percent,
     Tag, StickyNote, Check,
 } from "lucide-react";
+import usePageLoadingOverlay from "@/hooks/usePageLoadingOverlay";
+import PageLoadingOverlay from "@/components/ui/PageLoadingOverlay";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const fmt   = (n) => Number(n || 0).toLocaleString("en-PK");
@@ -265,6 +267,8 @@ function CreateProductionInvoiceContent() {
     const [shoot,    setShoot]    = useState(null);
     const [shootExpenses, setShootExpenses] = useState([]);
 
+    const overlay = usePageLoadingOverlay("Loading...");
+
     const [form, setForm] = useState({
         shoot_id:        "",
         title:           "",
@@ -414,6 +418,7 @@ function CreateProductionInvoiceContent() {
                 message: err?.response?.data?.message || "Failed to create invoice",
             });
         } finally {
+            overlay.finish();
             setLoading(false);
         }
     };
@@ -422,6 +427,7 @@ function CreateProductionInvoiceContent() {
     const canPrev = step > 0;
 
     return (
+        <>
         <Layout>
             <div className="min-h-screen bg-slate-50 font-sans pb-32">
 
@@ -807,6 +813,8 @@ function CreateProductionInvoiceContent() {
 
             </div>
         </Layout>
+        <PageLoadingOverlay visible={overlay.visible} overlayRect={overlay.overlayRect} text={overlay.text} />
+    </>
     );
 }
 

@@ -11,6 +11,8 @@ import { useParams } from "next/navigation";
 import api from "@/lib/api";
 
 import progressToast from "@/lib/progressToast";
+import usePageLoadingOverlay from "@/hooks/usePageLoadingOverlay";
+import PageLoadingOverlay from "@/components/ui/PageLoadingOverlay";
 
 import {
     Briefcase,
@@ -53,6 +55,8 @@ export default function EditShootPage() {
             status: "planned",
             notes: "",
         });
+
+    const overlay = usePageLoadingOverlay("Loading Production...");
 
     useEffect(() => {
 
@@ -124,6 +128,7 @@ export default function EditShootPage() {
         } finally {
 
             setFetching(false);
+            overlay.finish();
         }
 
 
@@ -167,33 +172,8 @@ export default function EditShootPage() {
         };
 
 
-    if (fetching) {
-
-
-        return (
-
-            <Layout>
-
-                <div className="
-      flex
-      items-center
-      justify-center
-      h-[500px]
-    ">
-
-                    Loading Production...
-
-                </div>
-
-            </Layout>
-        );
-
-
-    }
-
     return (
-
-
+        <>
         <Layout>
 
             <div className="
@@ -715,9 +695,9 @@ hover:border-blue-200
 
             </div >
 
-        </Layout >
-
-
+        </Layout>
+        <PageLoadingOverlay visible={overlay.visible} overlayRect={overlay.overlayRect} text={overlay.text} />
+        </>
     );
 }
 /* ========================================================= */

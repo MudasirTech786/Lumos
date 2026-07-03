@@ -18,6 +18,9 @@ import {
   X,
 } from "lucide-react";
 
+import usePageLoadingOverlay from "@/hooks/usePageLoadingOverlay";
+import PageLoadingOverlay from "@/components/ui/PageLoadingOverlay";
+
 export default function InventoryItemsPage() {
 
   const [items, setItems] =
@@ -44,6 +47,8 @@ export default function InventoryItemsPage() {
     useState(null);
 
   const confirmDialog = useConfirm();
+
+  const overlay = usePageLoadingOverlay("Loading Items...");
 
   const initialForm = {
 
@@ -119,6 +124,8 @@ export default function InventoryItemsPage() {
       progressToast.error(id, { title: "Error", message: "Failed to load inventory" });
 
     } finally {
+
+      overlay.finish();
 
       setLoading(false);
 
@@ -331,7 +338,7 @@ export default function InventoryItemsPage() {
   }, [items, search]);
 
   return (
-
+    <>
     <Layout>
 
       {/* ====================================================== */}
@@ -1089,7 +1096,9 @@ export default function InventoryItemsPage() {
       )
       }
 
-    </Layout >
+    </Layout>
+    <PageLoadingOverlay visible={overlay.visible} overlayRect={overlay.overlayRect} text={overlay.text} />
+    </>
   );
 }
 

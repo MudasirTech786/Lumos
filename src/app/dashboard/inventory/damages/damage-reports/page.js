@@ -19,6 +19,9 @@ import {
   Boxes,
 } from "lucide-react";
 
+import usePageLoadingOverlay from "@/hooks/usePageLoadingOverlay";
+import PageLoadingOverlay from "@/components/ui/PageLoadingOverlay";
+
 export default function DamageReportsPage() {
 
   const [loading, setLoading] =
@@ -55,6 +58,8 @@ export default function DamageReportsPage() {
 
       estimated_cost: "",
     });
+
+  const overlay = usePageLoadingOverlay("Loading Damage Reports...");
 
   /* ========================================================= */
   /* FETCH */
@@ -101,6 +106,8 @@ export default function DamageReportsPage() {
       progressToast.error(pToastId, { title: "Error", message: "Failed loading reports" });
 
     } finally {
+
+      overlay.finish();
 
       setLoading(false);
     }
@@ -278,7 +285,7 @@ export default function DamageReportsPage() {
   if (loading) {
 
     return (
-
+      <>
       <Layout>
 
         <div className="
@@ -292,11 +299,13 @@ export default function DamageReportsPage() {
         </div>
 
       </Layout>
+      <PageLoadingOverlay visible={overlay.visible} overlayRect={overlay.overlayRect} text={overlay.text} />
+      </>
     );
   }
 
   return (
-
+    <>
     <Layout>
 
       <div className="
@@ -721,6 +730,8 @@ export default function DamageReportsPage() {
       </div>
 
     </Layout>
+    <PageLoadingOverlay visible={overlay.visible} overlayRect={overlay.overlayRect} text={overlay.text} />
+    </>
   );
 }
 

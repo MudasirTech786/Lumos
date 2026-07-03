@@ -7,6 +7,8 @@ import Layout from "@/components/Layout";
 import api from "@/lib/api";
 
 import progressToast from "@/lib/progressToast";
+import usePageLoadingOverlay from "@/hooks/usePageLoadingOverlay";
+import PageLoadingOverlay from "@/components/ui/PageLoadingOverlay";
 
 import Link from "next/link";
 
@@ -34,6 +36,8 @@ export default function SchedulingDashboard() {
   const [showIssues, setShowIssues] =
     useState(false);
 
+  const overlay = usePageLoadingOverlay("Loading Schedule...");
+
   /* ====================================================== */
   /* FETCH */
   /* ====================================================== */
@@ -60,6 +64,7 @@ export default function SchedulingDashboard() {
     } finally {
 
       setLoading(false);
+      overlay.finish();
     }
   };
 
@@ -180,32 +185,8 @@ export default function SchedulingDashboard() {
 
   }, [shoots]);
 
-  /* ====================================================== */
-  /* LOADING */
-  /* ====================================================== */
-
-  if (loading) {
-
-    return (
-
-      <Layout>
-
-        <div className="
-          py-24
-          text-center
-          text-gray-500
-        ">
-
-          Loading productions...
-
-        </div>
-
-      </Layout>
-    );
-  }
-
   return (
-
+    <>
     <Layout>
 
       <div className="
@@ -825,6 +806,8 @@ export default function SchedulingDashboard() {
       )}
 
     </Layout>
+    <PageLoadingOverlay visible={overlay.visible} overlayRect={overlay.overlayRect} text={overlay.text} />
+    </>
   );
 }
 

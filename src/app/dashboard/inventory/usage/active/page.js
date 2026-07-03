@@ -18,6 +18,9 @@ import {
   X,
 } from "lucide-react";
 
+import usePageLoadingOverlay from "@/hooks/usePageLoadingOverlay";
+import PageLoadingOverlay from "@/components/ui/PageLoadingOverlay";
+
 export default function ActiveUsagePage() {
 
   const [usages, setUsages] =
@@ -83,6 +86,8 @@ export default function ActiveUsagePage() {
 
   const [form, setForm] =
     useState(initialForm);
+
+  const overlay = usePageLoadingOverlay("Loading Active Usage...");
 
   /* ====================================================== */
   /* FETCH */
@@ -381,6 +386,8 @@ export default function ActiveUsagePage() {
 
     } finally {
 
+      overlay.finish();
+
       setLoading(false);
     }
   };
@@ -591,7 +598,7 @@ export default function ActiveUsagePage() {
   };
 
   return (
-
+    <>
     <Layout>
 
       <div className={`
@@ -1779,7 +1786,8 @@ export default function ActiveUsagePage() {
 
         )}
     </Layout>
-
+    <PageLoadingOverlay visible={overlay.visible} overlayRect={overlay.overlayRect} text={overlay.text} />
+    </>
   );
 }
 

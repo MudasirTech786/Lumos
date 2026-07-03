@@ -13,6 +13,9 @@ import {
   Search,
 } from "lucide-react";
 
+import usePageLoadingOverlay from "@/hooks/usePageLoadingOverlay";
+import PageLoadingOverlay from "@/components/ui/PageLoadingOverlay";
+
 export default function StockPage() {
 
   const [items, setItems] =
@@ -23,6 +26,8 @@ export default function StockPage() {
 
   const [search, setSearch] =
     useState("");
+
+  const overlay = usePageLoadingOverlay("Loading Stock...");
 
   const fetchItems = async () => {
 
@@ -40,6 +45,8 @@ export default function StockPage() {
       progressToast.error(id, { title: "Error", message: "Failed to load stock" });
 
     } finally {
+
+      overlay.finish();
 
       setLoading(false);
 
@@ -70,7 +77,7 @@ export default function StockPage() {
     }, [items, search]);
 
   return (
-
+    <>
     <Layout>
 
       <div className="mx-auto max-w-7xl pb-24">
@@ -222,6 +229,7 @@ export default function StockPage() {
       </div>
 
     </Layout>
-
+    <PageLoadingOverlay visible={overlay.visible} overlayRect={overlay.overlayRect} text={overlay.text} />
+    </>
   );
 }

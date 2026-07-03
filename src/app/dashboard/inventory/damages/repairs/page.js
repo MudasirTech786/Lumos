@@ -20,6 +20,9 @@ import {
   ClipboardCheck,
 } from "lucide-react";
 
+import usePageLoadingOverlay from "@/hooks/usePageLoadingOverlay";
+import PageLoadingOverlay from "@/components/ui/PageLoadingOverlay";
+
 export default function RepairsPage() {
 
   const [loading, setLoading] =
@@ -56,6 +59,8 @@ export default function RepairsPage() {
 
       repair_cost: "",
     });
+
+  const overlay = usePageLoadingOverlay("Loading Repairs...");
 
   /* ========================================================= */
   /* FETCH */
@@ -103,6 +108,8 @@ export default function RepairsPage() {
       progressToast.error(pToastId, { title: "Error", message: "Failed loading repairs" });
 
     } finally {
+
+      overlay.finish();
 
       setLoading(false);
     }
@@ -288,7 +295,7 @@ export default function RepairsPage() {
   if (loading) {
 
     return (
-
+      <>
       <Layout>
 
         <div className="
@@ -302,11 +309,13 @@ export default function RepairsPage() {
         </div>
 
       </Layout>
+      <PageLoadingOverlay visible={overlay.visible} overlayRect={overlay.overlayRect} text={overlay.text} />
+      </>
     );
   }
 
   return (
-
+    <>
     <Layout>
 
       <div className="
@@ -899,6 +908,8 @@ export default function RepairsPage() {
       </div>
 
     </Layout>
+    <PageLoadingOverlay visible={overlay.visible} overlayRect={overlay.overlayRect} text={overlay.text} />
+    </>
   );
 }
 

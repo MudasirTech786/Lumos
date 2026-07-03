@@ -8,18 +8,16 @@ import {
 } from 'lucide-react';
 
 // ── Variant configuration ────────────────────────────────────────────────────
-// Icon containers match the reference image style:
-// dark-tinted bg of the variant colour + glowing border ring, no white/pastel.
+// Matches the LUMOS design system: soft pastel icon chips (blue-100/purple-100/
+// green-100/amber-100 style), solid-color top accent bar (same idea as the
+// stat-card top borders on Platform Users), blue-600 as the default primary.
 const VARIANTS = {
   danger: {
     Icon: Trash2,
     color: '#DC2626',
     hoverColor: '#B91C1C',
-    accentFrom: '#DC2626',
-    accentVia: '#EF4444',
-    accentTo: '#F87171',
+    ring: 'rgba(220,38,38,0.16)',
     iconBg: '#FEF2F2',
-    iconBorder: 'rgba(220,38,38,0.18)',
     iconColor: '#DC2626',
     loadingText: 'Deleting...',
   },
@@ -27,23 +25,17 @@ const VARIANTS = {
     Icon: AlertTriangle,
     color: '#D97706',
     hoverColor: '#B45309',
-    accentFrom: '#D97706',
-    accentVia: '#F59E0B',
-    accentTo: '#FCD34D',
+    ring: 'rgba(217,119,6,0.16)',
     iconBg: '#FFFBEB',
-    iconBorder: 'rgba(217,119,6,0.18)',
     iconColor: '#D97706',
     loadingText: 'Processing...',
   },
   success: {
-    Icon: Send,
+    Icon: CheckCircle,
     color: '#059669',
     hoverColor: '#047857',
-    accentFrom: '#059669',
-    accentVia: '#10B981',
-    accentTo: '#6EE7B7',
+    ring: 'rgba(5,150,105,0.16)',
     iconBg: '#F0FDF4',
-    iconBorder: 'rgba(5,150,105,0.18)',
     iconColor: '#059669',
     loadingText: 'Publishing...',
   },
@@ -51,11 +43,8 @@ const VARIANTS = {
     Icon: Info,
     color: '#2563EB',
     hoverColor: '#1D4ED8',
-    accentFrom: '#2563EB',
-    accentVia: '#3B82F6',
-    accentTo: '#93C5FD',
+    ring: 'rgba(37,99,235,0.16)',
     iconBg: '#EFF6FF',
-    iconBorder: 'rgba(37,99,235,0.18)',
     iconColor: '#2563EB',
     loadingText: 'Please wait...',
   },
@@ -63,11 +52,8 @@ const VARIANTS = {
     Icon: LogOut,
     color: '#2563EB',
     hoverColor: '#1D4ED8',
-    accentFrom: '#2563EB',
-    accentVia: '#3B82F6',
-    accentTo: '#93C5FD',
+    ring: 'rgba(37,99,235,0.16)',
     iconBg: '#EFF6FF',
-    iconBorder: 'rgba(37,99,235,0.18)',
     iconColor: '#2563EB',
     loadingText: 'Signing out...',
   },
@@ -75,11 +61,8 @@ const VARIANTS = {
     Icon: Archive,
     color: '#D97706',
     hoverColor: '#B45309',
-    accentFrom: '#D97706',
-    accentVia: '#F59E0B',
-    accentTo: '#FCD34D',
+    ring: 'rgba(217,119,6,0.16)',
     iconBg: '#FFFBEB',
-    iconBorder: 'rgba(217,119,6,0.18)',
     iconColor: '#D97706',
     loadingText: 'Archiving...',
   },
@@ -87,11 +70,8 @@ const VARIANTS = {
     Icon: RotateCcw,
     color: '#7C3AED',
     hoverColor: '#6D28D9',
-    accentFrom: '#7C3AED',
-    accentVia: '#8B5CF6',
-    accentTo: '#C4B5FD',
+    ring: 'rgba(124,58,237,0.16)',
     iconBg: '#F5F3FF',
-    iconBorder: 'rgba(124,58,237,0.18)',
     iconColor: '#7C3AED',
     loadingText: 'Resetting...',
   },
@@ -99,11 +79,8 @@ const VARIANTS = {
     Icon: Send,
     color: '#059669',
     hoverColor: '#047857',
-    accentFrom: '#059669',
-    accentVia: '#10B981',
-    accentTo: '#6EE7B7',
+    ring: 'rgba(5,150,105,0.16)',
     iconBg: '#F0FDF4',
-    iconBorder: 'rgba(5,150,105,0.18)',
     iconColor: '#059669',
     loadingText: 'Publishing...',
   },
@@ -229,7 +206,7 @@ export default function ConfirmDialog({
           aria-describedby="confirm-desc"
         >
           {/* Backdrop */}
-          <div className="absolute inset-0 bg-black/35 backdrop-blur-[6px]" />
+          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-[3px]" />
 
           {/* Dialog card */}
           <motion.div
@@ -239,30 +216,28 @@ export default function ConfirmDialog({
             animate="visible"
             exit="exit"
             onClick={(e) => e.stopPropagation()}
-            className="relative w-full max-w-[440px] bg-white dark:bg-zinc-900 rounded-[20px] overflow-hidden"
+            className="relative w-full max-w-[440px] bg-white rounded-2xl border border-slate-200 overflow-hidden"
             style={{
               boxShadow:
-                '0 32px 64px -12px rgba(0,0,0,0.18), 0 0 0 1px rgba(0,0,0,0.06)',
+                '0 20px 48px -12px rgba(15,23,42,0.18), 0 0 0 1px rgba(15,23,42,0.02)',
             }}
           >
-            {/* ── Top accent bar ── */}
+            {/* ── Top accent bar (matches the stat-card top borders) ── */}
             <div
               className="h-[3px] w-full"
-              style={{
-                backgroundColor: '#b91c1c',
-              }}
+              style={{ backgroundColor: cfg.color }}
               aria-hidden="true"
             />
 
-            <div className="px-8 pt-8 pb-7">
+            <div className="px-7 pt-7 pb-6">
 
               {/* ── Icon ── */}
               <div className="flex justify-center mb-5">
                 <div
-                  className="w-[52px] h-[52px] rounded-[14px] flex items-center justify-center"
+                  className="w-[52px] h-[52px] rounded-xl flex items-center justify-center"
                   style={{
                     backgroundColor: cfg.iconBg,
-                    boxShadow: cfg.iconGlow,
+                    boxShadow: `0 0 0 6px ${cfg.ring}`,
                   }}
                 >
                   <Icon size={22} style={{ color: cfg.iconColor }} strokeWidth={2.2} />
@@ -272,7 +247,7 @@ export default function ConfirmDialog({
               {/* ── Title ── */}
               <h2
                 id="confirm-title"
-                className="text-center text-[17px] font-[500] text-gray-900 dark:text-zinc-50 leading-snug tracking-[-0.01em] mb-2"
+                className="text-center text-[18px] font-bold text-slate-900 leading-snug tracking-[-0.01em] mb-2"
               >
                 {title}
               </h2>
@@ -286,7 +261,7 @@ export default function ConfirmDialog({
                     initial="hidden"
                     animate="visible"
                     exit="hidden"
-                    className="text-center text-[13.5px] font-[500]"
+                    className="text-center text-[13.5px] font-medium"
                     style={{ color: cfg.color }}
                   >
                     {loadingText}
@@ -299,7 +274,7 @@ export default function ConfirmDialog({
                     initial="hidden"
                     animate="visible"
                     exit="hidden"
-                    className="text-center text-[13.5px] text-gray-500 dark:text-zinc-400 leading-relaxed max-w-xs mx-auto"
+                    className="text-center text-[13.5px] text-slate-500 leading-relaxed max-w-xs mx-auto"
                   >
                     {description}
                   </motion.p>
@@ -312,7 +287,7 @@ export default function ConfirmDialog({
                   {meta.map(({ icon: MetaIcon, label }, i) => (
                     <div
                       key={i}
-                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] text-gray-500 dark:text-zinc-400 bg-gray-50 dark:bg-zinc-800 border border-gray-200/80 dark:border-zinc-700"
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-medium text-slate-500 bg-slate-50/70 border border-slate-200"
                     >
                       <MetaIcon size={12} strokeWidth={2} />
                       {label}
@@ -329,18 +304,18 @@ export default function ConfirmDialog({
                     animate={{ opacity: 1, y: 0, height: 'auto' }}
                     exit={{ opacity: 0, y: -4, height: 0 }}
                     transition={{ duration: 0.18 }}
-                    className="mt-3 flex items-center gap-2 px-3 py-2.5 rounded-[10px] bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50"
+                    className="mt-3 flex items-center gap-2 px-3 py-2.5 rounded-xl bg-red-50 border border-red-200"
                   >
                     <svg className="w-3.5 h-3.5 text-red-500 flex-shrink-0" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
                       <path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm0 4a.75.75 0 0 1 .75.75v3a.75.75 0 0 1-1.5 0v-3A.75.75 0 0 1 8 5zm0 6.5a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5z" />
                     </svg>
-                    <p className="text-[12.5px] font-[500] text-red-600 dark:text-red-400">{errorMessage}</p>
+                    <p className="text-[12.5px] font-medium text-red-600">{errorMessage}</p>
                   </motion.div>
                 )}
               </AnimatePresence>
 
               {/* ── Divider ── */}
-              <div className="h-px bg-gray-100 dark:bg-zinc-800 my-6 -mx-8" />
+              <div className="h-px bg-slate-100 my-6 -mx-7" />
 
               {/* ── Action buttons ── */}
               <div className="flex items-center gap-2.5">
@@ -348,7 +323,7 @@ export default function ConfirmDialog({
                 <button
                   onClick={onCancel}
                   disabled={loading}
-                  className="flex-1 h-11 rounded-[12px] text-[14px] font-[500] text-gray-600 dark:text-zinc-300 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 transition-all duration-150 hover:bg-gray-100 dark:hover:bg-zinc-700 hover:text-gray-800 dark:hover:text-zinc-100 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-300"
+                  className="flex-1 h-11 rounded-xl text-[14px] font-semibold text-slate-600 bg-slate-50/70 border border-slate-200 transition-all duration-150 hover:bg-slate-100 hover:text-slate-800 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
                 >
                   {cancelText}
                 </button>
@@ -358,30 +333,30 @@ export default function ConfirmDialog({
                   ref={confirmRef}
                   onClick={onConfirm}
                   disabled={loading}
-                  className="flex-[1.4] h-11 rounded-[12px] text-[14px] font-[500] text-white inline-flex items-center justify-center gap-2 transition-all duration-150 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed focus-visible:outline-none"
+                  className="flex-[1.4] h-11 rounded-xl text-[14px] font-semibold text-white inline-flex items-center justify-center gap-2 transition-all duration-150 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed focus-visible:outline-none"
                   style={{
                     backgroundColor: cfg.color,
-                    boxShadow: `0 1px 2px rgba(0,0,0,0.12), 0 0 0 1px ${cfg.color}22`,
+                    boxShadow: `0 1px 2px rgba(15,23,42,0.12), 0 0 0 1px ${cfg.color}22`,
                   }}
                   onMouseEnter={(e) => {
                     if (!loading) {
                       e.currentTarget.style.backgroundColor = cfg.hoverColor;
                       e.currentTarget.style.transform = 'translateY(-1px)';
-                      e.currentTarget.style.boxShadow = `0 4px 12px ${cfg.color}40, 0 0 0 1px ${cfg.color}22`;
+                      e.currentTarget.style.boxShadow = `0 6px 16px ${cfg.color}38, 0 0 0 1px ${cfg.color}22`;
                     }
                   }}
                   onMouseLeave={(e) => {
                     if (!loading) {
                       e.currentTarget.style.backgroundColor = cfg.color;
                       e.currentTarget.style.transform = 'translateY(0)';
-                      e.currentTarget.style.boxShadow = `0 1px 2px rgba(0,0,0,0.12), 0 0 0 1px ${cfg.color}22`;
+                      e.currentTarget.style.boxShadow = `0 1px 2px rgba(15,23,42,0.12), 0 0 0 1px ${cfg.color}22`;
                     }
                   }}
                   onFocus={(e) => {
                     e.currentTarget.style.boxShadow = `0 0 0 2px white, 0 0 0 4px ${cfg.color}`;
                   }}
                   onBlur={(e) => {
-                    e.currentTarget.style.boxShadow = `0 1px 2px rgba(0,0,0,0.12), 0 0 0 1px ${cfg.color}22`;
+                    e.currentTarget.style.boxShadow = `0 1px 2px rgba(15,23,42,0.12), 0 0 0 1px ${cfg.color}22`;
                   }}
                 >
                   {loading ? (

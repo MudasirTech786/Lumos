@@ -11,6 +11,8 @@ import {
     X, Filter, ArrowLeft, TrendingUp, Layers,
     Camera, ChevronRight,
 } from "lucide-react";
+import usePageLoadingOverlay from "@/hooks/usePageLoadingOverlay";
+import PageLoadingOverlay from "@/components/ui/PageLoadingOverlay";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const fmt = (n) => Number(n || 0).toLocaleString("en-PK");
@@ -57,6 +59,8 @@ export default function ShootExpensesPage() {
 
     const confirmDialog = useConfirm();
 
+    const overlay = usePageLoadingOverlay("Loading Expenses...");
+
     const fetchData = async () => {
         try {
             setLoading(true);
@@ -70,6 +74,7 @@ export default function ShootExpensesPage() {
             const id = progressToast.loading({ title: "Error", message: "" });
             progressToast.error(id, { title: "Error", message: "Failed to load expenses" });
         } finally {
+            overlay.finish();
             setLoading(false);
         }
     };
@@ -133,21 +138,8 @@ export default function ShootExpensesPage() {
     const avgAmount        = expenses.length > 0 ? Math.round(totalAmount / expenses.length) : 0;
     const filteredTotal    = filteredExpenses.reduce((acc, e) => acc + Number(e.amount || 0), 0);
 
-    // ── Loading ──────────────────────────────────────────────────────────────
-    if (loading) return (
-        <Layout>
-            <div className="min-h-screen flex items-center justify-center bg-slate-50">
-                <div className="flex flex-col items-center gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-900 to-blue-500 flex items-center justify-center shadow-lg animate-pulse">
-                        <Receipt size={24} className="text-white" />
-                    </div>
-                    <p className="text-slate-500 text-base font-medium">Loading Expenses…</p>
-                </div>
-            </div>
-        </Layout>
-    );
-
     return (
+        <>
         <Layout>
             <div className="min-h-screen bg-slate-50 font-sans pb-20">
 
@@ -401,6 +393,8 @@ export default function ShootExpensesPage() {
                 />
             )}
         </Layout>
+        <PageLoadingOverlay visible={overlay.visible} overlayRect={overlay.overlayRect} text={overlay.text} />
+    </>
     );
 }
 

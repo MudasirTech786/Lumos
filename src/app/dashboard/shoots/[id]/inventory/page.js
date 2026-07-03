@@ -13,6 +13,8 @@ import {
   Boxes, ScanLine, ShieldCheck, Hash, X,
   ChevronDown, Layers, RefreshCw, Tag,
 } from "lucide-react";
+import usePageLoadingOverlay from "@/hooks/usePageLoadingOverlay";
+import PageLoadingOverlay from "@/components/ui/PageLoadingOverlay";
 
 /* ─── STATUS CONFIG ──────────────────────────────────── */
 const USAGE_STATUS = {
@@ -245,6 +247,7 @@ export default function ShootInventoryPage() {
   const selectedItem = items.find((i) => i.id == form.inventory_item_id);
 
   const confirmDialog = useConfirm();
+  const overlay = usePageLoadingOverlay("Loading Inventory...");
 
   /* ── fetch ── */
   const fetchData = async () => {
@@ -262,7 +265,7 @@ export default function ShootInventoryPage() {
       const id = progressToast.loading({ title: "Error", message: "" });
       progressToast.error(id, { title: "Error", message: "Failed loading inventory" });
     }
-    finally   { setLoading(false); }
+    finally   { setLoading(false); overlay.finish(); }
   };
   useEffect(() => { fetchData(); }, []);
 
@@ -341,19 +344,8 @@ export default function ShootInventoryPage() {
     lost:       inventoryList.reduce((s, i) => s + (i.lost_quantity || 0), 0),
   }), [inventoryList]);
 
-  /* ── loading ── */
-  if (loading) return (
-    <Layout>
-      <div className="min-h-screen bg-slate-50/70 flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <RefreshCw size={22} className="text-slate-300 animate-spin" />
-          <p className="text-sm text-slate-400 font-medium">Loading inventory…</p>
-        </div>
-      </div>
-    </Layout>
-  );
-
   return (
+    <>
     <Layout>
       <div className="min-h-screen bg-slate-50/70">
         <div className="max-w-5xl mx-auto px-5 py-8 space-y-5">
@@ -612,7 +604,8 @@ export default function ShootInventoryPage() {
           </Modal>
         );
       })()}
-
     </Layout>
+    <PageLoadingOverlay visible={overlay.visible} overlayRect={overlay.overlayRect} text={overlay.text} />
+    </>
   );
 }

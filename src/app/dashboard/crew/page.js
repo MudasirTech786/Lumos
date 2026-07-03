@@ -35,6 +35,9 @@ const ImageCropModal = dynamic(() => import("@/components/ImageCropModal"), {
     ssr: false,
 });
 
+import usePageLoadingOverlay from "@/hooks/usePageLoadingOverlay";
+import PageLoadingOverlay from "@/components/ui/PageLoadingOverlay";
+
 export default function CrewPage() {
 
     const router = useRouter();
@@ -43,6 +46,8 @@ export default function CrewPage() {
     const [crew, setCrew] = useState([]);
 
     const [loading, setLoading] = useState(true);
+
+    const overlay = usePageLoadingOverlay("Loading Crew...");
 
     const [search, setSearch] = useState("");
 
@@ -154,6 +159,7 @@ export default function CrewPage() {
         } finally {
 
             setLoading(false);
+            overlay.finish();
         }
     };
 
@@ -384,6 +390,7 @@ export default function CrewPage() {
 
     // ================= UI =================
     return (
+        <>
         <ProtectedPage permission="crew.view">
             <Layout>
 
@@ -1556,6 +1563,8 @@ export default function CrewPage() {
 
             </Layout>
         </ProtectedPage>
+        <PageLoadingOverlay visible={overlay.visible} overlayRect={overlay.overlayRect} text={overlay.text} />
+        </>
     );
 }
 

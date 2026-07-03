@@ -19,6 +19,9 @@ import {
   Package,
 } from "lucide-react";
 
+import usePageLoadingOverlay from "@/hooks/usePageLoadingOverlay";
+import PageLoadingOverlay from "@/components/ui/PageLoadingOverlay";
+
 export default function ReturnsPage() {
 
   const [usages, setUsages] =
@@ -52,6 +55,8 @@ export default function ReturnsPage() {
 
   const [returnForm, setReturnForm] =
     useState(initialReturnForm);
+
+  const overlay = usePageLoadingOverlay("Loading Returns...");
 
   /* ====================================================== */
   /* FETCH */
@@ -125,6 +130,8 @@ export default function ReturnsPage() {
       progressToast.error(pToastId, { title: "Error", message: error.response?.data?.message || "Failed to load returns" });
 
     } finally {
+
+      overlay.finish();
 
       setLoading(false);
     }
@@ -296,7 +303,7 @@ export default function ReturnsPage() {
   };
 
   return (
-
+    <>
     <Layout>
 
       {/* PAGE */}
@@ -1277,7 +1284,8 @@ export default function ReturnsPage() {
       })()}
 
     </Layout>
-
+    <PageLoadingOverlay visible={overlay.visible} overlayRect={overlay.overlayRect} text={overlay.text} />
+    </>
   );
 }
 

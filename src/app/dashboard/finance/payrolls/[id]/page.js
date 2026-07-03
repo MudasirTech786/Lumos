@@ -11,6 +11,8 @@ import {
     Clock, ShieldCheck, BadgeCheck, AlertCircle,
     Users, Briefcase,
 } from "lucide-react";
+import usePageLoadingOverlay from "@/hooks/usePageLoadingOverlay";
+import PageLoadingOverlay from "@/components/ui/PageLoadingOverlay";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const fmt = (n) => `Rs ${Number(n || 0).toLocaleString("en-PK")}`;
@@ -55,6 +57,8 @@ export default function PayrollDetailPage() {
     const [confirming,  setConfirming]  = useState(null); // "approve" | "paid"
     const [actioning,   setActioning]   = useState(false);
 
+    const overlay = usePageLoadingOverlay("Loading Payroll...");
+
     const fetchPayroll = async () => {
         try {
             setLoading(true);
@@ -68,6 +72,7 @@ export default function PayrollDetailPage() {
             const id = progressToast.loading({ title: "Error", message: "" });
             progressToast.error(id, { title: "Error", message: "Failed to load payroll" });
         } finally {
+            overlay.finish();
             setLoading(false);
         }
     };
@@ -104,19 +109,7 @@ export default function PayrollDetailPage() {
         }
     };
 
-    // ── Loading ──────────────────────────────────────────────────────────────
-    if (loading) return (
-        <Layout>
-            <div className="min-h-screen flex items-center justify-center bg-slate-50">
-                <div className="flex flex-col items-center gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-900 to-blue-500 flex items-center justify-center shadow-lg animate-pulse">
-                        <Wallet size={24} className="text-white" />
-                    </div>
-                    <p className="text-slate-500 text-base font-medium">Loading Payroll…</p>
-                </div>
-            </div>
-        </Layout>
-    );
+    // ── The overlay handles loading state ──
 
     if (!payroll) return (
         <Layout>
@@ -132,6 +125,7 @@ export default function PayrollDetailPage() {
     const pendingCount  = items.length - paidCount;
 
     return (
+        <>
         <Layout>
             <div className="min-h-screen bg-slate-50 font-sans pb-20">
 
@@ -422,6 +416,8 @@ export default function PayrollDetailPage() {
                 />
             )}
         </Layout>
+        <PageLoadingOverlay visible={overlay.visible} overlayRect={overlay.overlayRect} text={overlay.text} />
+    </>
     );
 }
 

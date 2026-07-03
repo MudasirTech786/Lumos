@@ -6,6 +6,8 @@ import Layout from "@/components/Layout";
 import api from "@/lib/api";
 import progressToast from "@/lib/progressToast";
 import { useConfirm } from "@/context/ConfirmContext";
+import usePageLoadingOverlay from "@/hooks/usePageLoadingOverlay";
+import PageLoadingOverlay from "@/components/ui/PageLoadingOverlay";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import {
@@ -45,6 +47,7 @@ export default function ShootLogisticsPage() {
   });
 
   const confirmDialog = useConfirm();
+  const overlay = usePageLoadingOverlay("Loading Logistics...");
 
   /* ========================================================= */
   /* FETCH                                                      */
@@ -59,6 +62,7 @@ export default function ShootLogisticsPage() {
       progressToast.error(id, { title: "Error", message: "Failed to load logistics" });
     } finally {
       setLoading(false);
+      overlay.finish();
     }
   };
 
@@ -172,21 +176,8 @@ export default function ShootLogisticsPage() {
     };
   }, [logisticsList]);
 
-  /* ========================================================= */
-  /* LOADING                                                    */
-  /* ========================================================= */
-
-  if (loading) {
-    return (
-      <Layout>
-        <div className="py-24 text-center text-gray-500">
-          Loading transport...
-        </div>
-      </Layout>
-    );
-  }
-
   return (
+    <>
     <Layout>
       <div className="mx-auto max-w-6xl pb-24">
 
@@ -499,6 +490,8 @@ export default function ShootLogisticsPage() {
 
       </div>
     </Layout>
+    <PageLoadingOverlay visible={overlay.visible} overlayRect={overlay.overlayRect} text={overlay.text} />
+    </>
   );
 }
 

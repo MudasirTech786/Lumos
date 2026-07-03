@@ -25,6 +25,9 @@ import api from "@/lib/api";
 
 import progressToast from "@/lib/progressToast";
 
+import usePageLoadingOverlay from "@/hooks/usePageLoadingOverlay";
+import PageLoadingOverlay from "@/components/ui/PageLoadingOverlay";
+
 export default function EmployeeDetail() {
 
   const { id } = useParams();
@@ -34,6 +37,8 @@ export default function EmployeeDetail() {
   const [employee, setEmployee] = useState(null);
 
   const [loading, setLoading] = useState(true);
+
+  const overlay = usePageLoadingOverlay("Loading Employee...");
 
   useEffect(() => {
 
@@ -65,6 +70,7 @@ export default function EmployeeDetail() {
     } finally {
 
       setLoading(false);
+      overlay.finish();
     }
   };
 
@@ -140,7 +146,7 @@ export default function EmployeeDetail() {
   }
 
   return (
-
+    <>
     <Layout>
 
       <div className="
@@ -595,6 +601,8 @@ export default function EmployeeDetail() {
       </div>
 
     </Layout>
+    <PageLoadingOverlay visible={overlay.visible} overlayRect={overlay.overlayRect} text={overlay.text} />
+    </>
   );
 }
 

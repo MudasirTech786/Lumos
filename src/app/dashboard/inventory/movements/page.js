@@ -16,6 +16,9 @@ import {
   Package,
 } from "lucide-react";
 
+import usePageLoadingOverlay from "@/hooks/usePageLoadingOverlay";
+import PageLoadingOverlay from "@/components/ui/PageLoadingOverlay";
+
 export default function InventoryMovementsPage() {
 
   const [movements, setMovements] =
@@ -26,6 +29,8 @@ export default function InventoryMovementsPage() {
 
   const [search, setSearch] =
     useState("");
+
+  const overlay = usePageLoadingOverlay("Loading Movements...");
 
   /* ====================================================== */
   /* FETCH */
@@ -53,6 +58,8 @@ export default function InventoryMovementsPage() {
       progressToast.error(id, { title: "Error", message: "Failed to load movements" });
 
     } finally {
+
+      overlay.finish();
 
       setLoading(false);
     }
@@ -108,7 +115,7 @@ export default function InventoryMovementsPage() {
   };
 
   return (
-
+    <>
     <Layout>
 
       <div className="
@@ -495,5 +502,7 @@ export default function InventoryMovementsPage() {
       </div>
 
     </Layout>
+    <PageLoadingOverlay visible={overlay.visible} overlayRect={overlay.overlayRect} text={overlay.text} />
+    </>
   );
 }

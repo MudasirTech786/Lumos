@@ -17,6 +17,9 @@ import {
   Edit3,
 } from "lucide-react";
 
+import usePageLoadingOverlay from "@/hooks/usePageLoadingOverlay";
+import PageLoadingOverlay from "@/components/ui/PageLoadingOverlay";
+
 export default function CategoriesPage() {
 
   const [categories, setCategories] =
@@ -38,6 +41,8 @@ export default function CategoriesPage() {
 
   const confirmDialog = useConfirm();
 
+  const overlay = usePageLoadingOverlay("Loading Categories...");
+
   const fetchCategories = async () => {
 
     try {
@@ -54,6 +59,8 @@ export default function CategoriesPage() {
       progressToast.error(id, { title: "Error", message: "Failed to load categories" });
 
     } finally {
+
+      overlay.finish();
 
       setLoading(false);
 
@@ -119,7 +126,7 @@ export default function CategoriesPage() {
     });
 
   return (
-
+    <>
     <Layout>
 
       <div className="mx-auto max-w-7xl pb-24">
@@ -307,7 +314,8 @@ export default function CategoriesPage() {
       </div>
 
     </Layout>
-
+    <PageLoadingOverlay visible={overlay.visible} overlayRect={overlay.overlayRect} text={overlay.text} />
+    </>
   );
 }
 

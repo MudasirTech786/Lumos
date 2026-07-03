@@ -20,6 +20,8 @@ import api from "@/lib/api";
 import progressToast from "@/lib/progressToast";
 import { useConfirm } from "@/context/ConfirmContext";
 import StatsCard from "@/components/ui/StatsCard";
+import usePageLoadingOverlay from "@/hooks/usePageLoadingOverlay";
+import PageLoadingOverlay from "@/components/ui/PageLoadingOverlay";
 
 export default function RolesPage() {
 
@@ -53,6 +55,7 @@ export default function RolesPage() {
   const [form, setForm] = useState(initialForm);
 
   const confirmDialog = useConfirm();
+  const overlay = usePageLoadingOverlay("Loading Roles...");
 
   useEffect(() => {
 
@@ -108,6 +111,7 @@ export default function RolesPage() {
     } finally {
 
       setLoading(false);
+      overlay.finish();
     }
   };
 
@@ -236,6 +240,7 @@ export default function RolesPage() {
   };
 
   return (
+    <>
     <ProtectedPage permission="roles.view">
       <Layout>
 
@@ -665,6 +670,8 @@ export default function RolesPage() {
 
       </Layout>
     </ProtectedPage>
+    <PageLoadingOverlay visible={overlay.visible} overlayRect={overlay.overlayRect} text={overlay.text} />
+    </>
   );
 }
 

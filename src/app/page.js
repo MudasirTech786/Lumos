@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Layout from "@/components/Layout";
 import { useDashboard } from "@/hooks/useDashboard";
+import usePageLoadingOverlay from "@/hooks/usePageLoadingOverlay";
+import PageLoadingOverlay from "@/components/ui/PageLoadingOverlay";
 import Link from "next/link";
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis,
@@ -394,7 +396,13 @@ export default function Dashboard() {
     crew, isLoading, isRefetching, refetchCount, refetchAll,
   } = useDashboard();
 
+  const overlay = usePageLoadingOverlay("Loading Dashboard...");
   const [refreshState, setRefreshState] = useState("idle");
+
+  useEffect(() => {
+    const timer = setTimeout(() => overlay.finish(), 600);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleRefresh = useCallback(async () => {
     setRefreshState("loading");
@@ -412,6 +420,7 @@ export default function Dashboard() {
   };
 
   return (
+    <>
     <Layout>
       <div className="min-h-screen bg-slate-50/40">
         <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6 sm:space-y-8">
@@ -699,5 +708,7 @@ export default function Dashboard() {
         </div>
       </div>
     </Layout>
+    <PageLoadingOverlay visible={overlay.visible} overlayRect={overlay.overlayRect} text={overlay.text} />
+    </>
   );
 }

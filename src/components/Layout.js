@@ -84,20 +84,20 @@ export default function Layout({ children }) {
     setOpen(saved === "true");
   }, []);
 
-  const [profileOpen, setProfileOpen]     = useState(false);
-  const [editOpen, setEditOpen]           = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
 
   // ── Command Palette state (replaces old searchOpen) ──────────────────────
-  const [paletteOpen, setPaletteOpen]     = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
   const [paletteMobile, setPaletteMobile] = useState(false);
   // ─────────────────────────────────────────────────────────────────────────
 
-  const [checkingAuth, setCheckingAuth]   = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(false);
 
   const confirmDialog = useConfirm();
   const { user, ready, refreshUser } = useAuth();
   const router = useRouter();
-  const dropdownRef       = useRef(null);
+  const dropdownRef = useRef(null);
   const mobileDropdownRef = useRef(null);
 
   const [form, setForm] = useState({
@@ -107,13 +107,13 @@ export default function Layout({ children }) {
     avatar: null,
   });
 
-  const [preview, setPreview]       = useState(null);
+  const [preview, setPreview] = useState(null);
   const [localAvatar, setLocalAvatar] = useState(null);
 
-  const [cropOpen, setCropOpen]               = useState(false);
-  const [imageSrc, setImageSrc]               = useState(null);
-  const [crop, setCrop]                       = useState({ x: 0, y: 0 });
-  const [zoom, setZoom]                       = useState(1);
+  const [cropOpen, setCropOpen] = useState(false);
+  const [imageSrc, setImageSrc] = useState(null);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
 
   const avatar =
@@ -211,7 +211,7 @@ export default function Layout({ children }) {
       image.onload = () => {
         const canvas = document.createElement("canvas");
         const ctx = canvas.getContext("2d");
-        canvas.width  = cropArea.width;
+        canvas.width = cropArea.width;
         canvas.height = cropArea.height;
         ctx.drawImage(image, cropArea.x, cropArea.y, cropArea.width, cropArea.height, 0, 0, cropArea.width, cropArea.height);
         canvas.toBlob(
@@ -270,36 +270,36 @@ export default function Layout({ children }) {
       <div className="flex-1 flex flex-col min-w-0 relative z-0">
         <PageTransitionProvider autoDetect={false}>
 
-        {/* ===================================================
+          {/* ===================================================
             HEADER
             Desktop: single 72px white row
             Mobile:  dark top row
         =================================================== */}
-        <header className="sticky top-0 z-[60] bg-[#0B0F19] md:bg-white border-b border-white/10 md:border-slate-200 md:shadow-sm">
+          <header className="sticky top-0 z-[60] bg-[#0B0F19] md:bg-white border-b border-white/10 md:border-slate-200 md:shadow-sm">
 
-          {/* ══ DESKTOP TOP ROW ══ */}
-          <div className="hidden md:flex h-[72px] items-center justify-between px-4 md:px-6 gap-3">
+            {/* ══ DESKTOP TOP ROW ══ */}
+            <div className="hidden md:flex h-[72px] items-center justify-between px-4 md:px-6 gap-3">
 
-            {/* LEFT: hamburger */}
-            <div className="flex items-center gap-3 flex-shrink-0">
-              <button
-                onClick={handleSidebarToggle}
-                className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 transition-colors duration-150"
-                aria-label="Toggle sidebar"
-              >
-                <Menu size={22} strokeWidth={2} />
-              </button>
-            </div>
+              {/* LEFT: hamburger */}
+              <div className="flex items-center gap-3 flex-shrink-0">
+                <button
+                  onClick={handleSidebarToggle}
+                  className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 transition-colors duration-150"
+                  aria-label="Toggle sidebar"
+                >
+                  <Menu size={22} strokeWidth={2} />
+                </button>
+              </div>
 
-            {/* CENTER: search bar (opens Command Palette) + date/time */}
-            <div className="flex flex-1 items-center justify-center gap-4 max-w-3xl mx-auto">
-              {/*
+              {/* CENTER: search bar (opens Command Palette) + date/time */}
+              <div className="flex flex-1 items-center justify-center gap-4 max-w-3xl mx-auto">
+                {/*
                 SEARCH TRIGGER — clicking this opens the desktop command palette.
                 Visual appearance is unchanged from the original.
               */}
-              <button
-                onClick={() => { setPaletteOpen(true); setPaletteMobile(false); }}
-                className="
+                <button
+                  onClick={() => { setPaletteOpen(true); setPaletteMobile(false); }}
+                  className="
                   flex items-center gap-2
                   w-full max-w-[420px]
                   px-4 py-2.5
@@ -313,346 +313,674 @@ export default function Layout({ children }) {
                   transition-all duration-200
                   text-left
                 "
-                aria-label="Open search (Ctrl K)"
-              >
-                <Search size={15} className="text-slate-400 flex-shrink-0" strokeWidth={2.2} />
-                <span className="flex-1 text-[13px] text-slate-400 truncate">
-                  Search projects, productions, crew…
-                </span>
-                <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-slate-200/80 border border-slate-300/60 flex-shrink-0">
-                  <span className="text-[10px] font-medium text-slate-500 tracking-tight">Ctrl K</span>
-                </div>
-              </button>
-              <DateTimePills />
+                  aria-label="Open search (Ctrl K)"
+                >
+                  <Search size={15} className="text-slate-400 flex-shrink-0" strokeWidth={2.2} />
+                  <span className="flex-1 text-[13px] text-slate-400 truncate">
+                    Search projects, productions, crew…
+                  </span>
+                  <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-slate-200/80 border border-slate-300/60 flex-shrink-0">
+                    <span className="text-[10px] font-medium text-slate-500 tracking-tight">Ctrl K</span>
+                  </div>
+                </button>
+                <DateTimePills />
+              </div>
+
+              {/* RIGHT: notification + profile */}
+              <div className="flex items-center gap-2.5 flex-shrink-0 relative" ref={dropdownRef}>
+                {/* BELL */}
+                <button className="relative w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 hover:bg-slate-200 transition-colors duration-150">
+                  <Bell size={18} className="text-slate-600" strokeWidth={2} />
+                  <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-red-500 text-white text-[10px] font-bold px-1 border-2 border-white">3</span>
+                </button>
+
+                {/* ─────────────────────────────────────────────────────────────────
+    DESKTOP PROFILE TRIGGER BUTTON
+───────────────────────────────────────────────────────────────── */}
+                <button
+                  onClick={() => setProfileOpen(!profileOpen)}
+                  aria-haspopup="true"
+                  aria-expanded={profileOpen}
+                  aria-label="Profile menu"
+                  className={`
+    group relative flex items-center gap-2.5 pl-1 pr-3 py-1
+    rounded-[18px] bg-white border transition-all duration-200
+    focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#50a2ff]/40
+    ${profileOpen
+                      ? "border-[#bfdbfe] shadow-[0_4px_14px_rgba(37,99,235,0.10)]"
+                      : "border-slate-200 shadow-[0_2px_6px_rgba(0,0,0,0.05)] hover:border-[#bfdbfe] hover:shadow-[0_4px_14px_rgba(37,99,235,0.10)]"
+                    }
+  `}
+                >
+                  {/* Avatar */}
+                  <div className="relative flex-shrink-0">
+                    <div className="w-9 h-9 rounded-[11px] overflow-hidden border-2 border-white shadow-sm bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
+                      {avatar ? (
+                        <img src={avatar} className="w-full h-full object-cover" alt="avatar" />
+                      ) : (
+                        <span className="text-white text-[13px] font-bold">
+                          {user?.name?.charAt(0)?.toUpperCase()}
+                        </span>
+                      )}
+                    </div>
+                    <span className="absolute -bottom-0.5 -right-0.5 w-[9px] h-[9px] rounded-full bg-emerald-400 border-2 border-white" />
+                  </div>
+
+                  {/* Name + role */}
+                  <div className="flex flex-col items-start leading-tight">
+                    <span className="text-[13px] font-semibold text-slate-900 max-w-[120px] truncate tracking-[-0.01em]">
+                      {user?.name}
+                    </span>
+                    <span className="text-[11px] text-slate-500">
+                      {user?.roles?.[0]?.name || "User"}
+                    </span>
+                  </div>
+
+                  {/* Chevron */}
+                  <svg
+                    className={`w-3 h-3 flex-shrink-0 transition-all duration-200 ${profileOpen ? "text-[#50a2ff] rotate-180" : "text-slate-400 group-hover:text-[#50a2ff]"
+                      }`}
+                    fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
+
+                {/* ─────────────────────────────────────────────────────────────────
+    DESKTOP PROFILE DROPDOWN
+───────────────────────────────────────────────────────────────── */}
+                {profileOpen && (
+                  <>
+                    {/* ── Full-page blur backdrop: everything behind the menu goes soft, only the menu stays sharp ── */}
+                    <div
+                      onClick={() => setProfileOpen(false)}
+                      className="fixed inset-0 z-40 bg-slate-900/20"
+                      style={{
+                        backdropFilter: "blur(8px)",
+                        WebkitBackdropFilter: "blur(8px)",
+                        animation: "bdFade 0.18s ease-out forwards",
+                      }}
+                      aria-hidden="true"
+                    >
+                      <style>{`
+        @keyframes bdFade {
+          from { opacity: 0; }
+          to   { opacity: 1; }
+        }
+      `}</style>
+                    </div>
+
+                    <div
+                      className="absolute right-0 top-[calc(100%+10px)] w-[300px] z-50"
+                      style={{ animation: "ddOpen 0.18s cubic-bezier(0.16,1,0.3,1) forwards" }}
+                    >
+                      <style>{`
+      @keyframes ddOpen {
+        from { opacity: 0; transform: scale(0.94) translateY(-6px); }
+        to   { opacity: 1; transform: scale(1)    translateY(0);    }
+      }
+    `}</style>
+
+                      <div
+                        className="overflow-hidden rounded-[22px] border border-slate-200/80 bg-white"
+                        style={{
+                          boxShadow:
+                            "0 24px 60px rgba(37,99,235,0.16), 0 2px 8px rgba(0,0,0,0.08), 0 0 0 0.5px rgba(80,162,255,0.08)",
+                        }}
+                      >
+
+                        {/* ── Brand accent bar ── */}
+                        <div className="h-[3px] w-full" style={{ background: "#50a2ff" }} />
+
+                        {/* ── User header ── */}
+                        <div className="relative px-[18px] pt-[18px] pb-[16px] border-b border-slate-100 overflow-hidden">
+                          {/* Subtle blue glow */}
+                          <div
+                            className="absolute -top-8 -right-8 w-32 h-32 rounded-full pointer-events-none"
+                            style={{
+                              background:
+                                "radial-gradient(circle, rgba(80,162,255,0.08), transparent 70%)",
+                            }}
+                          />
+
+                          <div className="relative flex items-center gap-3.5">
+                            {/* Avatar */}
+                            <div className="relative flex-shrink-0">
+                              <div
+                                className="w-[52px] h-[52px] rounded-[15px] overflow-hidden border-2 border-white bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center"
+                                style={{ boxShadow: "0 4px 14px rgba(37,99,235,0.25)" }}
+                              >
+                                {avatar ? (
+                                  <img src={avatar} className="w-full h-full object-cover" alt="avatar" />
+                                ) : (
+                                  <span className="text-white text-[18px] font-bold">
+                                    {user?.name?.charAt(0)?.toUpperCase()}
+                                  </span>
+                                )}
+                              </div>
+                              <span className="absolute -bottom-[2px] -right-[2px] w-[14px] h-[14px] rounded-full bg-emerald-400 border-[2.5px] border-white" />
+                            </div>
+
+                            {/* Info */}
+                            <div className="min-w-0 flex-1">
+                              <p className="text-[14.5px] font-bold text-slate-900 truncate tracking-[-0.02em]">
+                                {user?.name}
+                              </p>
+                              <p className="text-[11.5px] text-slate-500 truncate mt-0.5">
+                                {user?.email}
+                              </p>
+                              <span
+                                className="inline-flex items-center mt-1.5 px-2 py-[3px] rounded-full text-[9.5px] font-bold uppercase tracking-[0.08em]"
+                                style={{
+                                  background: "rgba(80,162,255,0.10)",
+                                  border: "1px solid rgba(80,162,255,0.22)",
+                                  color: "#2563eb",
+                                }}
+                              >
+                                {user?.roles?.[0]?.name || "User"}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* ── Menu items ── */}
+                        <div className="p-[7px] space-y-0.5">
+
+                          {/* Edit profile */}
+                          <button
+                            onClick={() => {
+                              if (user?.name === "Super Admin") {
+                                toast.error("Super Admin profile cannot be edited");
+                                return;
+                              }
+                              setEditOpen(true);
+                              setProfileOpen(false);
+                            }}
+                            disabled={user?.name === "Super Admin"}
+                            className={`
+            w-full flex items-center gap-3 px-2.5 py-[9px] rounded-[13px]
+            transition-all duration-150 group text-left
+            ${user?.name === "Super Admin"
+                                ? "opacity-40 cursor-not-allowed"
+                                : "hover:bg-slate-50 active:bg-slate-100"
+                              }
+          `}
+                          >
+                            <div
+                              className="w-9 h-9 rounded-[10px] flex items-center justify-center flex-shrink-0 transition-transform duration-150 group-hover:scale-[1.08]"
+                              style={
+                                user?.name === "Super Admin"
+                                  ? { background: "#f1f5f9", border: "1px solid #e2e8f0", color: "#475569" }
+                                  : { background: "rgba(80,162,255,0.10)", border: "1px solid rgba(80,162,255,0.18)", color: "#2563eb" }
+                              }
+                            >
+                              {user?.name === "Super Admin" ? (
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                  <rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                                </svg>
+                              ) : (
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                                </svg>
+                              )}
+                            </div>
+                            <div className="min-w-0">
+                              <p className={`text-[13.5px] font-[500] leading-none ${user?.name === "Super Admin" ? "text-slate-400" : "text-slate-800"}`}>
+                                {user?.name === "Super Admin" ? "Profile locked" : "Edit profile"}
+                              </p>
+                              <p className="text-[11px] text-slate-400 mt-0.5">
+                                {user?.name === "Super Admin" ? "Protected account" : "Manage your account"}
+                              </p>
+                            </div>
+                            {user?.name !== "Super Admin" && (
+                              <svg className="ml-auto text-slate-300 flex-shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                <path d="M9 18l6-6-6-6" />
+                              </svg>
+                            )}
+                          </button>
+
+                          {/* Notifications */}
+                          <button className="w-full flex items-center gap-3 px-2.5 py-[9px] rounded-[13px] hover:bg-slate-50 active:bg-slate-100 transition-all duration-150 group text-left">
+                            <div
+                              className="w-9 h-9 rounded-[10px] flex items-center justify-center flex-shrink-0 transition-transform duration-150 group-hover:scale-[1.08]"
+                              style={{ background: "rgba(80,162,255,0.10)", border: "1px solid rgba(80,162,255,0.18)", color: "#2563eb" }}
+                            >
+                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                              </svg>
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-[13.5px] font-[500] text-slate-800 leading-none">Notifications</p>
+                              <p className="text-[11px] text-slate-400 mt-0.5">3 unread alerts</p>
+                            </div>
+                            <svg className="ml-auto text-slate-300 flex-shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                              <path d="M9 18l6-6-6-6" />
+                            </svg>
+                          </button>
+
+                          {/* Divider */}
+                          <div className="my-1 mx-1.5 h-px bg-slate-100" />
+
+                          {/* Sign out */}
+                          <button
+                            onClick={handleLogout}
+                            className="w-full flex items-center gap-3 px-2.5 py-[9px] rounded-[13px] hover:bg-red-50 active:bg-red-100 transition-all duration-150 group text-left"
+                          >
+                            <div
+                              className="w-9 h-9 rounded-[10px] flex items-center justify-center flex-shrink-0 transition-transform duration-150 group-hover:scale-[1.08]"
+                              style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.15)", color: "#dc2626" }}
+                            >
+                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" />
+                              </svg>
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-[13.5px] font-[500] text-red-600 leading-none">Sign out</p>
+                              <p className="text-[11px] text-slate-400 mt-0.5">End your session</p>
+                            </div>
+                          </button>
+                        </div>
+
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
 
-            {/* RIGHT: notification + profile */}
-            <div className="flex items-center gap-2.5 flex-shrink-0 relative" ref={dropdownRef}>
-              {/* BELL */}
-              <button className="relative w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 hover:bg-slate-200 transition-colors duration-150">
-                <Bell size={18} className="text-slate-600" strokeWidth={2} />
-                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-red-500 text-white text-[10px] font-bold px-1 border-2 border-white">3</span>
+            {/* ══ MOBILE TOP ROW ══ */}
+            <div className="md:hidden flex h-16 items-center px-4 gap-0">
+
+              {/* HAMBURGER */}
+              <button
+                onClick={handleSidebarToggle}
+                className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-xl text-slate-400 hover:bg-white/10 transition-colors"
+                aria-label="Toggle sidebar"
+              >
+                <Menu size={20} strokeWidth={2} />
               </button>
 
-              {/* PROFILE CARD */}
-              <button
-                onClick={() => setProfileOpen(!profileOpen)}
-                className="group relative flex items-center gap-2.5 pl-1 pr-3 py-1 rounded-[18px] bg-white border border-slate-200 shadow-[0_2px_8px_rgba(0,0,0,0.06)] hover:shadow-[0_4px_16px_rgba(37,99,235,0.12)] hover:border-blue-200 transition-all duration-200"
-              >
-                <div className="relative flex-shrink-0">
-                  <div className="w-9 h-9 rounded-[12px] overflow-hidden border-2 border-white shadow-sm bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
+              {/* LOGO — absolutely centered */}
+              <div className="flex-1 flex items-center justify-center pointer-events-none select-none">
+                <img
+                  src="/images/LUMOS-LOGO-BLACK.jpeg"
+                  alt="Lumos"
+                  className="h-10 w-auto object-contain"
+                />
+              </div>
+
+              {/* RIGHT ICONS: search · bell · avatar */}
+              <div className="flex-shrink-0 flex items-center gap-1" ref={mobileDropdownRef}>
+
+                {/* SEARCH ICON — opens mobile palette */}
+                <button
+                  onClick={() => { setPaletteOpen(true); setPaletteMobile(true); }}
+                  className="w-10 h-10 flex items-center justify-center rounded-xl text-slate-400 hover:bg-white/10 transition-colors"
+                  aria-label="Search"
+                >
+                  <Search size={19} strokeWidth={2} />
+                </button>
+
+                {/* NOTIFICATION BELL */}
+                <button className="relative w-10 h-10 flex items-center justify-center rounded-xl text-slate-400 hover:bg-white/10 transition-colors">
+                  <Bell size={19} strokeWidth={2} />
+                  <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500 border border-[#0B0F19]" />
+                </button>
+
+                {/* ─────────────────────────────────────────────────────────────────
+    AVATAR BUTTON — mobile header, right side
+───────────────────────────────────────────────────────────────── */}
+                <button
+                  onClick={() => setProfileOpen(!profileOpen)}
+                  className="relative w-10 h-10 flex items-center justify-center"
+                  aria-label="Profile menu"
+                  aria-expanded={profileOpen}
+                  aria-haspopup="true"
+                >
+                  <div className="w-[30px] h-[30px] rounded-[9px] overflow-hidden border border-white/15 bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center flex-shrink-0">
                     {avatar ? (
                       <img src={avatar} className="w-full h-full object-cover" alt="avatar" />
                     ) : (
-                      <span className="text-white text-xs font-semibold">{user?.name?.charAt(0)?.toUpperCase()}</span>
+                      <span className="text-white text-[11px] font-bold">
+                        {user?.name?.charAt(0)?.toUpperCase()}
+                      </span>
                     )}
                   </div>
-                  <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-white" />
-                </div>
-                <div className="flex flex-col items-start leading-tight">
-                  <span className="text-[13px] font-semibold text-slate-800 max-w-[120px] truncate">{user?.name}</span>
-                  <span className="text-[11px] text-slate-500">{user?.roles?.[0]?.name || "User"}</span>
-                </div>
-                <svg className="w-3 h-3 text-slate-400 group-hover:text-blue-500 transition-colors flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
+                  {/* Online indicator */}
+                  <span className="absolute bottom-[4px] right-[4px] w-[7px] h-[7px] rounded-full bg-emerald-400 border-[1.5px] border-[#0B0F19]" />
+                </button>
 
-              {/* DESKTOP DROPDOWN */}
-              {profileOpen && (
-                <div className="absolute right-0 top-[calc(100%+8px)] w-[290px] z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-                  <div className="overflow-hidden rounded-3xl border border-blue-100/80 bg-white/95 backdrop-blur-xl shadow-[0_25px_80px_rgba(37,99,235,0.15)]">
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,0.08),transparent_30%)] pointer-events-none" />
-                    <div className="relative p-5 border-b border-blue-50">
-                      <div className="flex items-center gap-4">
-                        <div className="relative">
-                          <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-white shadow-md bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center">
-                            {avatar ? (
-                              <img src={avatar} className="w-full h-full object-cover" alt="avatar" />
-                            ) : (
-                              <span className="text-white font-semibold">{user?.name?.charAt(0)?.toUpperCase()}</span>
-                            )}
+
+                {/* ─────────────────────────────────────────────────────────────────
+    MOBILE PROFILE DROPDOWN
+    Position: absolute, anchored below the top bar (top-[68px])
+    Width: 272px, right-aligned to the header edge
+───────────────────────────────────────────────────────────────── */}
+                {profileOpen && (
+                  <div
+                    className="absolute right-3 top-[68px] w-[272px] z-[70]"
+                    style={{ animation: "ddOpen 0.18s cubic-bezier(0.16,1,0.3,1) forwards" }}
+                  >
+                    <style>{`
+      @keyframes ddOpen {
+        from { opacity: 0; transform: scale(0.94) translateY(-6px); }
+        to   { opacity: 1; transform: scale(1)    translateY(0);    }
+      }
+    `}</style>
+
+                    <div
+                      className="overflow-hidden rounded-[22px] border border-white/[0.08]"
+                      style={{
+                        background: "rgba(13,17,35,0.97)",
+                        backdropFilter: "blur(20px)",
+                        WebkitBackdropFilter: "blur(20px)",
+                        boxShadow:
+                          "0 20px 60px rgba(0,0,0,0.55), 0 0 0 0.5px rgba(80,162,255,0.12)",
+                      }}
+                    >
+
+                      {/* ── Blue accent bar (matches brand colour) ── */}
+                      <div className="h-[3px] w-full" style={{ background: "#50a2ff" }} />
+
+                      {/* ── User header ── */}
+                      <div className="relative p-4 border-b border-white/[0.07] overflow-hidden">
+                        {/* Subtle blue glow in top-right corner */}
+                        <div
+                          className="absolute -top-5 -right-5 w-24 h-24 rounded-full pointer-events-none"
+                          style={{
+                            background:
+                              "radial-gradient(circle, rgba(80,162,255,0.12), transparent 70%)",
+                          }}
+                        />
+
+                        <div className="relative flex items-center gap-3">
+                          {/* Avatar */}
+                          <div className="relative flex-shrink-0">
+                            <div className="w-12 h-12 rounded-[14px] overflow-hidden border border-white/12 bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center shadow-md">
+                              {avatar ? (
+                                <img
+                                  src={avatar}
+                                  className="w-full h-full object-cover"
+                                  alt="avatar"
+                                />
+                              ) : (
+                                <span className="text-white text-[17px] font-bold">
+                                  {user?.name?.charAt(0)?.toUpperCase()}
+                                </span>
+                              )}
+                            </div>
+                            <span className="absolute -bottom-[2px] -right-[2px] w-[13px] h-[13px] rounded-full bg-emerald-400 border-2 border-[rgba(13,17,35,0.97)]" />
                           </div>
-                          <span className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-white" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <h3 className="text-sm font-semibold text-slate-800 truncate">{user?.name}</h3>
-                          <p className="text-xs text-slate-500 truncate mt-0.5">{user?.email}</p>
-                          <div className="mt-2">
-                            <span className="inline-flex items-center rounded-full bg-blue-50 border border-blue-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-blue-700">
-                              {user?.roles?.[0]?.name || "USER"}
+
+                          {/* Name / email / role */}
+                          <div className="min-w-0 flex-1">
+                            <p className="text-[14px] font-semibold text-slate-100 truncate tracking-[-0.01em]">
+                              {user?.name}
+                            </p>
+                            <p className="text-[11.5px] text-slate-400/70 truncate mt-0.5">
+                              {user?.email}
+                            </p>
+                            <span
+                              className="inline-flex items-center mt-1.5 px-2 py-[2px] rounded-full text-[9.5px] font-bold uppercase tracking-[0.08em]"
+                              style={{
+                                background: "rgba(80,162,255,0.12)",
+                                border: "1px solid rgba(80,162,255,0.25)",
+                                color: "#50a2ff",
+                              }}
+                            >
+                              {user?.roles?.[0]?.name || "User"}
                             </span>
                           </div>
                         </div>
                       </div>
-                    </div>
-                    <div className="p-2">
-                      <button
-                        onClick={() => {
-                          if (user?.name === "Super Admin") { const _t = progressToast.loading({ title: "Restricted", message: "Super Admin profile cannot be edited" }); progressToast.error(_t, { title: "Restricted", message: "Super Admin profile cannot be edited" }); return; }
-                          setEditOpen(true); setProfileOpen(false);
-                        }}
-                        disabled={user?.name === "Super Admin"}
-                        className={`group w-full flex items-center gap-3 rounded-2xl px-3 py-3 transition-all duration-200 ${user?.name === "Super Admin" ? "opacity-50 cursor-not-allowed" : "hover:bg-blue-50"}`}
-                        title={user?.name === "Super Admin" ? "Super Admin profile cannot be edited" : "Manage your account"}
-                      >
-                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center group-hover:scale-105 transition-all ${user?.name === "Super Admin" ? "bg-gray-100 text-gray-400" : "bg-blue-100 text-blue-700"}`}>
-                          {user?.name === "Super Admin" ? "🔒" : "✦"}
-                        </div>
-                        <div className="flex flex-col items-start">
-                          <span className={`text-sm font-medium ${user?.name === "Super Admin" ? "text-gray-400" : "text-slate-700"}`}>Edit Profile</span>
-                          <span className="text-[11px] text-slate-400">{user?.name === "Super Admin" ? "Protected account" : "Manage your account"}</span>
-                        </div>
-                      </button>
-                      <button onClick={handleLogout} className="group w-full flex items-center gap-3 rounded-2xl px-3 py-3 hover:bg-red-500/10 transition-all duration-200">
-                        <div className="w-10 h-10 rounded-xl bg-red-500/15 text-red-400 flex items-center justify-center group-hover:scale-105 transition-all">⎋</div>
-                        <div className="flex flex-col items-start">
-                          <span className="text-sm font-medium text-red-400">Logout</span>
-                          <span className="text-[11px] text-slate-500">End your session</span>
-                        </div>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
 
-          {/* ══ MOBILE TOP ROW ══ */}
-          <div className="md:hidden flex h-16 items-center px-4 gap-0">
+                      {/* ── Menu items ── */}
+                      <div className="p-1.5 space-y-0.5">
 
-            {/* HAMBURGER */}
-            <button
-              onClick={handleSidebarToggle}
-              className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-xl text-slate-400 hover:bg-white/10 transition-colors"
-              aria-label="Toggle sidebar"
-            >
-              <Menu size={20} strokeWidth={2} />
-            </button>
-
-            {/* LOGO — absolutely centered */}
-            <div className="flex-1 flex items-center justify-center pointer-events-none select-none">
-              <img
-                src="/images/LUMOS-LOGO-BLACK.jpeg"
-                alt="Lumos"
-                className="h-10 w-auto object-contain"
-              />
-            </div>
-
-            {/* RIGHT ICONS: search · bell · avatar */}
-            <div className="flex-shrink-0 flex items-center gap-1" ref={mobileDropdownRef}>
-
-              {/* SEARCH ICON — opens mobile palette */}
-              <button
-                onClick={() => { setPaletteOpen(true); setPaletteMobile(true); }}
-                className="w-10 h-10 flex items-center justify-center rounded-xl text-slate-400 hover:bg-white/10 transition-colors"
-                aria-label="Search"
-              >
-                <Search size={19} strokeWidth={2} />
-              </button>
-
-              {/* NOTIFICATION BELL */}
-              <button className="relative w-10 h-10 flex items-center justify-center rounded-xl text-slate-400 hover:bg-white/10 transition-colors">
-                <Bell size={19} strokeWidth={2} />
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500 border border-[#0B0F19]" />
-              </button>
-
-              {/* AVATAR */}
-              <button
-                onClick={() => setProfileOpen(!profileOpen)}
-                className="relative w-10 h-10 flex items-center justify-center"
-                aria-label="Profile"
-              >
-                <div className="w-8 h-8 rounded-[10px] overflow-hidden border border-white/20 bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center flex-shrink-0">
-                  {avatar ? (
-                    <img src={avatar} className="w-full h-full object-cover" alt="avatar" />
-                  ) : (
-                    <span className="text-white text-xs font-semibold">{user?.name?.charAt(0)?.toUpperCase()}</span>
-                  )}
-                </div>
-                <span className="absolute bottom-1 right-1 w-2 h-2 rounded-full bg-emerald-400 border border-[#0B0F19]" />
-              </button>
-
-              {/* MOBILE PROFILE DROPDOWN */}
-              {profileOpen && (
-                <div className="absolute right-3 top-[68px] w-[280px] z-[70] animate-in fade-in slide-in-from-top-2 duration-200">
-                  <div className="overflow-hidden rounded-3xl border border-white/10 bg-[#13172a]/95 backdrop-blur-xl shadow-[0_25px_80px_rgba(0,0,0,0.5)]">
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,0.1),transparent_40%)] pointer-events-none" />
-                    <div className="relative p-5 border-b border-white/10">
-                      <div className="flex items-center gap-4">
-                        <div className="relative">
-                          <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-white/20 shadow-md bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center">
-                            {avatar ? (
-                              <img src={avatar} className="w-full h-full object-cover" alt="avatar" />
+                        {/* Edit profile */}
+                        <button
+                          onClick={() => {
+                            if (user?.name === "Super Admin") {
+                              toast.error("Super Admin profile cannot be edited");
+                              return;
+                            }
+                            setEditOpen(true);
+                            setProfileOpen(false);
+                          }}
+                          disabled={user?.name === "Super Admin"}
+                          className={`
+            w-full flex items-center gap-3 px-2.5 py-2.5 rounded-[14px]
+            transition-all duration-150 group text-left
+            ${user?.name === "Super Admin"
+                              ? "opacity-50 cursor-not-allowed"
+                              : "hover:bg-white/[0.05] active:bg-white/[0.08]"
+                            }
+          `}
+                        >
+                          <div
+                            className="w-9 h-9 rounded-[11px] flex items-center justify-center flex-shrink-0 transition-transform duration-150 group-hover:scale-105"
+                            style={{
+                              background: user?.name === "Super Admin"
+                                ? "rgba(255,255,255,0.05)"
+                                : "rgba(80,162,255,0.13)",
+                              border: `1px solid ${user?.name === "Super Admin"
+                                ? "rgba(255,255,255,0.06)"
+                                : "rgba(80,162,255,0.20)"}`,
+                              color: user?.name === "Super Admin" ? "rgba(148,163,184,0.4)" : "#50a2ff",
+                              fontSize: 16,
+                            }}
+                          >
+                            {user?.name === "Super Admin" ? (
+                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                <rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                              </svg>
                             ) : (
-                              <span className="text-white font-semibold">{user?.name?.charAt(0)?.toUpperCase()}</span>
+                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                              </svg>
                             )}
                           </div>
-                          <span className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-[#13172a]" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <h3 className="text-sm font-semibold text-white truncate">{user?.name}</h3>
-                          <p className="text-xs text-slate-400 truncate mt-0.5">{user?.email}</p>
-                          <div className="mt-2">
-                            <span className="inline-flex items-center rounded-full bg-blue-500/15 border border-blue-500/30 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-blue-400">
-                              {user?.roles?.[0]?.name || "USER"}
+                          <div className="flex flex-col items-start min-w-0">
+                            <span
+                              className={`text-[13.5px] font-[500] leading-none ${user?.name === "Super Admin" ? "text-slate-500" : "text-slate-200"
+                                }`}
+                            >
+                              Edit profile
+                            </span>
+                            <span className="text-[11px] text-slate-500 mt-[3px]">
+                              {user?.name === "Super Admin" ? "Protected account" : "Manage your account"}
                             </span>
                           </div>
-                        </div>
+                          {user?.name !== "Super Admin" && (
+                            <svg className="ml-auto text-slate-600 flex-shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                              <path d="M9 18l6-6-6-6" />
+                            </svg>
+                          )}
+                        </button>
+
+                        {/* Notifications */}
+                        <button
+                          className="w-full flex items-center gap-3 px-2.5 py-2.5 rounded-[14px] hover:bg-white/[0.05] active:bg-white/[0.08] transition-all duration-150 group text-left"
+                        >
+                          <div
+                            className="w-9 h-9 rounded-[11px] flex items-center justify-center flex-shrink-0 transition-transform duration-150 group-hover:scale-105"
+                            style={{
+                              background: "rgba(80,162,255,0.13)",
+                              border: "1px solid rgba(80,162,255,0.20)",
+                              color: "#50a2ff",
+                              fontSize: 16,
+                            }}
+                          >
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                            </svg>
+                          </div>
+                          <div className="flex flex-col items-start min-w-0">
+                            <span className="text-[13.5px] font-[500] text-slate-200 leading-none">Notifications</span>
+                            <span className="text-[11px] text-slate-500 mt-[3px]">3 unread alerts</span>
+                          </div>
+                          <svg className="ml-auto text-slate-600 flex-shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <path d="M9 18l6-6-6-6" />
+                          </svg>
+                        </button>
+
+                        {/* Divider */}
+                        <div className="my-1 mx-1.5 h-px bg-white/[0.06]" />
+
+                        {/* Sign out */}
+                        <button
+                          onClick={handleLogout}
+                          className="w-full flex items-center gap-3 px-2.5 py-2.5 rounded-[14px] hover:bg-red-500/[0.08] active:bg-red-500/[0.12] transition-all duration-150 group text-left"
+                        >
+                          <div
+                            className="w-9 h-9 rounded-[11px] flex items-center justify-center flex-shrink-0 transition-transform duration-150 group-hover:scale-105"
+                            style={{
+                              background: "rgba(239,68,68,0.13)",
+                              border: "1px solid rgba(239,68,68,0.20)",
+                              color: "#f87171",
+                              fontSize: 16,
+                            }}
+                          >
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" />
+                            </svg>
+                          </div>
+                          <div className="flex flex-col items-start min-w-0">
+                            <span className="text-[13.5px] font-[500] text-red-400 leading-none">Sign out</span>
+                            <span className="text-[11px] text-slate-500 mt-[3px]">End your session</span>
+                          </div>
+                        </button>
+
                       </div>
                     </div>
-                    <div className="p-2">
-                      <button
-                        onClick={() => {
-                          if (user?.name === "Super Admin") { const _t = progressToast.loading({ title: "Restricted", message: "Super Admin profile cannot be edited" }); progressToast.error(_t, { title: "Restricted", message: "Super Admin profile cannot be edited" }); return; }
-                          setEditOpen(true); setProfileOpen(false);
-                        }}
-                        disabled={user?.name === "Super Admin"}
-                        className={`group w-full flex items-center gap-3 rounded-2xl px-3 py-3 transition-all duration-200 ${user?.name === "Super Admin" ? "opacity-50 cursor-not-allowed" : "hover:bg-white/10"}`}
-                      >
-                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center group-hover:scale-105 transition-all ${user?.name === "Super Admin" ? "bg-white/5 text-slate-500" : "bg-blue-500/15 text-blue-400"}`}>
-                          {user?.name === "Super Admin" ? "🔒" : "✦"}
-                        </div>
-                        <div className="flex flex-col items-start">
-                          <span className={`text-sm font-medium ${user?.name === "Super Admin" ? "text-slate-500" : "text-slate-200"}`}>Edit Profile</span>
-                          <span className="text-[11px] text-slate-500">{user?.name === "Super Admin" ? "Protected account" : "Manage your account"}</span>
-                        </div>
-                      </button>
-                      <button onClick={handleLogout} className="group w-full flex items-center gap-3 rounded-2xl px-3 py-3 hover:bg-red-500/10 transition-all duration-200">
-                        <div className="w-10 h-10 rounded-xl bg-red-500/15 text-red-400 flex items-center justify-center group-hover:scale-105 transition-all">⎋</div>
-                        <div className="flex flex-col items-start">
-                          <span className="text-sm font-medium text-red-400">Logout</span>
-                          <span className="text-[11px] text-slate-500">End your session</span>
-                        </div>
-                      </button>
-                    </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
-          </div>
 
-        </header>
+          </header>
 
-        {/* ═══════════════════════════════════════════
+          {/* ═══════════════════════════════════════════
             COMMAND PALETTE
             Replaces the old mobile fullscreen overlay
             AND adds new desktop floating modal.
         ═══════════════════════════════════════════ */}
-        <CommandPalette
-          open={paletteOpen}
-          onClose={() => setPaletteOpen(false)}
-          isMobile={paletteMobile}
-        />
+          <CommandPalette
+            open={paletteOpen}
+            onClose={() => setPaletteOpen(false)}
+            isMobile={paletteMobile}
+          />
 
-        {/* ===== CONTENT ===== */}
-        <main className="p-4 md:p-6 flex-1 overflow-y-auto">
-          {children}
-        </main>
+          {/* ===== CONTENT ===== */}
+          <main className="p-4 md:p-6 flex-1 overflow-y-auto">
+            {children}
+          </main>
 
-        {/* ===== CROPPER (UNCHANGED) ===== */}
-        {cropOpen && (
-          <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[9999]">
-            <div className="bg-white w-[95%] max-w-md md:max-w-lg rounded-lg overflow-hidden shadow-xl">
-              <div className="h-[220px] md:h-[300px] bg-black relative">
-                <Cropper
-                  image={imageSrc}
-                  crop={crop}
-                  zoom={zoom}
-                  aspect={1}
-                  onCropChange={setCrop}
-                  onZoomChange={setZoom}
-                  onCropComplete={(a, b) => setCroppedAreaPixels(b)}
-                />
+          {/* ===== CROPPER (UNCHANGED) ===== */}
+          {cropOpen && (
+            <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[9999]">
+              <div className="bg-white w-[95%] max-w-md md:max-w-lg rounded-lg overflow-hidden shadow-xl">
+                <div className="h-[220px] md:h-[300px] bg-black relative">
+                  <Cropper
+                    image={imageSrc}
+                    crop={crop}
+                    zoom={zoom}
+                    aspect={1}
+                    onCropChange={setCrop}
+                    onZoomChange={setZoom}
+                    onCropComplete={(a, b) => setCroppedAreaPixels(b)}
+                  />
+                </div>
+                <div className="p-4">
+                  <input
+                    type="range"
+                    min={1} max={3} step={0.1}
+                    value={zoom}
+                    onChange={(e) => setZoom(e.target.value)}
+                    className="w-full"
+                  />
+                  <div className="flex justify-end gap-2 mt-3">
+                    <button
+                      onClick={() => { setCropOpen(false); setImageSrc(null); }}
+                      className="px-3 py-1 text-sm rounded-md bg-gray-100"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={async () => {
+                        const file = await getCroppedImg(imageSrc, croppedAreaPixels);
+                        setForm((prev) => ({ ...prev, avatar: file }));
+                        const url = URL.createObjectURL(file);
+                        setPreview(url);
+                        setLocalAvatar(url);
+                        setCropOpen(false);
+                      }}
+                      className="px-3 py-1 text-sm rounded-md bg-blue-600 text-white"
+                    >
+                      Apply
+                    </button>
+                  </div>
+                </div>
               </div>
-              <div className="p-4">
+            </div>
+          )}
+
+          {/* ===== EDIT MODAL (UNCHANGED) ===== */}
+          {editOpen && (
+            <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[1000] backdrop-blur-sm">
+              <div className="w-[95%] max-w-md bg-white rounded-xl shadow-[0_30px_80px_rgba(0,0,0,0.2)] p-6 md:p-6 space-y-4 border border-blue-50">
+                <h2 className="text-lg font-semibold text-center text-blue-700">Edit Profile</h2>
+
+                <label className="flex flex-col items-center cursor-pointer">
+                  <div className="w-20 h-20 rounded-full overflow-hidden border border-blue-200 shadow-md">
+                    {preview ? (
+                      <img src={preview} className="w-full h-full object-cover" alt="preview" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-blue-600 text-white">
+                        {form.name?.charAt(0)}
+                      </div>
+                    )}
+                  </div>
+                  <div className="text-xs text-blue-600 mt-2 flex items-center gap-1">
+                    <Camera size={14} />
+                    Change photo
+                  </div>
+                  <input type="file" className="hidden" onChange={handleAvatar} />
+                </label>
+
                 <input
-                  type="range"
-                  min={1} max={3} step={0.1}
-                  value={zoom}
-                  onChange={(e) => setZoom(e.target.value)}
-                  className="w-full"
+                  className="w-full p-2 border rounded-md text-sm border-blue-100 focus:ring-2 focus:ring-blue-200 outline-none"
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  placeholder="Name"
                 />
-                <div className="flex justify-end gap-2 mt-3">
-                  <button
-                    onClick={() => { setCropOpen(false); setImageSrc(null); }}
-                    className="px-3 py-1 text-sm rounded-md bg-gray-100"
-                  >
+                <input
+                  className="w-full p-2 border rounded-md text-sm border-blue-100 focus:ring-2 focus:ring-blue-200 outline-none"
+                  value={form.email}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  placeholder="Email"
+                />
+                <input
+                  type="password"
+                  className="w-full p-2 border rounded-md text-sm border-blue-100 focus:ring-2 focus:ring-blue-200 outline-none"
+                  value={form.password}
+                  onChange={(e) => setForm({ ...form, password: e.target.value })}
+                  placeholder="New Password"
+                />
+
+                <div className="flex justify-end gap-2 pt-2">
+                  <button onClick={() => setEditOpen(false)} className="px-3 py-1 text-sm rounded-md bg-gray-100">
                     Cancel
                   </button>
-                  <button
-                    onClick={async () => {
-                      const file = await getCroppedImg(imageSrc, croppedAreaPixels);
-                      setForm((prev) => ({ ...prev, avatar: file }));
-                      const url = URL.createObjectURL(file);
-                      setPreview(url);
-                      setLocalAvatar(url);
-                      setCropOpen(false);
-                    }}
-                    className="px-3 py-1 text-sm rounded-md bg-blue-600 text-white"
-                  >
-                    Apply
+                  <button onClick={updateProfile} className="px-3 py-1 text-sm rounded-md bg-blue-600 text-white shadow-md">
+                    Save
                   </button>
                 </div>
               </div>
             </div>
-          </div>
-        )}
-
-        {/* ===== EDIT MODAL (UNCHANGED) ===== */}
-        {editOpen && (
-          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[1000] backdrop-blur-sm">
-            <div className="w-[95%] max-w-md bg-white rounded-xl shadow-[0_30px_80px_rgba(0,0,0,0.2)] p-6 md:p-6 space-y-4 border border-blue-50">
-              <h2 className="text-lg font-semibold text-center text-blue-700">Edit Profile</h2>
-
-              <label className="flex flex-col items-center cursor-pointer">
-                <div className="w-20 h-20 rounded-full overflow-hidden border border-blue-200 shadow-md">
-                  {preview ? (
-                    <img src={preview} className="w-full h-full object-cover" alt="preview" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-blue-600 text-white">
-                      {form.name?.charAt(0)}
-                    </div>
-                  )}
-                </div>
-                <div className="text-xs text-blue-600 mt-2 flex items-center gap-1">
-                  <Camera size={14} />
-                  Change photo
-                </div>
-                <input type="file" className="hidden" onChange={handleAvatar} />
-              </label>
-
-              <input
-                className="w-full p-2 border rounded-md text-sm border-blue-100 focus:ring-2 focus:ring-blue-200 outline-none"
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                placeholder="Name"
-              />
-              <input
-                className="w-full p-2 border rounded-md text-sm border-blue-100 focus:ring-2 focus:ring-blue-200 outline-none"
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-                placeholder="Email"
-              />
-              <input
-                type="password"
-                className="w-full p-2 border rounded-md text-sm border-blue-100 focus:ring-2 focus:ring-blue-200 outline-none"
-                value={form.password}
-                onChange={(e) => setForm({ ...form, password: e.target.value })}
-                placeholder="New Password"
-              />
-
-              <div className="flex justify-end gap-2 pt-2">
-                <button onClick={() => setEditOpen(false)} className="px-3 py-1 text-sm rounded-md bg-gray-100">
-                  Cancel
-                </button>
-                <button onClick={updateProfile} className="px-3 py-1 text-sm rounded-md bg-blue-600 text-white shadow-md">
-                  Save
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+          )}
 
         </PageTransitionProvider>
       </div>

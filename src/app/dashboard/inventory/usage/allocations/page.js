@@ -16,6 +16,9 @@ import {
   Search,
 } from "lucide-react";
 
+import usePageLoadingOverlay from "@/hooks/usePageLoadingOverlay";
+import PageLoadingOverlay from "@/components/ui/PageLoadingOverlay";
+
 export default function AllocationsPage() {
 
   const [usages, setUsages] =
@@ -26,6 +29,8 @@ export default function AllocationsPage() {
 
   const [search, setSearch] =
     useState("");
+
+  const overlay = usePageLoadingOverlay("Loading Allocations...");
 
   /* ====================================================== */
   /* FETCH */
@@ -96,6 +101,8 @@ setUsages(usagesData);
       progressToast.error(pToastId, { title: "Error", message: error.response?.data?.message || "Failed to load allocations" });
 
     } finally {
+
+      overlay.finish();
 
       setLoading(false);
     }
@@ -276,7 +283,7 @@ setUsages(usagesData);
   };
 
   return (
-
+    <>
     <Layout>
 
       <div className="
@@ -623,6 +630,7 @@ setUsages(usagesData);
       </div>
 
     </Layout>
-
+    <PageLoadingOverlay visible={overlay.visible} overlayRect={overlay.overlayRect} text={overlay.text} />
+    </>
   );
 }

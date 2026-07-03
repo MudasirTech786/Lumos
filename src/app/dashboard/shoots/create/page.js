@@ -9,6 +9,8 @@ import Layout from "@/components/Layout";
 import api from "@/lib/api";
 
 import progressToast from "@/lib/progressToast";
+import usePageLoadingOverlay from "@/hooks/usePageLoadingOverlay";
+import PageLoadingOverlay from "@/components/ui/PageLoadingOverlay";
 
 import {
   Briefcase,
@@ -43,6 +45,8 @@ export default function CreateShootPage() {
       status: "planned",
       notes: "",
     });
+
+  const overlay = usePageLoadingOverlay("Loading...");
 
   /*
   |--------------------------------------------------------------------------
@@ -82,11 +86,12 @@ export default function CreateShootPage() {
     } finally {
 
       setLoading(false);
+      overlay.finish();
     }
   };
 
   return (
-
+    <>
     <Layout>
 
       <div className="
@@ -616,6 +621,8 @@ crew expectations or planning information...
       </div>
 
     </Layout>
+    <PageLoadingOverlay visible={overlay.visible} overlayRect={overlay.overlayRect} text={overlay.text} />
+    </>
   );
 }
 

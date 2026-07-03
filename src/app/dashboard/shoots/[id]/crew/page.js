@@ -10,6 +10,8 @@ import api from "@/lib/api";
 
 import progressToast from "@/lib/progressToast";
 import { useConfirm } from "@/context/ConfirmContext";
+import usePageLoadingOverlay from "@/hooks/usePageLoadingOverlay";
+import PageLoadingOverlay from "@/components/ui/PageLoadingOverlay";
 
 import {
   ArrowLeft,
@@ -48,6 +50,7 @@ export default function ShootCrewPage() {
     useState([]);
 
   const confirmDialog = useConfirm();
+  const overlay = usePageLoadingOverlay("Loading Crew...");
 
   const [search, setSearch] =
     useState("");
@@ -129,6 +132,7 @@ export default function ShootCrewPage() {
     } finally {
 
       setLoading(false);
+      overlay.finish();
     }
   };
 
@@ -276,28 +280,8 @@ export default function ShootCrewPage() {
     fetchData();
   };
 
-  /* ====================================================== */
-  /* LOADING */
-  /* ====================================================== */
-
-  if (loading) {
-
-    return (
-
-      <Layout>
-
-        <div className="py-24 text-center text-gray-500">
-
-          Loading crew...
-
-        </div>
-
-      </Layout>
-    );
-  }
-
   return (
-
+    <>
     <Layout>
 
       <div className="mx-auto max-w-6xl pb-24">
@@ -796,7 +780,8 @@ export default function ShootCrewPage() {
 
       )}
     </Layout>
-
+    <PageLoadingOverlay visible={overlay.visible} overlayRect={overlay.overlayRect} text={overlay.text} />
+    </>
   );
 }
 

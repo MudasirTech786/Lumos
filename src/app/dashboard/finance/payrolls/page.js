@@ -10,6 +10,8 @@ import {
     X, Calendar, TrendingUp, Clock, CheckCircle2,
     ChevronRight,
 } from "lucide-react";
+import usePageLoadingOverlay from "@/hooks/usePageLoadingOverlay";
+import PageLoadingOverlay from "@/components/ui/PageLoadingOverlay";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const fmt = (n) => Number(n || 0).toLocaleString("en-PK");
@@ -44,6 +46,8 @@ export default function PayrollRunsPage() {
     const [crewForm,            setCrewForm]            = useState({ start_date: "", end_date: "" });
     const [employeeForm,        setEmployeeForm]        = useState({ start_date: "", end_date: "" });
 
+    const overlay = usePageLoadingOverlay("Loading Payroll Runs...");
+
     const fetchPayrolls = async () => {
         try {
             setLoading(true);
@@ -53,6 +57,7 @@ export default function PayrollRunsPage() {
             const id = progressToast.loading({ title: "Error", message: "" });
             progressToast.error(id, { title: "Error", message: "Failed to load payrolls" });
         } finally {
+            overlay.finish();
             setLoading(false);
         }
     };
@@ -83,21 +88,8 @@ export default function PayrollRunsPage() {
     const paidCount    = payrolls.filter((p) => p.status === "paid").length;
     const pendingCount = payrolls.filter((p) => p.status !== "paid").length;
 
-    // ── Loading ──────────────────────────────────────────────────────────────
-    if (loading) return (
-        <Layout>
-            <div className="min-h-screen flex items-center justify-center bg-slate-50">
-                <div className="flex flex-col items-center gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-900 to-blue-500 flex items-center justify-center shadow-lg animate-pulse">
-                        <Wallet size={24} className="text-white" />
-                    </div>
-                    <p className="text-slate-500 text-base font-medium">Loading Payrolls…</p>
-                </div>
-            </div>
-        </Layout>
-    );
-
     return (
+        <>
         <Layout>
             <div className="min-h-screen bg-slate-50 font-sans pb-20">
 
@@ -347,6 +339,8 @@ export default function PayrollRunsPage() {
             )}
 
         </Layout>
+        <PageLoadingOverlay visible={overlay.visible} overlayRect={overlay.overlayRect} text={overlay.text} />
+    </>
     );
 }
 

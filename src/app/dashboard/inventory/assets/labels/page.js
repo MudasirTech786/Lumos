@@ -10,12 +10,17 @@ import {
     Tag, Search, ScanLine, Download,
 } from "lucide-react";
 
+import usePageLoadingOverlay from "@/hooks/usePageLoadingOverlay";
+import PageLoadingOverlay from "@/components/ui/PageLoadingOverlay";
+
 export default function LabelsPage() {
     const router = useRouter();
 
     const [assets,  setAssets]  = useState([]);
     const [loading, setLoading] = useState(true);
     const [search,  setSearch]  = useState("");
+
+    const overlay = usePageLoadingOverlay("Loading Labels...");
 
     useEffect(() => { loadAssets(); }, []);
 
@@ -24,6 +29,7 @@ export default function LabelsPage() {
             const res = await getAssets();
             setAssets(res.data || []);
         } finally {
+            overlay.finish();
             setLoading(false);
         }
     };
@@ -38,6 +44,7 @@ export default function LabelsPage() {
     /* ── loading ── */
     if (loading) {
         return (
+            <>
             <Layout>
                 <div className="min-h-screen bg-slate-50/70 flex items-center justify-center">
                     <div className="flex flex-col items-center gap-3">
@@ -48,10 +55,13 @@ export default function LabelsPage() {
                     </div>
                 </div>
             </Layout>
+            <PageLoadingOverlay visible={overlay.visible} overlayRect={overlay.overlayRect} text={overlay.text} />
+            </>
         );
     }
 
     return (
+        <>
         <Layout>
             {/* ── print styles ── */}
             <style jsx global>{`
@@ -227,5 +237,7 @@ export default function LabelsPage() {
                 </div>
             </div>
         </Layout>
+        <PageLoadingOverlay visible={overlay.visible} overlayRect={overlay.overlayRect} text={overlay.text} />
+        </>
     );
 }

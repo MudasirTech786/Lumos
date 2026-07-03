@@ -12,6 +12,8 @@ import {
     Receipt,
     Eye,
 } from "lucide-react";
+import usePageLoadingOverlay from "@/hooks/usePageLoadingOverlay";
+import PageLoadingOverlay from "@/components/ui/PageLoadingOverlay";
 
 export default function ProductionInvoicesPage() {
 
@@ -22,6 +24,8 @@ export default function ProductionInvoicesPage() {
 
     const [invoices, setInvoices] =
         useState([]);
+
+    const overlay = usePageLoadingOverlay("Loading Invoices...");
 
     async function fetchInvoices() {
 
@@ -43,7 +47,7 @@ export default function ProductionInvoicesPage() {
             progressToast.error(id, { title: "Error", message: "Failed to load invoices" });
 
         } finally {
-
+            overlay.finish();
             setLoading(false);
         }
     }
@@ -55,7 +59,7 @@ export default function ProductionInvoicesPage() {
     }, []);
 
     return (
-
+        <>
         <Layout>
 
             <div className="
@@ -323,6 +327,7 @@ export default function ProductionInvoicesPage() {
             </div>
 
         </Layout>
-
+        <PageLoadingOverlay visible={overlay.visible} overlayRect={overlay.overlayRect} text={overlay.text} />
+    </>
     );
 }

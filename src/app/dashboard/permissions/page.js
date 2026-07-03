@@ -19,6 +19,8 @@ import api from "@/lib/api";
 import progressToast from "@/lib/progressToast";
 import { useConfirm } from "@/context/ConfirmContext";
 import StatsCard from "@/components/ui/StatsCard";
+import usePageLoadingOverlay from "@/hooks/usePageLoadingOverlay";
+import PageLoadingOverlay from "@/components/ui/PageLoadingOverlay";
 
 export default function PermissionsPage() {
 
@@ -46,6 +48,7 @@ export default function PermissionsPage() {
   const [form, setForm] = useState(initialForm);
 
   const confirmDialog = useConfirm();
+  const overlay = usePageLoadingOverlay("Loading Permissions...");
 
   // SEARCH DEBOUNCE
   useEffect(() => {
@@ -97,6 +100,7 @@ export default function PermissionsPage() {
     } finally {
 
       setLoading(false);
+      overlay.finish();
     }
   };
 
@@ -188,6 +192,7 @@ export default function PermissionsPage() {
   };
 
   return (
+    <>
     <ProtectedPage permission="permissions.view">
       <Layout>
 
@@ -556,6 +561,8 @@ export default function PermissionsPage() {
 
       </Layout>
     </ProtectedPage>
+    <PageLoadingOverlay visible={overlay.visible} overlayRect={overlay.overlayRect} text={overlay.text} />
+    </>
   );
 }
 

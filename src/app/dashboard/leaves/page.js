@@ -26,6 +26,9 @@ import StatsCard from "@/components/ui/StatsCard";
 
 import useAuth from "@/hooks/useAuth";
 
+import usePageLoadingOverlay from "@/hooks/usePageLoadingOverlay";
+import PageLoadingOverlay from "@/components/ui/PageLoadingOverlay";
+
 export default function LeavesPage() {
 
   const { can, user, ready } = useAuth();
@@ -33,6 +36,7 @@ export default function LeavesPage() {
   const [leaves, setLeaves] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
+  const overlay = usePageLoadingOverlay("Loading Leaves...");
   const [search, setSearch] = useState("");
   const [openModal, setOpenModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -179,6 +183,7 @@ export default function LeavesPage() {
     } finally {
 
       setLoading(false);
+      overlay.finish();
     }
   };
 
@@ -485,7 +490,7 @@ export default function LeavesPage() {
   }
 
   return (
-
+    <>
     <ProtectedPage permission="leaves.view">
 
       <Layout>
@@ -1051,6 +1056,8 @@ export default function LeavesPage() {
       </Layout>
 
     </ProtectedPage>
+    <PageLoadingOverlay visible={overlay.visible} overlayRect={overlay.overlayRect} text={overlay.text} />
+    </>
   );
 }
 

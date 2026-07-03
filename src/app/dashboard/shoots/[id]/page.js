@@ -6,6 +6,8 @@ import Layout from "@/components/Layout";
 import api from "@/lib/api";
 import progressToast from "@/lib/progressToast";
 import Link from "next/link";
+import usePageLoadingOverlay from "@/hooks/usePageLoadingOverlay";
+import PageLoadingOverlay from "@/components/ui/PageLoadingOverlay";
 
 import {
   ArrowLeft,
@@ -90,6 +92,8 @@ export default function ShootDetailsPage() {
     amount: "",
   });
 
+  const overlay = usePageLoadingOverlay("Loading Production...");
+
   const fetchShoot = async () => {
     try {
       const res = await api.get(`/shoots/${params.id}`);
@@ -99,6 +103,7 @@ export default function ShootDetailsPage() {
       progressToast.error(id, { title: "Error", message: "Failed to load shoot" });
     } finally {
       setLoading(false);
+      overlay.finish();
     }
   };
 
@@ -142,14 +147,21 @@ export default function ShootDetailsPage() {
     [shoot]
   );
 
-  if (loading) return <Layout><div className="py-24 text-center text-gray-400">Loading shoot...</div></Layout>;
-  if (!shoot) return <Layout><div className="py-24 text-center text-gray-400">Shoot not found</div></Layout>;
+  if (!shoot) return (
+    <>
+    <Layout>
+      <div className="py-24 text-center text-gray-400">Shoot not found</div>
+    </Layout>
+    <PageLoadingOverlay visible={overlay.visible} overlayRect={overlay.overlayRect} text={overlay.text} />
+    </>
+  );
 
   const cfg = STATUS_CONFIG[shoot.status] || STATUS_CONFIG.planned;
   const crew = shoot.crew_members || shoot.crewMembers || [];
   const totalExpenses = expenses.reduce((sum, e) => sum + Number(e.amount || 0), 0);
 
   return (
+    <>
     <Layout>
       <div className="mx-auto max-w-6xl pb-32 px-4 sm:px-6">
 
@@ -587,6 +599,8 @@ export default function ShootDetailsPage() {
         />
       )}
     </Layout>
+    <PageLoadingOverlay visible={overlay.visible} overlayRect={overlay.overlayRect} text={overlay.text} />
+    </>
   );
 }
 

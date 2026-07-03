@@ -21,6 +21,8 @@ import api from "@/lib/api";
 import progressToast from "@/lib/progressToast";
 import { useConfirm } from "@/context/ConfirmContext";
 import StatsCard from "@/components/ui/StatsCard";
+import usePageLoadingOverlay from "@/hooks/usePageLoadingOverlay";
+import PageLoadingOverlay from "@/components/ui/PageLoadingOverlay";
 
 export default function UsersPage() {
 
@@ -56,6 +58,7 @@ export default function UsersPage() {
   const [form, setForm] = useState(initialForm);
 
   const confirmDialog = useConfirm();
+  const overlay = usePageLoadingOverlay("Loading Users...");
 
   // ✅ CHECK IF USER IS SUPER ADMIN
   const isSuperAdmin = (user) => user.name === "Super Admin";
@@ -100,6 +103,7 @@ export default function UsersPage() {
     } finally {
 
       setLoading(false);
+      overlay.finish();
     }
   };
 
@@ -248,6 +252,7 @@ export default function UsersPage() {
   ).length;
 
   return (
+    <>
     <ProtectedPage permission="users.view">
       <Layout>
 
@@ -705,6 +710,8 @@ export default function UsersPage() {
 
       </Layout>
     </ProtectedPage>
+    <PageLoadingOverlay visible={overlay.visible} overlayRect={overlay.overlayRect} text={overlay.text} />
+    </>
   );
 }
 

@@ -5,6 +5,8 @@ import Layout from "@/components/Layout";
 import api from "@/lib/api";
 import Link from "next/link";
 import progressToast from "@/lib/progressToast";
+import usePageLoadingOverlay from "@/hooks/usePageLoadingOverlay";
+import PageLoadingOverlay from "@/components/ui/PageLoadingOverlay";
 import {
     DollarSign, TrendingUp, Receipt, Clock,
     Briefcase, Users, ArrowUpRight, Landmark,
@@ -36,14 +38,13 @@ function StatusPill({ status = "draft" }) {
 }
 
 export default function FinanceDashboardPage() {
-    const [loading,    setLoading]    = useState(true);
+    const overlay = usePageLoadingOverlay("Loading Financial Dashboard...");
     const [shoots,     setShoots]     = useState([]);
     const [payrolls,   setPayrolls]   = useState([]);
     const [financeMap, setFinanceMap] = useState({});
 
     const fetchDashboard = async () => {
         try {
-            setLoading(true);
             const [shootsRes, payrollsRes] = await Promise.all([
                 api.get("/shoots"),
                 api.get("/payrolls"),
@@ -70,7 +71,7 @@ export default function FinanceDashboardPage() {
             const id = progressToast.loading({ title: "Error", message: "" });
             progressToast.error(id, { title: "Error", message: "Failed to load finance dashboard" });
         } finally {
-            setLoading(false);
+            overlay.finish();
         }
     };
 
@@ -89,27 +90,14 @@ export default function FinanceDashboardPage() {
         return { totalRevenue, totalCost, totalProfit, pendingPayroll };
     }, [financeMap, payrolls]);
 
-    // ── Loading ──────────────────────────────────────────────────────────────
-    if (loading) return (
-        <Layout>
-            <div className="min-h-screen flex items-center justify-center bg-slate-50">
-                <div className="flex flex-col items-center gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-900 to-blue-500 flex items-center justify-center shadow-lg animate-pulse">
-                        <Landmark size={24} className="text-white" />
-                    </div>
-                    <p className="text-slate-500 text-base font-medium">Loading Finance Dashboard…</p>
-                </div>
-            </div>
-        </Layout>
-    );
-
     const marginPct  = pct(stats.totalProfit, stats.totalRevenue);
     const costPct    = pct(stats.totalCost,   stats.totalRevenue);
     const pendingRuns = payrolls.filter((p) => p.status !== "paid").length;
 
     return (
+        <>
         <Layout>
-            <div className="min-h-screen bg-slate-50 font-sans">
+            <div className="relative min-h-screen bg-slate-50 font-sans">
 
                 {/* ── HERO BANNER ─────────────────────────────────────────── */}
                 <div className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-blue-950 to-blue-900 px-8 py-14">
@@ -354,10 +342,12 @@ export default function FinanceDashboardPage() {
                         Finance Dashboard · Live data as of{" "}
                         {new Date().toLocaleDateString("en-PK", { day: "numeric", month: "long", year: "numeric" })}
                     </div>
-
                 </div>
+
             </div>
         </Layout>
+        <PageLoadingOverlay visible={overlay.visible} overlayRect={overlay.overlayRect} text={overlay.text} />
+        </>
     );
 }
 

@@ -12,6 +12,8 @@ import {
   Wallet,
   BarChart3,
 } from "lucide-react";
+import usePageLoadingOverlay from "@/hooks/usePageLoadingOverlay";
+import PageLoadingOverlay from "@/components/ui/PageLoadingOverlay";
 
 export default function FinanceReportsPage() {
 
@@ -20,6 +22,8 @@ export default function FinanceReportsPage() {
 
   const [report, setReport] =
     useState(null);
+
+  const overlay = usePageLoadingOverlay("Loading Reports...");
 
   const fetchReport =
     async () => {
@@ -41,7 +45,7 @@ export default function FinanceReportsPage() {
           const id = progressToast.loading({ title: "Error", message: "" });
           progressToast.error(id, { title: "Error", message: "Failed to load reports" });
       } finally {
-
+          overlay.finish();
         setLoading(false);
 
       }
@@ -53,19 +57,7 @@ export default function FinanceReportsPage() {
 
   }, []);
 
-  if (loading) {
-
-    return (
-      <Layout>
-        <div className="
-          py-32
-          text-center
-        ">
-          Loading Reports...
-        </div>
-      </Layout>
-    );
-  }
+  // ── Loading handled by overlay ──
 
   const totals =
     report?.totals || {};
@@ -74,6 +66,7 @@ export default function FinanceReportsPage() {
     report?.breakdown || {};
 
   return (
+    <>
     <Layout>
 
       <div className="
@@ -556,7 +549,8 @@ export default function FinanceReportsPage() {
       </div>
 
     </Layout>
-
+        <PageLoadingOverlay visible={overlay.visible} overlayRect={overlay.overlayRect} text={overlay.text} />
+    </>
   );
 }
 

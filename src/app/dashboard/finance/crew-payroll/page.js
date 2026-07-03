@@ -5,6 +5,8 @@ import Layout from "@/components/Layout";
 import api from "@/lib/api";
 import Link from "next/link";
 import progressToast from "@/lib/progressToast";
+import usePageLoadingOverlay from "@/hooks/usePageLoadingOverlay";
+import PageLoadingOverlay from "@/components/ui/PageLoadingOverlay";
 
 export default function CrewPayrollPage() {
 
@@ -13,6 +15,8 @@ export default function CrewPayrollPage() {
 
   const [loading, setLoading] =
     useState(true);
+
+  const overlay = usePageLoadingOverlay("Loading Crew Payroll...");
 
   const [form, setForm] =
     useState({
@@ -45,7 +49,7 @@ export default function CrewPayrollPage() {
           const id = progressToast.loading({ title: "Error", message: "" });
           progressToast.error(id, { title: "Error", message: "Failed to load payrolls" });
       } finally {
-
+          overlay.finish();
         setLoading(false);
 
       }
@@ -77,6 +81,7 @@ export default function CrewPayrollPage() {
     };
 
   return (
+    <>
     <Layout>
 
       <div className="max-w-7xl mx-auto px-6 py-6">
@@ -265,5 +270,7 @@ export default function CrewPayrollPage() {
       </div>
 
     </Layout>
+        <PageLoadingOverlay visible={overlay.visible} overlayRect={overlay.overlayRect} text={overlay.text} />
+    </>
   );
 }

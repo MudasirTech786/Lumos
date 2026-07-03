@@ -14,6 +14,8 @@ import {
     Plus,
     CheckCircle2,
 } from "lucide-react";
+import usePageLoadingOverlay from "@/hooks/usePageLoadingOverlay";
+import PageLoadingOverlay from "@/components/ui/PageLoadingOverlay";
 
 export default function ProductionInvoiceDetailPage() {
 
@@ -24,6 +26,8 @@ export default function ProductionInvoiceDetailPage() {
     const [loading, setLoading] = useState(true);
 
     const [invoice, setInvoice] = useState(null);
+
+    const overlay = usePageLoadingOverlay("Loading Invoice...");
 
     const [paymentForm, setPaymentForm] = useState({
         payment_date:
@@ -60,7 +64,7 @@ export default function ProductionInvoiceDetailPage() {
             progressToast.error(id, { title: "Error", message: "Failed to load invoice" });
 
         } finally {
-
+            overlay.finish();
             setLoading(false);
         }
     }
@@ -115,16 +119,7 @@ export default function ProductionInvoiceDetailPage() {
         }
     }
 
-    if (loading) {
-
-        return (
-            <Layout>
-                <div className="p-8">
-                    Loading...
-                </div>
-            </Layout>
-        );
-    }
+    // ── Loading handled by overlay ──
 
     if (!invoice) {
 
@@ -138,6 +133,7 @@ export default function ProductionInvoiceDetailPage() {
     }
 
     return (
+        <>
         <Layout>
 
             <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
@@ -516,6 +512,8 @@ export default function ProductionInvoiceDetailPage() {
             </div>
 
         </Layout>
+        <PageLoadingOverlay visible={overlay.visible} overlayRect={overlay.overlayRect} text={overlay.text} />
+    </>
     );
     function MetricCard({
         title,

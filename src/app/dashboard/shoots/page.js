@@ -9,6 +9,8 @@ import Link from "next/link";
 
 import { useConfirm } from "@/context/ConfirmContext";
 import progressToast from "@/lib/progressToast";
+import usePageLoadingOverlay from "@/hooks/usePageLoadingOverlay";
+import PageLoadingOverlay from "@/components/ui/PageLoadingOverlay";
 
 import {
   Plus,
@@ -31,6 +33,7 @@ export default function ShootsPage() {
   const [activeTab, setActiveTab] = useState("all");
 
   const confirmDialog = useConfirm();
+  const overlay = usePageLoadingOverlay("Loading Productions...");
 
   /* ========================================================= */
   /* FETCH SHOOTS */
@@ -50,6 +53,7 @@ export default function ShootsPage() {
       progressToast.error(id, { title: "Error", message: "Failed to load shoots" });
     } finally {
       setLoading(false);
+      overlay.finish();
     }
   };
 
@@ -138,6 +142,7 @@ export default function ShootsPage() {
   }, [shoots]);
 
   return (
+    <>
     <Layout>
       <div className="mx-auto max-w-6xl pb-24">
 
@@ -325,6 +330,8 @@ export default function ShootsPage() {
 
       </div>
     </Layout>
+    <PageLoadingOverlay visible={overlay.visible} overlayRect={overlay.overlayRect} text={overlay.text} />
+    </>
   );
 }
 

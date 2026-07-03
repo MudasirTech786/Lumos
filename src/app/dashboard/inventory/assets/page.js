@@ -13,6 +13,9 @@ import {
     ShieldCheck, Hash, DollarSign,
 } from "lucide-react";
 
+import usePageLoadingOverlay from "@/hooks/usePageLoadingOverlay";
+import PageLoadingOverlay from "@/components/ui/PageLoadingOverlay";
+
 /* ─── STATUS CONFIG ─────────────────────────── */
 const STATUS = {
     available:    { label: "Available",    icon: CheckCircle2,  card: "bg-emerald-50 text-emerald-700 border-emerald-200", dot: "bg-emerald-500" },
@@ -140,10 +143,12 @@ export default function InventoryAssetsPage() {
     const [assignedTo,    setAssignedTo]    = useState("");
     const [actionLoading, setActionLoading] = useState(false);
 
+    const overlay = usePageLoadingOverlay("Loading Assets...");
+
     const fetchAssets = async () => {
         try { setLoading(true); const r = await api.get("/inventory/inventory-assets"); setAssets(r.data.data || []); }
         catch { const id = progressToast.loading({ title: "Error", message: "" }); progressToast.error(id, { title: "Error", message: "Failed to load assets" }); }
-        finally { setLoading(false); }
+        finally { overlay.finish(); setLoading(false); }
     };
 
     const loadAssetDetails = async (id) => {
@@ -200,6 +205,7 @@ export default function InventoryAssetsPage() {
     }, [assets, search, statusFilter]);
 
     return (
+        <>
         <Layout>
             <div className="min-h-screen bg-slate-50/70">
                 <div className="max-w-7xl mx-auto px-4 sm:px-5 py-6 sm:py-8 space-y-5">
@@ -482,5 +488,7 @@ export default function InventoryAssetsPage() {
                 </div>
             )}
         </Layout>
+        <PageLoadingOverlay visible={overlay.visible} overlayRect={overlay.overlayRect} text={overlay.text} />
+        </>
     );
 }
