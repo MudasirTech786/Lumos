@@ -1,0 +1,1812 @@
+"use client";
+
+import Layout from "@/components/Layout";
+import ProtectedPage from "@/components/ProtectedPage";
+import {
+    Plus,
+    Search,
+    Trash2,
+    Pencil,
+    Users,
+    UserCheck,
+    UserX,
+    Briefcase,
+    Sparkles,
+    BadgeDollarSign,
+    FileText,
+    Upload,
+    X,
+    Camera,
+
+} from "lucide-react";
+
+import DateTimePicker from "@/components/ui/DateTimePicker";
+
+import { useEffect, useMemo, useState } from "react";
+
+import api from "@/lib/api";
+
+import progressToast from "@/lib/progressToast";
+import { useConfirm } from "@/context/ConfirmContext";
+
+import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
+import StatsCard from "@/components/ui/StatsCard";
+
+const ImageCropModal = dynamic(() => import("@/components/ImageCropModal"), {
+    ssr: false,
+});
+
+import usePageLoadingOverlay from "@/hooks/usePageLoadingOverlay";
+import PageLoadingOverlay from "@/components/ui/PageLoadingOverlay";
+
+export default function CrewPage() {
+
+    const router = useRouter();
+
+    // ================= STATES =================
+    const [crew, setCrew] = useState([]);
+
+    const [loading, setLoading] = useState(true);
+
+    const overlay = usePageLoadingOverlay("Loading Crew...");
+
+    const [search, setSearch] = useState("");
+
+    const [typeFilter, setTypeFilter] = useState("");
+
+    const [statusFilter, setStatusFilter] = useState("");
+
+    const [openModal, setOpenModal] = useState(false);
+
+    const [editModal, setEditModal] = useState(false);
+
+    const [editingId, setEditingId] = useState(null);
+
+    const [loadingId, setLoadingId] = useState(null);
+
+    const confirmDialog = useConfirm();
+
+    // ================= FORM =================
+    const initialForm = {
+
+        name: "",
+
+        email: "",
+
+        phone: "",
+
+        designation: "",
+
+        employment_type: "freelancer",
+
+        basic_salary: "",
+
+        rate_per_shift: "",
+
+        hourly_rate: "",
+
+        commission: "",
+
+        home_allowance: "",
+
+        fuel_allowance: "",
+
+        others: "",
+
+        skills: [],
+
+        notes: "",
+
+        joining_date: "",
+
+        address: "",
+
+        cnic: "",
+
+        emergency_contact: "",
+
+        profile_photo: "",
+
+        is_active: true,
+    };
+
+    const [form, setForm] = useState(initialForm);
+    const [profilePhotoFile, setProfilePhotoFile] = useState(null);
+    const [profilePhotoPreview, setProfilePhotoPreview] = useState(null);
+    const [cropOpen, setCropOpen] = useState(false);
+    const [cropImageSrc, setCropImageSrc] = useState(null);
+
+    // ================= FETCH =================
+    useEffect(() => {
+
+        fetchCrew();
+
+    }, [search, typeFilter, statusFilter]);
+
+    const fetchCrew = async () => {
+
+        try {
+
+            setLoading(true);
+
+            const res = await api.get("/crew", {
+                params: {
+                    search,
+                    employment_type: typeFilter,
+                    is_active: statusFilter,
+                }
+            });
+
+            console.log(res.data);
+
+            const data =
+                res.data?.crew?.data ||
+                res.data?.crew ||
+                [];
+
+            setCrew(Array.isArray(data) ? data : []);
+
+        } catch (err) {
+
+            console.log(err?.response?.data || err);
+
+            const id = progressToast.loading({ title: "Error", message: "" });
+            progressToast.error(id, { title: "Fetch Error", message: err.response?.data?.message || "Failed to load crew" });
+
+            console.log(err.response?.data);
+
+            setCrew([]);
+
+        } finally {
+
+            setLoading(false);
+            overlay.finish();
+        }
+    };
+
+    // ================= STATS =================
+    const stats = useMemo(() => {
+
+        return {
+
+            total: crew.length,
+
+            freelancers: crew.filter(
+                (c) => c.employment_type === "freelancer"
+            ).length,
+
+            fullTime: crew.filter(
+                (c) => c.employment_type === "full_time"
+            ).length,
+
+            inactive: crew.filter(
+                (c) => !c.is_active
+            ).length,
+        };
+
+    }, [crew]);
+
+    // ================= CREATE =================
+    const handleSubmit = async () => {
+
+        if (!form.name) {
+            const id = progressToast.loading({ title: "Error", message: "" });
+            progressToast.error(id, { title: "Validation Error", message: "Name required" });
+            return;
+        }
+
+        const pToastId = progressToast.loading({
+            title: "Creating Crew Member",
+            message: "Saving crew information...",
+        });
+
+        try {
+
+            const payload = formatPayload(form);
+
+            if (profilePhotoFile) {
+                progressToast.update(pToastId, {
+                    progress: 40,
+                    message: "Uploading profile photo...",
+                });
+                const { profile_photo, ...clean } = payload;
+                const fd = buildFormData(clean);
+                fd.append('profile_photo', profilePhotoFile);
+                await api.post("/crew", fd);
+            } else {
+                progressToast.update(pToastId, {
+                    progress: 75,
+                    message: "Assigning details...",
+                });
+                await api.post("/crew", payload);
+            }
+
+            progressToast.success(pToastId, {
+                title: "Crew Member Created",
+                message: "Crew member has been added successfully.",
+            });
+
+            if (profilePhotoPreview?.startsWith('blob:')) URL.revokeObjectURL(profilePhotoPreview);
+            setForm(initialForm);
+            setProfilePhotoFile(null);
+            setProfilePhotoPreview(null);
+
+            setOpenModal(false);
+
+            fetchCrew();
+
+        } catch (err) {
+
+            console.log(err?.response?.data || err);
+
+            progressToast.error(pToastId, {
+                title: "Creation Failed",
+                message: err.response?.data?.message || "Failed to add crew",
+            });
+
+            console.log(err.response?.data);
+        }
+    };
+
+    // ================= EDIT =================
+    const handleEdit = (c) => {
+
+        if (profilePhotoPreview?.startsWith('blob:')) {
+            URL.revokeObjectURL(profilePhotoPreview);
+        }
+
+        setForm({
+            ...initialForm,
+            ...c,
+        });
+
+        setProfilePhotoPreview(c?.profile_photo_url || c?.profile_photo || null);
+        setProfilePhotoFile(null);
+
+        setEditingId(c.id);
+
+        setEditModal(true);
+    };
+
+    const handleUpdate = async () => {
+
+        const pToastId = progressToast.loading({
+            title: "Updating Crew Member",
+            message: "Saving changes...",
+        });
+
+        try {
+
+            const payload = formatPayload(form);
+
+            if (profilePhotoFile) {
+                progressToast.update(pToastId, {
+                    progress: 40,
+                    message: "Uploading profile photo...",
+                });
+                const { profile_photo, ...clean } = payload;
+                const fd = buildFormData(clean);
+                fd.append('profile_photo', profilePhotoFile);
+                fd.append('_method', 'PUT');
+                await api.post(`/crew/${editingId}`, fd);
+            } else {
+                progressToast.update(pToastId, {
+                    progress: 60,
+                    message: "Updating crew details...",
+                });
+                await api.put(
+                    `/crew/${editingId}`,
+                    payload
+                );
+            }
+
+            progressToast.success(pToastId, {
+                title: "Crew Member Updated",
+                message: "Changes saved successfully.",
+            });
+
+            if (profilePhotoPreview?.startsWith('blob:')) URL.revokeObjectURL(profilePhotoPreview);
+            setEditModal(false);
+            setProfilePhotoFile(null);
+            setProfilePhotoPreview(null);
+
+            fetchCrew();
+
+        } catch (err) {
+
+            console.log(err?.response?.data || err);
+
+            progressToast.error(pToastId, {
+                title: "Update Failed",
+                message: err.response?.data?.message || "Update failed",
+            });
+
+            console.log(err.response?.data);
+        }
+    };
+
+    // ================= DELETE =================
+    const handleDelete = async (id) => {
+
+        const ok = await confirmDialog({
+            variant: "danger",
+            title: "Delete Crew Member",
+            description: "This action cannot be undone.",
+            confirmText: "Delete",
+            confirmAction: () => api.delete(`/crew/${id}`),
+        });
+
+        if (!ok) return;
+
+        setCrew((prev) =>
+            prev.filter((c) => c.id !== id)
+        );
+    };
+
+    // ================= FORMAT =================
+    const formatPayload = (data) => ({
+
+        ...data,
+
+        basic_salary:
+            Number(data.basic_salary) || 0,
+
+        rate_per_shift:
+            Number(data.rate_per_shift) || 0,
+
+        hourly_rate:
+            Number(data.hourly_rate) || 0,
+
+        commission:
+            Number(data.commission) || 0,
+
+        home_allowance:
+            Number(data.home_allowance) || 0,
+
+        fuel_allowance:
+            Number(data.fuel_allowance) || 0,
+
+        others:
+            Number(data.others) || 0,
+
+        is_active:
+            Boolean(data.is_active),
+    });
+
+    const buildFormData = (data) => {
+        const fd = new FormData();
+        for (const [key, value] of Object.entries(data)) {
+            if (Array.isArray(value)) {
+                value.forEach(v => fd.append(`${key}[]`, v));
+            } else if (value === true) {
+                fd.append(key, '1');
+            } else if (value === false) {
+                fd.append(key, '0');
+            } else if (value !== null && value !== undefined) {
+                fd.append(key, value);
+            }
+        }
+        return fd;
+    };
+
+    // ================= UI =================
+    return (
+        <>
+        <ProtectedPage permission="crew.view">
+            <Layout>
+
+                <div className="space-y-6">
+
+                    {/* HEADER */}
+                    <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+
+                        <div>
+
+                            <div className="
+    inline-flex
+    items-center
+    gap-2
+    rounded-full
+    border
+    border-blue-100
+    bg-blue-50
+    px-4
+    py-2
+    text-[11px]
+    font-semibold
+    uppercase
+    tracking-[0.22em]
+    text-blue-700
+  ">
+
+                                <Sparkles size={12} />
+
+                                Workforce Operations
+
+                            </div>
+
+                            <h1 className="
+    mt-4
+    text-4xl
+    md:text-5xl
+    font-black
+    tracking-[-0.06em]
+    text-gray-900
+  ">
+
+                                Crew Management
+
+                            </h1>
+
+                            <p className="
+    mt-4
+    max-w-3xl
+    text-base
+    leading-relaxed
+    text-gray-500
+  ">
+
+                                Manage production workforce, freelancers,
+                                operational staffing and crew coordination.
+
+                            </p>
+
+                        </div>
+
+                        <button
+                            onClick={() => setOpenModal(true)}
+                            className="bg-blue-600 hover:bg-blue-700 transition text-white px-4 md:px-5 py-3 rounded-2xl w-full md:w-auto justify-center flex items-center gap-2"
+                        >
+                            <Plus size={18} />
+                            Add Crew
+                        </button>
+
+                    </div>
+
+                    {/* KPI STATS */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+
+                        <StatsCard
+                            icon={<Users size={20} />}
+                            iconBg="bg-blue-100"
+                            iconColor="text-blue-600"
+                            accentColor="bg-blue-500"
+                            value={stats.total}
+                            label="Total Crew"
+                            chip={{ text: "Active", bg: "bg-green-100", color: "text-green-700" }}
+                            index={0}
+                        />
+
+                        <StatsCard
+                            icon={<Briefcase size={20} />}
+                            iconBg="bg-green-100"
+                            iconColor="text-green-600"
+                            accentColor="bg-green-500"
+                            value={stats.freelancers}
+                            label="Freelancers"
+                            index={1}
+                        />
+
+                        <StatsCard
+                            icon={<UserCheck size={20} />}
+                            iconBg="bg-purple-100"
+                            iconColor="text-purple-600"
+                            accentColor="bg-purple-500"
+                            value={stats.fullTime}
+                            label="Full Time"
+                            index={2}
+                        />
+
+                        <StatsCard
+                            icon={<UserX size={20} />}
+                            iconBg="bg-amber-100"
+                            iconColor="text-amber-600"
+                            accentColor="bg-amber-500"
+                            value={stats.inactive}
+                            label="Inactive"
+                            index={3}
+                        />
+
+                    </div>
+
+                    <div className="bg-white rounded-3xl border border-blue-100 p-5 shadow-sm space-y-4">
+
+                        {/* SEARCH */}
+                        <div className="relative">
+
+                            <Search
+                                className="absolute left-3 top-3 text-gray-400"
+                                size={18}
+                            />
+
+                            <input
+                                value={search}
+                                onChange={(e) =>
+                                    setSearch(e.target.value)
+                                }
+                                placeholder="Search crew..."
+                                className="w-full pl-10 border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none p-3 rounded-2xl"
+                            />
+
+                        </div>
+
+                        {/* FILTERS */}
+                        <div className="flex flex-col md:flex-row gap-3">
+
+                            <select
+                                value={typeFilter}
+                                onChange={(e) =>
+                                    setTypeFilter(e.target.value)
+                                }
+                                className="border border-gray-200 p-3 rounded-2xl md:w-60 focus:border-blue-500 outline-none"
+                            >
+                                <option value="">
+                                    All Types
+                                </option>
+
+                                <option value="freelancer">
+                                    Freelancer
+                                </option>
+
+                                <option value="full_time">
+                                    Full Time
+                                </option>
+
+                                <option value="part_time">
+                                    Part Time
+                                </option>
+
+                            </select>
+
+                            <select
+                                value={statusFilter}
+                                onChange={(e) =>
+                                    setStatusFilter(e.target.value)
+                                }
+                                className="border border-gray-200 p-3 rounded-2xl md:w-60 focus:border-blue-500 outline-none"
+                            >
+                                <option value="">
+                                    All Status
+                                </option>
+
+                                <option value="1">
+                                    Active
+                                </option>
+
+                                <option value="0">
+                                    Inactive
+                                </option>
+
+                            </select>
+
+                        </div>
+
+                    </div>
+
+                    {/* TABLE */}
+                    {/* CREW DATA */}
+                    <div className="space-y-4">
+
+                        {/* DESKTOP TABLE */}
+                        <div className="hidden lg:block bg-white rounded-3xl border border-blue-100 overflow-hidden shadow-sm">
+
+                            <div className="overflow-x-auto">
+
+                                <table className="w-full text-sm border-collapse min-w-[1100px]">
+
+                                    <thead className="bg-blue-50 border-b border-blue-100">
+
+                                        <tr>
+
+                                            <th className="p-4 text-left">
+                                                Name
+                                            </th>
+
+                                            <th className="p-4 text-left">
+                                                Type
+                                            </th>
+
+                                            <th className="p-4 text-left">
+                                                Skills
+                                            </th>
+
+                                            <th className="p-4 text-left">
+                                                Phone
+                                            </th>
+
+                                            <th className="p-4 text-right">
+                                                Hourly
+                                            </th>
+
+                                            <th className="p-4 text-right">
+                                                Shift
+                                            </th>
+
+                                            <th className="p-4 text-center">
+                                                Status
+                                            </th>
+
+                                            <th className="p-4 text-right">
+                                                Action
+                                            </th>
+
+                                        </tr>
+
+                                    </thead>
+
+                                    <tbody>
+
+                                        {/* LOADING */}
+                                        {loading && (
+
+                                            <tr>
+
+                                                <td
+                                                    colSpan={8}
+                                                    className="p-10 text-center text-gray-400"
+                                                >
+                                                    Loading...
+                                                </td>
+
+                                            </tr>
+                                        )}
+
+                                        {/* EMPTY */}
+                                        {!loading && crew.length === 0 && (
+
+                                            <tr>
+
+                                                <td
+                                                    colSpan={8}
+                                                    className="p-10 text-center text-gray-400"
+                                                >
+                                                    No crew found
+                                                </td>
+
+                                            </tr>
+                                        )}
+
+                                        {/* DATA */}
+                                        {!loading && crew.map((c) => (
+
+                                            <tr
+                                                key={c.id}
+                                                className="border-b border-gray-100 hover:bg-blue-50/40 transition cursor-pointer"
+                                                onClick={() =>
+                                                    router.push(`/dashboard/crew/${c.id}`)
+                                                }
+                                            >
+
+                                                {/* NAME */}
+                                                <td className="p-4">
+
+                                                    <div className="flex items-center gap-3">
+
+                                                        <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0 overflow-hidden">
+                                                            {c.profile_photo_url || c.profile_photo ? (
+                                                                <img
+                                                                    src={c.profile_photo_url || c.profile_photo}
+                                                                    alt={c.name}
+                                                                    className="h-full w-full object-cover"
+                                                                />
+                                                            ) : (
+                                                                c.name?.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)
+                                                            )}
+                                                        </div>
+
+                                                        <div>
+
+                                                            <p className="font-semibold text-gray-900">
+                                                                {c.name}
+                                                            </p>
+
+                                                            <p className="text-xs text-gray-500 mt-1">
+                                                                {c.designation || "No designation"}
+                                                            </p>
+
+                                                        </div>
+
+                                                    </div>
+
+                                                </td>
+
+                                                {/* TYPE */}
+                                                <td className="p-4">
+
+                                                    <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-medium capitalize">
+                                                        {c.employment_type?.replace("_", " ")}
+                                                    </span>
+
+                                                </td>
+
+                                                {/* SKILLS */}
+                                                <td className="p-4">
+
+                                                    <div className="flex flex-wrap gap-1">
+
+                                                        {c.skills?.length ? (
+
+                                                            c.skills
+                                                                .slice(0, 2)
+                                                                .map((skill, index) => (
+
+                                                                    <span
+                                                                        key={index}
+                                                                        className="bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs"
+                                                                    >
+                                                                        {skill}
+                                                                    </span>
+                                                                ))
+
+                                                        ) : (
+
+                                                            <span className="text-gray-400 text-xs">
+                                                                No skills
+                                                            </span>
+                                                        )}
+
+                                                    </div>
+
+                                                </td>
+
+                                                {/* PHONE */}
+                                                <td className="p-4 text-gray-700">
+                                                    {c.phone || "-"}
+                                                </td>
+
+                                                {/* HOURLY */}
+                                                <td className="p-4 text-right font-medium">
+                                                    {c.hourly_rate || 0}
+                                                </td>
+
+                                                {/* SHIFT */}
+                                                <td className="p-4 text-right font-medium">
+                                                    {c.rate_per_shift || 0}
+                                                </td>
+
+                                                {/* STATUS */}
+                                                <td className="p-4 text-center">
+
+                                                    <span
+                                                        className={`px-3 py-1 rounded-full text-xs font-medium ${c.is_active
+                                                            ? "bg-green-100 text-green-700"
+                                                            : "bg-gray-200 text-gray-600"
+                                                            }`}
+                                                    >
+                                                        {c.is_active
+                                                            ? "Active"
+                                                            : "Inactive"}
+                                                    </span>
+
+                                                </td>
+
+                                                {/* ACTION */}
+                                                <td
+                                                    className="p-4"
+                                                    onClick={(e) =>
+                                                        e.stopPropagation()
+                                                    }
+                                                >
+
+                                                    <div className="flex justify-end gap-3">
+
+                                                        <button
+                                                            onClick={() => handleEdit(c)}
+                                                            className="text-blue-600 hover:text-blue-800"
+                                                        >
+                                                            <Pencil size={16} />
+                                                        </button>
+
+                                                        <button
+                                                            onClick={() => handleDelete(c.id)}
+                                                            disabled={loadingId === c.id}
+                                                            className="text-red-500 hover:text-red-700"
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
+
+                                                    </div>
+
+                                                </td>
+
+                                            </tr>
+                                        ))}
+
+                                    </tbody>
+
+                                </table>
+
+                            </div>
+
+                        </div>
+
+                        {/* MOBILE CARDS */}
+                        <div className="grid grid-cols-1 gap-4 lg:hidden">
+
+                            {loading && (
+
+                                <div className="bg-white rounded-3xl p-10 text-center text-gray-400 border border-blue-100">
+                                    Loading...
+                                </div>
+                            )}
+
+                            {!loading && crew.length === 0 && (
+
+                                <div className="bg-white rounded-3xl p-10 text-center text-gray-400 border border-blue-100">
+                                    No crew found
+                                </div>
+                            )}
+
+                            {!loading && crew.map((c) => (
+
+                                <div
+                                    key={c.id}
+                                    onClick={() =>
+                                        router.push(`/dashboard/crew/${c.id}`)
+                                    }
+                                    className="bg-white border border-blue-100 rounded-3xl p-5 shadow-sm space-y-4"
+                                >
+
+                                    {/* TOP */}
+                                    <div className="flex items-start justify-between gap-4">
+
+                                        <div className="flex items-center gap-3">
+
+                                            <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-base flex-shrink-0 overflow-hidden">
+                                                {c.profile_photo_url || c.profile_photo ? (
+                                                    <img
+                                                        src={c.profile_photo_url || c.profile_photo}
+                                                        alt={c.name}
+                                                        className="h-full w-full object-cover"
+                                                    />
+                                                ) : (
+                                                    c.name?.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)
+                                                )}
+                                            </div>
+
+                                            <div>
+
+                                                <h3 className="font-semibold text-gray-900 text-lg">
+                                                    {c.name}
+                                                </h3>
+
+                                                <p className="text-sm text-gray-500 mt-1">
+                                                    {c.designation || "No designation"}
+                                                </p>
+
+                                            </div>
+
+                                        </div>
+
+                                        <span
+                                            className={`px-3 py-1 rounded-full text-xs font-medium ${c.is_active
+                                                ? "bg-green-100 text-green-700"
+                                                : "bg-gray-200 text-gray-600"
+                                                }`}
+                                        >
+                                            {c.is_active ? "Active" : "Inactive"}
+                                        </span>
+
+                                    </div>
+
+                                    {/* TAGS */}
+                                    <div className="flex flex-wrap gap-2">
+
+                                        <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-medium capitalize">
+                                            {c.employment_type?.replace("_", " ")}
+                                        </span>
+
+                                        {c.skills?.slice(0, 2).map((skill, index) => (
+
+                                            <span
+                                                key={index}
+                                                className="bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs"
+                                            >
+                                                {skill}
+                                            </span>
+
+                                        ))}
+
+                                    </div>
+
+                                    {/* INFO */}
+                                    <div className="grid grid-cols-2 gap-4 text-sm">
+
+                                        <div>
+
+                                            <p className="text-gray-400">
+                                                Phone
+                                            </p>
+
+                                            <p className="font-medium mt-1">
+                                                {c.phone || "-"}
+                                            </p>
+
+                                        </div>
+
+                                        <div>
+
+                                            <p className="text-gray-400">
+                                                Hourly
+                                            </p>
+
+                                            <p className="font-medium mt-1">
+                                                {c.hourly_rate || 0}
+                                            </p>
+
+                                        </div>
+
+                                        <div>
+
+                                            <p className="text-gray-400">
+                                                Shift Rate
+                                            </p>
+
+                                            <p className="font-medium mt-1">
+                                                {c.rate_per_shift || 0}
+                                            </p>
+
+                                        </div>
+
+                                    </div>
+
+                                    {/* ACTIONS */}
+                                    <div
+                                        className="flex justify-end gap-3 pt-2"
+                                        onClick={(e) => e.stopPropagation()}
+                                    >
+
+                                        <button
+                                            onClick={() => handleEdit(c)}
+                                            className="bg-blue-50 hover:bg-blue-100 text-blue-600 p-3 rounded-2xl transition"
+                                        >
+                                            <Pencil size={16} />
+                                        </button>
+
+                                        <button
+                                            onClick={() => handleDelete(c.id)}
+                                            className="bg-red-50 hover:bg-red-100 text-red-500 p-3 rounded-2xl transition"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+
+                                    </div>
+
+                                </div>
+                            ))}
+
+                        </div>
+
+                    </div>
+
+                    {/* MODAL */}
+                    {(openModal || editModal) && (
+
+                        <div className="
+    fixed
+    inset-0
+    z-[9999]
+    overflow-y-auto
+    bg-[#020817]/70
+    backdrop-blur-md
+  ">
+
+                            {/* BACKDROP */}
+                            <div
+                                                                onClick={() => {
+                                                                    if (profilePhotoPreview?.startsWith('blob:')) URL.revokeObjectURL(profilePhotoPreview);
+                                                                    setOpenModal(false);
+                                                                    setEditModal(false);
+                                                                    setProfilePhotoFile(null);
+                                                                    setProfilePhotoPreview(null);
+                                                                }}
+                                                                className="fixed inset-0"
+                            />
+
+                            {/* ===================================================== */}
+                            {/* WRAPPER */}
+                            {/* ===================================================== */}
+
+                            <div className="
+      relative
+      flex
+      min-h-screen
+      items-start
+      justify-center
+      px-4
+      py-8
+      md:items-center
+    ">
+
+                                {/* ===================================================== */}
+                                {/* MODAL */}
+                                {/* ===================================================== */}
+
+                                <div className="
+        relative
+        mt-12
+        w-full
+        max-w-6xl
+        max-h-[90vh]
+        overflow-y-auto
+        no-scrollbar
+        rounded-[38px]
+        border
+        border-blue-100/70
+        bg-[rgba(255,255,255,0.92)]
+        shadow-[0_25px_120px_rgba(37,99,235,0.18)]
+        backdrop-blur-3xl
+      ">
+
+                                    {/* GRID BG */}
+
+                                    <div className="
+          pointer-events-none
+          absolute
+          inset-0
+          opacity-[0.03]
+          [background-image:linear-gradient(to_right,#2563eb_1px,transparent_1px),linear-gradient(to_bottom,#2563eb_1px,transparent_1px)]
+          [background-size:42px_42px]
+        " />
+
+                                    {/* GLOW */}
+
+                                    <div className="
+          absolute
+          -top-24
+          right-[-120px]
+          h-[320px]
+          w-[320px]
+          rounded-full
+          bg-blue-400/20
+          blur-[120px]
+        " />
+
+                                    <div className="
+          absolute
+          bottom-[-120px]
+          left-[-120px]
+          h-[280px]
+          w-[280px]
+          rounded-full
+          bg-cyan-300/10
+          blur-[120px]
+        " />
+
+                                    {/* ===================================================== */}
+                                    {/* HEADER */}
+                                    {/* ===================================================== */}
+
+                                    <div className="
+          sticky
+          top-0
+          z-20
+          border-b
+          border-blue-100/70
+          bg-white/85
+          px-6
+          py-5
+          backdrop-blur-2xl
+          md:px-8
+        ">
+
+                                        <div className="
+            flex
+            items-start
+            justify-between
+            gap-4
+          ">
+
+                                            <div>
+
+                                                <div className="
+                inline-flex
+                items-center
+                gap-2
+                rounded-full
+                border
+                border-blue-100
+                bg-blue-50
+                px-4
+                py-2
+                text-[11px]
+                font-semibold
+                uppercase
+                tracking-[0.22em]
+                text-blue-700
+              ">
+
+                                                    <Sparkles size={12} />
+
+                                                    Crew Operations
+
+                                                </div>
+
+                                                <h2 className="
+                mt-4
+                text-3xl
+                font-black
+                tracking-[-0.05em]
+                text-slate-900
+              ">
+
+                                                    {editModal
+                                                        ? "Edit Crew Member"
+                                                        : "Create Crew Member"}
+
+                                                </h2>
+
+                                                <p className="
+                mt-2
+                max-w-2xl
+                text-sm
+                leading-relaxed
+                text-slate-500
+              ">
+
+                                                    Manage workforce information,
+                                                    payroll structure, operational records
+                                                    and production crew assignments.
+
+                                                </p>
+
+                                            </div>
+
+                                            <button
+                                                onClick={() => {
+                                                    setOpenModal(false);
+                                                    setEditModal(false);
+                                                    setProfilePhotoFile(null);
+                                                    if (profilePhotoPreview?.startsWith('blob:')) URL.revokeObjectURL(profilePhotoPreview);
+                                                    setProfilePhotoPreview(null);
+                                                }}
+                                                className="
+                flex
+                h-12
+                w-12
+                items-center
+                justify-center
+                rounded-2xl
+                border
+                border-blue-100
+                bg-white
+                text-slate-500
+                transition-all
+                hover:bg-blue-50
+                hover:text-blue-700
+              "
+                                            >
+
+                                                ✕
+
+                                            </button>
+
+                                        </div>
+
+                                    </div>
+
+                                    {/* ===================================================== */}
+                                    {/* BODY */}
+                                    {/* ===================================================== */}
+
+                                    <div className="
+          relative
+          z-10
+          space-y-8
+          p-6
+          md:p-8
+        ">
+
+                                        {/* ===================================================== */}
+                                        {/* BASIC INFO */}
+                                        {/* ===================================================== */}
+
+                                        <GlassSection
+                                            title="Basic Information"
+                                            subtitle="Personal & operational details"
+                                            icon={<Users size={20} />}
+                                        >
+
+                                            <div className="
+              grid
+              grid-cols-1
+              gap-5
+              md:grid-cols-2
+            ">
+
+                                                <Input
+                                                    label="Full Name"
+                                                    placeholder="John Carter"
+                                                    value={form.name || ""}
+                                                    onChange={(e) =>
+                                                        setForm({
+                                                            ...form,
+                                                            name: e.target.value,
+                                                        })
+                                                    }
+                                                />
+
+                                                <Input
+                                                    label="Phone Number"
+                                                    placeholder="+92 300 0000000"
+                                                    value={form.phone || ""}
+                                                    onChange={(e) =>
+                                                        setForm({
+                                                            ...form,
+                                                            phone: e.target.value,
+                                                        })
+                                                    }
+                                                />
+
+                                                <Input
+                                                    label="Email Address"
+                                                    placeholder="john@email.com"
+                                                    value={form.email || ""}
+                                                    onChange={(e) =>
+                                                        setForm({
+                                                            ...form,
+                                                            email: e.target.value,
+                                                        })
+                                                    }
+                                                />
+
+                                                <Input
+                                                    label="Designation"
+                                                    placeholder="Camera Operator"
+                                                    value={form.designation || ""}
+                                                    onChange={(e) =>
+                                                        setForm({
+                                                            ...form,
+                                                            designation: e.target.value,
+                                                        })
+                                                    }
+                                                />
+
+                                            </div>
+
+                                        </GlassSection>
+
+                                        {/* ===================================================== */}
+                                        {/* EXTRA */}
+                                        {/* ===================================================== */}
+
+                                        <GlassSection
+                                            title="Additional Information"
+                                            subtitle="Internal workforce records"
+                                            icon={<Briefcase size={20} />}
+                                        >
+
+                                            <div className="
+              grid
+              grid-cols-1
+              gap-5
+              md:grid-cols-2
+            ">
+
+                                                <DateTimePicker
+                                                    dateOnly
+                                                    label="Joining Date"
+                                                    value={form.joining_date || ""}
+                                                    onChange={(val) =>
+                                                        setForm({
+                                                            ...form,
+                                                            joining_date: val,
+                                                        })
+                                                    }
+                                                />
+
+                                                <Input
+                                                    label="CNIC"
+                                                    placeholder="42101-1234567-1"
+                                                    value={form.cnic || ""}
+                                                    onChange={(e) =>
+                                                        setForm({
+                                                            ...form,
+                                                            cnic: e.target.value,
+                                                        })
+                                                    }
+                                                />
+
+                                                <Input
+                                                    label="Emergency Contact"
+                                                    placeholder="+92 300 0000000"
+                                                    value={form.emergency_contact || ""}
+                                                    onChange={(e) =>
+                                                        setForm({
+                                                            ...form,
+                                                            emergency_contact: e.target.value,
+                                                        })
+                                                    }
+                                                />
+
+                                                <div className="space-y-2">
+                                                    <div className="relative">
+                                                        <div className="pointer-events-none absolute left-4 top-3 z-10 text-[10px] font-bold uppercase tracking-[0.16em] text-blue-500">
+                                                            Profile Photo
+                                                        </div>
+                                                        {profilePhotoPreview ? (
+                                                            <div className="h-[72px] w-full rounded-[24px] border border-blue-100 bg-white/80 overflow-hidden flex items-center gap-3 px-4 pb-3 pt-7">
+                                                                <img
+                                                                    src={profilePhotoPreview}
+                                                                    alt="Preview"
+                                                                    className="h-10 w-10 rounded-lg object-cover flex-shrink-0"
+                                                                />
+                                                                <span className="text-sm text-slate-500 truncate flex-1">
+                                                                    {profilePhotoFile
+                                                                        ? "Photo uploaded"
+                                                                        : "Current photo"}
+                                                                </span>
+                                                                <div className="flex gap-1 flex-shrink-0">
+                                                                    <label className="cursor-pointer p-1.5 rounded-lg hover:bg-blue-50 text-blue-500 transition">
+                                                                        <Camera size={16} />
+                                                                        <input
+                                                                            type="file"
+                                                                            accept=".jpg,.jpeg,.png,.webp"
+                                                                            className="hidden"
+                                                                            onChange={(e) => {
+                                                                                const file = e.target.files?.[0];
+                                                                                if (file) {
+                                                                                    setCropImageSrc(URL.createObjectURL(file));
+                                                                                    setCropOpen(true);
+                                                                                }
+                                                                                e.target.value = null;
+                                                                            }}
+                                                                        />
+                                                                    </label>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => {
+                                                                            if (profilePhotoPreview?.startsWith('blob:')) {
+                                                                                URL.revokeObjectURL(profilePhotoPreview);
+                                                                            }
+                                                                            setProfilePhotoFile(null);
+                                                                            setProfilePhotoPreview(null);
+                                                                            setForm({ ...form, profile_photo: "" });
+                                                                        }}
+                                                                        className="p-1.5 rounded-lg hover:bg-red-50 text-red-500 transition"
+                                                                    >
+                                                                        <X size={16} />
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        ) : (
+                                                            <label className="cursor-pointer">
+                                                                <div className="h-[72px] w-full rounded-[24px] border border-dashed border-blue-200 bg-blue-50/30 hover:bg-blue-50/60 transition flex items-center justify-center gap-2 pb-3 pt-7">
+                                                                    <Upload size={16} className="text-blue-500" />
+                                                                    <span className="text-sm text-blue-600 font-medium">
+                                                                        Upload photo
+                                                                    </span>
+                                                                </div>
+                                                                <input
+                                                                    type="file"
+                                                                    accept=".jpg,.jpeg,.png,.webp"
+                                                                    className="hidden"
+                                                                    onChange={(e) => {
+                                                                        const file = e.target.files?.[0];
+                                                                        if (file) {
+                                                                            setCropImageSrc(URL.createObjectURL(file));
+                                                                            setCropOpen(true);
+                                                                        }
+                                                                        e.target.value = null;
+                                                                    }}
+                                                                />
+                                                            </label>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                            </div>
+
+                                        </GlassSection>
+
+                                        {/* ===================================================== */}
+                                        {/* PAYROLL */}
+                                        {/* ===================================================== */}
+
+                                        <GlassSection
+                                            title="Payroll Structure"
+                                            subtitle="Salary & allowance management"
+                                            icon={<BadgeDollarSign size={20} />}
+                                        >
+
+                                            <div className="
+              grid
+              grid-cols-1
+              gap-5
+              md:grid-cols-2
+              xl:grid-cols-3
+            ">
+
+                                                <Input
+                                                    label="Basic Salary"
+                                                    type="number"
+                                                    placeholder="150000"
+                                                    value={form.basic_salary || ""}
+                                                    onChange={(e) =>
+                                                        setForm({
+                                                            ...form,
+                                                            basic_salary: e.target.value,
+                                                        })
+                                                    }
+                                                />
+
+                                                <Input
+                                                    label="Rate Per Shift"
+                                                    type="number"
+                                                    placeholder="12000"
+                                                    value={form.rate_per_shift || ""}
+                                                    onChange={(e) =>
+                                                        setForm({
+                                                            ...form,
+                                                            rate_per_shift: e.target.value,
+                                                        })
+                                                    }
+                                                />
+
+                                                <Input
+                                                    label="Hourly Rate"
+                                                    type="number"
+                                                    placeholder="2500"
+                                                    value={form.hourly_rate || ""}
+                                                    onChange={(e) =>
+                                                        setForm({
+                                                            ...form,
+                                                            hourly_rate: e.target.value,
+                                                        })
+                                                    }
+                                                />
+
+                                            </div>
+
+                                        </GlassSection>
+
+                                        {/* ===================================================== */}
+                                        {/* ACTIONS */}
+                                        {/* ===================================================== */}
+
+                                        <div className="
+            flex
+            flex-col-reverse
+            gap-4
+            pt-2
+            md:flex-row
+          ">
+
+                                            <button
+                                                onClick={() => {
+                                                    setOpenModal(false);
+                                                    setEditModal(false);
+                                                    setProfilePhotoFile(null);
+                                                    if (profilePhotoPreview?.startsWith('blob:')) URL.revokeObjectURL(profilePhotoPreview);
+                                                    setProfilePhotoPreview(null);
+                                                }}
+                                                className="
+                w-full
+                rounded-2xl
+                border
+                border-blue-100
+                bg-white
+                py-4
+                font-semibold
+                text-slate-700
+                transition-all
+                hover:bg-blue-50
+              "
+                                            >
+
+                                                Cancel
+
+                                            </button>
+
+                                            <button
+                                                onClick={
+                                                    editModal
+                                                        ? handleUpdate
+                                                        : handleSubmit
+                                                }
+                                                className="
+                w-full
+                rounded-2xl
+                bg-blue-600
+                py-4
+                font-semibold
+                text-white
+                shadow-[0_20px_50px_rgba(37,99,235,0.28)]
+                transition-all
+                hover:bg-blue-700
+              "
+                                            >
+
+                                                {editModal
+                                                    ? "Update Crew Member"
+                                                    : "Create Crew Member"}
+
+                                            </button>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    )}
+
+                    {/* CROP MODAL */}
+                    <ImageCropModal
+                        open={cropOpen}
+                        imageSrc={cropImageSrc}
+                        onCancel={() => {
+                            if (cropImageSrc) {
+                                URL.revokeObjectURL(cropImageSrc);
+                            }
+                            setCropImageSrc(null);
+                            setCropOpen(false);
+                        }}
+                        onSave={(file) => {
+                            setProfilePhotoFile(file);
+                            if (profilePhotoPreview?.startsWith('blob:')) {
+                                URL.revokeObjectURL(profilePhotoPreview);
+                            }
+                            setProfilePhotoPreview(URL.createObjectURL(file));
+                            if (cropImageSrc) {
+                                URL.revokeObjectURL(cropImageSrc);
+                            }
+                            setCropImageSrc(null);
+                            setCropOpen(false);
+                        }}
+                    />
+
+                </div>
+
+            </Layout>
+        </ProtectedPage>
+        <PageLoadingOverlay visible={overlay.visible} overlayRect={overlay.overlayRect} text={overlay.text} />
+        </>
+    );
+}
+
+function Input({
+  label,
+  value,
+  onChange,
+  type = "text",
+  placeholder = "",
+}) {
+
+  return (
+
+    <div className="space-y-2">
+      {/* INPUT WRAPPER */}
+
+      <div className="relative">
+
+        {/* INSIDE NAME */}
+
+        <div className="
+          pointer-events-none
+          absolute
+          left-4
+          top-3
+          z-10
+          text-[10px]
+          font-bold
+          uppercase
+          tracking-[0.16em]
+          text-blue-500
+        ">
+
+          {label}
+
+        </div>
+
+        {/* INPUT */}
+
+        <input
+          type={type}
+          value={value || ""}
+          placeholder={placeholder}
+          onChange={onChange}
+          className="
+            h-[72px]
+            w-full
+            rounded-[24px]
+            border
+            border-blue-100
+            bg-white/80
+            px-4
+            pb-3
+            pt-7
+            text-sm
+            font-medium
+            text-slate-800
+            outline-none
+            transition-all
+            placeholder:text-slate-400
+            focus:border-blue-400
+            focus:ring-4
+            focus:ring-blue-100
+          "
+        />
+
+      </div>
+
+    </div>
+
+  );
+}
+
+
+function SectionHeader({
+    title,
+    subtitle,
+    icon,
+}) {
+
+    return (
+
+        <div className="
+      flex
+      items-center
+      gap-4
+    ">
+
+            <div className="
+        flex
+        h-14
+        w-14
+        items-center
+        justify-center
+        rounded-3xl
+        bg-blue-100
+        text-blue-700
+        shadow-[0_10px_30px_rgba(37,99,235,0.12)]
+      ">
+
+                {icon}
+
+            </div>
+
+            <div>
+
+                <h3 className="
+          text-xl
+          font-bold
+          tracking-[-0.03em]
+          text-slate-900
+        ">
+
+                    {title}
+
+                </h3>
+
+                <p className="
+          mt-1
+          text-sm
+          text-slate-500
+        ">
+
+                    {subtitle}
+
+                </p>
+
+            </div>
+
+        </div>
+    );
+}
+
+function GlassSection({
+    title,
+    subtitle,
+    icon,
+    children,
+}) {
+
+    return (
+
+        <div className="
+      relative
+      overflow-hidden
+      rounded-[32px]
+      border
+      border-blue-100/80
+      bg-white/75
+      p-6
+      shadow-[0_10px_40px_rgba(37,99,235,0.06)]
+      backdrop-blur-2xl
+    ">
+
+            {/* GRID */}
+
+            <div className="
+        pointer-events-none
+        absolute
+        inset-0
+        opacity-[0.03]
+        [background-image:linear-gradient(to_right,#2563eb_1px,transparent_1px),linear-gradient(to_bottom,#2563eb_1px,transparent_1px)]
+        [background-size:34px_34px]
+      " />
+
+            {/* GLOW */}
+
+            <div className="
+        absolute
+        top-[-60px]
+        right-[-60px]
+        h-[160px]
+        w-[160px]
+        rounded-full
+        bg-blue-200/20
+        blur-[70px]
+      " />
+
+            {/* CONTENT */}
+
+            <div className="relative z-10">
+
+                {/* HEADER */}
+
+                <div className="
+          mb-6
+          flex
+          items-start
+          gap-4
+        ">
+
+                    <div className="
+            flex
+            h-14
+            w-14
+            items-center
+            justify-center
+            rounded-3xl
+            bg-blue-100
+            text-blue-700
+            shadow-[0_10px_30px_rgba(37,99,235,0.18)]
+          ">
+
+                        {icon}
+
+                    </div>
+
+                    <div>
+
+                        <h3 className="
+              text-xl
+              font-black
+              tracking-[-0.03em]
+              text-slate-900
+            ">
+
+                            {title}
+
+                        </h3>
+
+                        <p className="
+              mt-1
+              text-sm
+              text-slate-500
+            ">
+
+                            {subtitle}
+
+                        </p>
+
+                    </div>
+
+                </div>
+
+                {/* BODY */}
+
+                {children}
+
+            </div>
+
+        </div>
+    );
+}
