@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import { motion, useAnimationControls } from "framer-motion";
 import api from "@/lib/api";
 import { useRouter } from "next/navigation";
 import {
@@ -33,6 +34,35 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
 
   const [showConfirm, setShowConfirm] = useState(false);
+
+  const linkControls = useAnimationControls();
+  const isHoveredRef = useRef(false);
+
+  useEffect(() => {
+    let timeoutId;
+
+    const runAnimation = async () => {
+      await linkControls.start({
+        x: [0, 6, -6, 0],
+        transition: { duration: 0.8, ease: "easeInOut" },
+      });
+      scheduleNext();
+    };
+
+    const scheduleNext = () => {
+      timeoutId = setTimeout(() => {
+        if (!isHoveredRef.current) {
+          runAnimation();
+        } else {
+          scheduleNext();
+        }
+      }, 2000);
+    };
+
+    scheduleNext();
+
+    return () => clearTimeout(timeoutId);
+  }, [linkControls]);
 
   const handleKeyDown = (e) => {
     if (e.key === "Enter") register();
@@ -388,9 +418,18 @@ export default function RegisterPage() {
             {/* LOGIN LINK */}
             <p className="mt-6 text-center text-sm text-slate-500">
               Already have an account?{" "}
-              <button
+              <motion.button
                 onClick={() => router.push("/login")}
-                className="group/signin relative inline-flex cursor-pointer items-center font-semibold text-slate-500 transition-all duration-200 ease-out hover:text-blue-600 hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 active:scale-[0.98]"
+                animate={linkControls}
+                onHoverStart={() => {
+                  isHoveredRef.current = true;
+                  linkControls.stop();
+                  linkControls.set({ x: 0 });
+                }}
+                onHoverEnd={() => {
+                  isHoveredRef.current = false;
+                }}
+                className="ml-2 group/signin relative inline-flex cursor-pointer items-center font-semibold text-slate-500 transition-all duration-200 ease-out hover:text-blue-600 hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 active:scale-[0.98]"
               >
                 <ArrowLeft
                   size={14}
@@ -398,7 +437,7 @@ export default function RegisterPage() {
                 />
                 Sign In
                 <span className="absolute bottom-0 left-0 h-[1.5px] w-0 bg-blue-600 transition-all duration-200 ease-out group-hover/signin:w-full" />
-              </button>
+              </motion.button>
             </p>
           </div>
         </div>

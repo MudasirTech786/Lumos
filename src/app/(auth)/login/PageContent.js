@@ -1,7 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import { motion, useAnimationControls } from "framer-motion";
 import api from "@/lib/api";
 import { Eye, EyeOff, Mail, Lock, Check, ArrowRight } from "lucide-react";
 import useAuth from "@/hooks/useAuth";
@@ -16,6 +17,35 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
+
+  const linkControls = useAnimationControls();
+  const isHoveredRef = useRef(false);
+
+  useEffect(() => {
+    let timeoutId;
+
+    const runAnimation = async () => {
+      await linkControls.start({
+        x: [0, 6, -6, 0],
+        transition: { duration: 0.8, ease: "easeInOut" },
+      });
+      scheduleNext();
+    };
+
+    const scheduleNext = () => {
+      timeoutId = setTimeout(() => {
+        if (!isHoveredRef.current) {
+          runAnimation();
+        } else {
+          scheduleNext();
+        }
+      }, 2000);
+    };
+
+    scheduleNext();
+
+    return () => clearTimeout(timeoutId);
+  }, [linkControls]);
 
   const login = async () => {
     if (!email || !password) {
@@ -318,9 +348,18 @@ export default function LoginPage() {
             {/* REGISTER */}
             <p className="mt-6 text-center text-sm text-slate-500">
               Don&apos;t have an account?{" "}
-              <button
+              <motion.button
                 onClick={() => router.push("/register")}
-                className="group/create relative inline-flex cursor-pointer items-center font-semibold text-slate-500 transition-all duration-200 ease-out hover:text-blue-600 hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 active:scale-[0.98]"
+                animate={linkControls}
+                onHoverStart={() => {
+                  isHoveredRef.current = true;
+                  linkControls.stop();
+                  linkControls.set({ x: 0 });
+                }}
+                onHoverEnd={() => {
+                  isHoveredRef.current = false;
+                }}
+                className="ml-1 group/create relative inline-flex cursor-pointer items-center font-semibold text-slate-500 transition-all duration-200 ease-out hover:text-blue-600 hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 active:scale-[0.98]"
               >
                 Create New Account
                 <ArrowRight
@@ -328,7 +367,7 @@ export default function LoginPage() {
                   className="ml-1 transition-transform duration-200 ease-out group-hover/create:translate-x-1"
                 />
                 <span className="absolute bottom-0 left-0 h-[1.5px] w-0 bg-blue-600 transition-all duration-200 ease-out group-hover/create:w-full" />
-              </button>
+              </motion.button>
             </p>
           </div>
         </div>
