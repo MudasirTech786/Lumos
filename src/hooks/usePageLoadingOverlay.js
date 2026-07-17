@@ -1,15 +1,15 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export default function usePageLoadingOverlay(text = "Loading...") {
   const [visible, setVisible] = useState(true);
-  const [overlayRect, setOverlayRect] = useState(null);
-  const startRef = useRef(Date.now());
+  const startRef = useRef(null);
   const timeoutRef = useRef(null);
 
   const finish = () => {
-    const elapsed = Date.now() - (startRef.current || Date.now());
+    if (startRef.current === null) startRef.current = Date.now();
+    const elapsed = Date.now() - startRef.current;
     if (elapsed >= 500) {
       setVisible(false);
     } else {
@@ -23,17 +23,6 @@ export default function usePageLoadingOverlay(text = "Loading...") {
     };
   }, []);
 
-  useLayoutEffect(() => {
-    if (!visible) return;
-    const mainEl = document.querySelector("main");
-    if (!mainEl) return;
-    const update = () => setOverlayRect(mainEl.getBoundingClientRect());
-    update();
-    const ro = new ResizeObserver(update);
-    ro.observe(mainEl);
-    return () => ro.disconnect();
-  }, [visible]);
-
   useEffect(() => {
     if (visible) {
       document.body.style.overflow = "hidden";
@@ -45,5 +34,5 @@ export default function usePageLoadingOverlay(text = "Loading...") {
     };
   }, [visible]);
 
-  return { visible, overlayRect, text, finish };
+  return { visible, text, finish };
 }

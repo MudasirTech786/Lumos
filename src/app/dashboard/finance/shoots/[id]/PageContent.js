@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import usePageLoadingOverlay from "@/hooks/usePageLoadingOverlay";
 import PageLoadingOverlay from "@/components/ui/PageLoadingOverlay";
+import LoadingLogo from "@/components/ui/LoadingLogo";
 
 export default function ShootFinanceReportPage() {
     const params = useParams();
@@ -97,13 +98,10 @@ export default function ShootFinanceReportPage() {
             <>
             <Layout>
                 <div className="min-h-screen flex items-center justify-center">
-                    <div className="flex flex-col items-center gap-4">
-                        <div className="w-10 h-10 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                        <p className="text-slate-500 text-sm font-medium">Loading report...</p>
-                    </div>
+                    <LoadingLogo />
                 </div>
             </Layout>
-            <PageLoadingOverlay visible={overlay.visible} overlayRect={overlay.overlayRect} text={overlay.text} />
+            <PageLoadingOverlay visible={overlay.visible} text={overlay.text} />
             </>
         );
     }
@@ -813,7 +811,7 @@ export default function ShootFinanceReportPage() {
                 </div>
             </div>
         </Layout>
-        <PageLoadingOverlay visible={overlay.visible} overlayRect={overlay.overlayRect} text={overlay.text} />
+        <PageLoadingOverlay visible={overlay.visible} text={overlay.text} />
     </>
     );
 }

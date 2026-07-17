@@ -152,7 +152,7 @@ export default function ShootDetailsPage() {
     <Layout>
       <div className="py-24 text-center text-gray-400">Shoot not found</div>
     </Layout>
-    <PageLoadingOverlay visible={overlay.visible} overlayRect={overlay.overlayRect} text={overlay.text} />
+    <PageLoadingOverlay visible={overlay.visible} text={overlay.text} />
     </>
   );
 
@@ -599,7 +599,7 @@ export default function ShootDetailsPage() {
         />
       )}
     </Layout>
-    <PageLoadingOverlay visible={overlay.visible} overlayRect={overlay.overlayRect} text={overlay.text} />
+    <PageLoadingOverlay visible={overlay.visible} text={overlay.text} />
     </>
   );
 }

@@ -229,7 +229,7 @@ export default function StockPage() {
       </div>
 
     </Layout>
-    <PageLoadingOverlay visible={overlay.visible} overlayRect={overlay.overlayRect} text={overlay.text} />
+    <PageLoadingOverlay visible={overlay.visible} text={overlay.text} />
     </>
   );
 }

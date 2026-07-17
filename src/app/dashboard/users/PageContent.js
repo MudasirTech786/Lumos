@@ -710,7 +710,7 @@ export default function UsersPage() {
 
       </Layout>
     </ProtectedPage>
-    <PageLoadingOverlay visible={overlay.visible} overlayRect={overlay.overlayRect} text={overlay.text} />
+    <PageLoadingOverlay visible={overlay.visible} text={overlay.text} />
     </>
   );
 }
