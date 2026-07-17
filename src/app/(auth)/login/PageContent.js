@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import { motion, useAnimationControls } from "framer-motion";
 import api from "@/lib/api";
-import { Eye, EyeOff, Mail, Lock, Check, ArrowRight } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, ArrowRight } from "lucide-react";
 import useAuth from "@/hooks/useAuth";
 import progressToast from "@/lib/progressToast";
 
@@ -16,8 +16,6 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(true);
-
   const linkControls = useAnimationControls();
   const isHoveredRef = useRef(false);
 
@@ -277,33 +275,6 @@ export default function LoginPage() {
               </button>
             </div>
 
-            {/* REMEMBER ME / FORGOT */}
-            <div className="mb-6 flex items-center justify-between">
-              <button
-                type="button"
-                onClick={() => setRememberMe(!rememberMe)}
-                className="flex items-center gap-2 text-sm text-slate-600"
-              >
-                <span
-                  className={`
-                    flex h-4.5 w-4.5 items-center justify-center rounded-md border transition-colors
-                    ${rememberMe ? "border-slate-800 bg-slate-800" : "border-slate-300 bg-white"}
-                  `}
-                >
-                  {rememberMe && <Check size={12} className="text-white" strokeWidth={3} />}
-                </span>
-                Remember me
-              </button>
-
-              <button
-                type="button"
-                onClick={() => router.push("/forgot-password")}
-                className="text-sm text-slate-500 hover:text-sky-700 transition"
-              >
-                Forgot Password?
-              </button>
-            </div>
-
             {/* LOGIN BUTTON */}
             <button
               onClick={login}
@@ -331,6 +302,7 @@ export default function LoginPage() {
                 hover:from-slate-800
                 hover:to-sky-800
                 disabled:opacity-60
+                mt-8
               "
             >
               {loading && (

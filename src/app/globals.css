@@ -62,3 +62,27 @@ body {
 #reader video {
   border-radius: 12px;
 }
+
+/* ── Notification badge pulse ── */
+@keyframes badgePulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+.notif-badge-pulse {
+  animation: badgePulse 2s ease-in-out infinite;
+}
+
+/* ── Notification unread dot pulse ── */
+@keyframes dotPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(0.8); }
+}
+.notif-dot-pulse {
+  animation: dotPulse 2s ease-in-out infinite;
+}
+
+/* ── Notification slide-in ── */
+@keyframes notifSlideIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}

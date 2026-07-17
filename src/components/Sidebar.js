@@ -15,6 +15,7 @@ import {
   ChevronRight,
   Briefcase,
   Landmark,
+  Bell,
 } from "lucide-react";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -348,6 +349,17 @@ export default function Sidebar({ open, setOpen }) {
         <CollapsedTooltip label="Dashboard" subtitle="Overview & KPIs" />
       </Link>
 
+      {/* Notifications — leaf link, no badge */}
+      <Link
+        href="/dashboard/notifications"
+        onClick={handleNavClick}
+        className={menuClass(isActive("/dashboard/notifications"))}
+        style={isActive("/dashboard/notifications") ? activeStyle : inactiveStyle}
+      >
+        <MenuIcon active={isActive("/dashboard/notifications")}><Bell size={18} /></MenuIcon>
+        <CollapsedTooltip label="Notifications" subtitle="Alerts & Updates" />
+      </Link>
+
       <div className="h-1" />
 
       {/* Access Control — has submenus → badge */}
@@ -534,6 +546,22 @@ export default function Sidebar({ open, setOpen }) {
                 <div>
                   <p className="text-[13.5px] font-semibold text-white leading-tight">Dashboard</p>
                   <p className="text-[11px] mt-0.5 leading-tight" style={{ color: isActive("/") ? "rgba(255,255,255,0.55)" : "rgba(255,255,255,0.38)" }}>Overview & KPIs</p>
+                </div>
+              </div>
+            </Link>
+
+            {/* Notifications — leaf */}
+            <Link
+              href="/dashboard/notifications"
+              onClick={handleNavClick}
+              className={menuClass(isActive("/dashboard/notifications"))}
+              style={isActive("/dashboard/notifications") ? activeStyle : inactiveStyle}
+            >
+              <div className="flex items-center gap-3">
+                <MenuIcon active={isActive("/dashboard/notifications")}><Bell size={18} /></MenuIcon>
+                <div>
+                  <p className="text-[13.5px] font-semibold text-white leading-tight">Notifications</p>
+                  <p className="text-[11px] mt-0.5 leading-tight" style={{ color: isActive("/dashboard/notifications") ? "rgba(255,255,255,0.55)" : "rgba(255,255,255,0.38)" }}>Alerts & Updates</p>
                 </div>
               </div>
             </Link>

@@ -12,6 +12,13 @@ import Cropper from "react-easy-crop";
 import NizaamoLogo from "@/components/NizaamoLogo";
 import CommandPalette from "@/components/CommandPalette"; // ← NEW
 import PageTransitionProvider from "@/components/ui/PageTransitionProvider";
+import dynamic from "next/dynamic";
+import { useUnreadCount } from "@/hooks/useUnreadCount";
+
+const NotificationPanel = dynamic(
+  () => import("@/components/notifications/NotificationPanel"),
+  { ssr: false }
+);
 
 // ── Live clock/date pill ──────────────────────────────────────────────────────
 function DateTimePills() {
@@ -74,6 +81,9 @@ function DateTimePills() {
 export default function Layout({ children }) {
 
   const [open, setOpen] = useState(false);
+  const [notifPanelOpen, setNotifPanelOpen] = useState(false);
+  const bellRef = useRef(null);
+  const unreadCount = useUnreadCount();
 
   useEffect(() => {
     if (window.innerWidth < 768) {
@@ -329,9 +339,17 @@ export default function Layout({ children }) {
               {/* RIGHT: notification + profile */}
               <div className="flex items-center gap-2.5 flex-shrink-0 relative" ref={dropdownRef}>
                 {/* BELL */}
-                <button className="relative w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 hover:bg-slate-200 transition-colors duration-150">
+                <button
+                  ref={bellRef}
+                  onClick={() => setNotifPanelOpen(!notifPanelOpen)}
+                  className="relative w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 hover:bg-slate-200 transition-colors duration-150"
+                >
                   <Bell size={18} className="text-slate-600" strokeWidth={2} />
-                  <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-red-500 text-white text-[10px] font-bold px-1 border-2 border-white">3</span>
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-red-500 text-white text-[10px] font-bold px-1 border-2 border-white notif-badge-pulse">
+                      {unreadCount > 99 ? "99+" : unreadCount}
+                    </span>
+                  )}
                 </button>
 
                 {/* ─────────────────────────────────────────────────────────────────
@@ -542,7 +560,13 @@ export default function Layout({ children }) {
                           </button>
 
                           {/* Notifications */}
-                          <button className="w-full flex items-center gap-3 px-2.5 py-[9px] rounded-[13px] hover:bg-slate-50 active:bg-slate-100 transition-all duration-150 group text-left">
+                          <button
+                            onClick={() => {
+                              setProfileOpen(false);
+                              router.push("/dashboard/notifications");
+                            }}
+                            className="w-full flex items-center gap-3 px-2.5 py-[9px] rounded-[13px] hover:bg-slate-50 active:bg-slate-100 transition-all duration-150 group text-left"
+                          >
                             <div
                               className="w-9 h-9 rounded-[10px] flex items-center justify-center flex-shrink-0 transition-transform duration-150 group-hover:scale-[1.08]"
                               style={{ background: "rgba(80,162,255,0.10)", border: "1px solid rgba(80,162,255,0.18)", color: "#2563eb" }}
@@ -553,7 +577,9 @@ export default function Layout({ children }) {
                             </div>
                             <div className="min-w-0">
                               <p className="text-[13.5px] font-[500] text-slate-800 leading-none">Notifications</p>
-                              <p className="text-[11px] text-slate-400 mt-0.5">3 unread alerts</p>
+                              <p className="text-[11px] text-slate-400 mt-0.5">
+                                {unreadCount > 0 ? `${unreadCount} unread alert${unreadCount !== 1 ? "s" : ""}` : "No unread alerts"}
+                              </p>
                             </div>
                             <svg className="ml-auto text-slate-300 flex-shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                               <path d="M9 18l6-6-6-6" />
@@ -624,9 +650,14 @@ export default function Layout({ children }) {
                 </button>
 
                 {/* NOTIFICATION BELL */}
-                <button className="relative w-10 h-10 flex items-center justify-center rounded-xl text-slate-400 hover:bg-white/10 transition-colors">
+                <button
+                  onClick={() => setNotifPanelOpen(!notifPanelOpen)}
+                  className="relative w-10 h-10 flex items-center justify-center rounded-xl text-slate-400 hover:bg-white/10 transition-colors"
+                >
                   <Bell size={19} strokeWidth={2} />
-                  <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500 border border-[#0B0F19]" />
+                  {unreadCount > 0 && (
+                    <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500 border border-[#0B0F19] notif-badge-pulse" />
+                  )}
                 </button>
 
                 {/* ─────────────────────────────────────────────────────────────────
@@ -802,6 +833,10 @@ export default function Layout({ children }) {
 
                         {/* Notifications */}
                         <button
+                          onClick={() => {
+                            setProfileOpen(false);
+                            router.push("/dashboard/notifications");
+                          }}
                           className="w-full flex items-center gap-3 px-2.5 py-2.5 rounded-[14px] hover:bg-white/[0.05] active:bg-white/[0.08] transition-all duration-150 group text-left"
                         >
                           <div
@@ -819,7 +854,9 @@ export default function Layout({ children }) {
                           </div>
                           <div className="flex flex-col items-start min-w-0">
                             <span className="text-[13.5px] font-[500] text-slate-200 leading-none">Notifications</span>
-                            <span className="text-[11px] text-slate-500 mt-[3px]">3 unread alerts</span>
+                            <span className="text-[11px] text-slate-500 mt-[3px]">
+                              {unreadCount > 0 ? `${unreadCount} unread alert${unreadCount !== 1 ? "s" : ""}` : "No unread alerts"}
+                            </span>
                           </div>
                           <svg className="ml-auto text-slate-600 flex-shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                             <path d="M9 18l6-6-6-6" />
@@ -871,6 +908,12 @@ export default function Layout({ children }) {
             open={paletteOpen}
             onClose={() => setPaletteOpen(false)}
             isMobile={paletteMobile}
+          />
+
+          {/* ═══ NOTIFICATION PANEL ═══ */}
+          <NotificationPanel
+            open={notifPanelOpen}
+            onClose={() => setNotifPanelOpen(false)}
           />
 
           {/* ===== CONTENT ===== */}

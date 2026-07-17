@@ -297,7 +297,11 @@ function CreateProductionInvoiceContent() {
     }
 
     useEffect(() => {
-        if (shootId) loadShoot(shootId);
+        if (shootId) {
+            loadShoot(shootId).finally(() => overlay.finish());
+        } else {
+            overlay.finish();
+        }
     }, [shootId]);
 
     useEffect(() => {

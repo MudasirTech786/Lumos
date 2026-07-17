@@ -97,7 +97,7 @@ export default function ProductionInvoicesPage() {
                     <button
                         onClick={() =>
                             router.push(
-                                "/dashboard/shoots"
+                                "/dashboard/invoices/production-invoices/create"
                             )
                         }
                         className="

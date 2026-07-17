@@ -43,6 +43,7 @@ export default function ShootFinanceReportPage() {
     });
     const [selectedDays, setSelectedDays] = useState(null);
     const [activeSection, setActiveSection] = useState("crew");
+    const [initialLoad, setInitialLoad] = useState(true);
 
     const overlay = usePageLoadingOverlay("Loading Production Finance...");
 
@@ -81,6 +82,7 @@ export default function ShootFinanceReportPage() {
         } finally {
             overlay.finish();
             setLoading(false);
+            setInitialLoad(false);
         }
     };
 
@@ -89,6 +91,22 @@ export default function ShootFinanceReportPage() {
     }, [shootId]);
 
     // ── Loading handled by overlay ──
+
+    if (initialLoad) {
+        return (
+            <>
+            <Layout>
+                <div className="min-h-screen flex items-center justify-center">
+                    <div className="flex flex-col items-center gap-4">
+                        <div className="w-10 h-10 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                        <p className="text-slate-500 text-sm font-medium">Loading report...</p>
+                    </div>
+                </div>
+            </Layout>
+            <PageLoadingOverlay visible={overlay.visible} overlayRect={overlay.overlayRect} text={overlay.text} />
+            </>
+        );
+    }
 
     if (!shoot || !finance) {
         return (
