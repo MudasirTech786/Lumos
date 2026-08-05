@@ -550,22 +550,6 @@ export default function Sidebar({ open, setOpen }) {
               </div>
             </Link>
 
-            {/* Notifications — leaf */}
-            <Link
-              href="/dashboard/notifications"
-              onClick={handleNavClick}
-              className={menuClass(isActive("/dashboard/notifications"))}
-              style={isActive("/dashboard/notifications") ? activeStyle : inactiveStyle}
-            >
-              <div className="flex items-center gap-3">
-                <MenuIcon active={isActive("/dashboard/notifications")}><Bell size={18} /></MenuIcon>
-                <div>
-                  <p className="text-[13.5px] font-semibold text-white leading-tight">Notifications</p>
-                  <p className="text-[11px] mt-0.5 leading-tight" style={{ color: isActive("/dashboard/notifications") ? "rgba(255,255,255,0.55)" : "rgba(255,255,255,0.38)" }}>Alerts & Updates</p>
-                </div>
-              </div>
-            </Link>
-
             <SectionLabel label="Management" />
 
             {/* Access Control — parent with submenus */}
